@@ -1,0 +1,204 @@
+{
+    "auxiliary_fan": "0",
+    "bed_custom_model": "",
+    "bed_custom_texture": "",
+    "bed_exclude_area": [
+        "0x0"
+    ],
+    "before_layer_change_gcode": "",
+    "change_filament_gcode": "",
+    "cooling_tube_length": "5",
+    "cooling_tube_retraction": "91.5",
+    "default_filament_profile": [
+        "Elegoo Generic PLA @0.4 nozzle"
+    ],
+    "default_print_profile": "0.20mm Standard @Elegoo Neptune4Pro (0.4 nozzle)",
+    "deretraction_speed": [
+        "30"
+    ],
+    "enable_filament_ramming": "1",
+    "extra_loading_move": "-2",
+    "extruder_clearance_height_to_lid": "34",
+    "extruder_clearance_height_to_rod": "34",
+    "extruder_clearance_radius": "47",
+    "extruder_colour": [
+        "#FCE94F"
+    ],
+    "extruder_offset": [
+        "0x0"
+    ],
+    "fan_kickstart": "0",
+    "fan_speedup_overhangs": "1",
+    "fan_speedup_time": "0",
+    "from": "",
+    "gcode_flavor": "klipper",
+    "high_current_on_filament_swap": "0",
+    "host_type": "octoprint",
+    "inherits": "Elegoo Neptune 4 Pro (0.4 nozzle)",
+    "layer_change_gcode": ";AFTER_LAYER_CHANGE\n;[layer_z]",
+    "machine_end_gcode": "PRINT_END",
+    "machine_load_filament_time": "0",
+    "machine_max_acceleration_e": [
+        "2000",
+        "5000"
+    ],
+    "machine_max_acceleration_extruding": [
+        "3100",
+        "20000"
+    ],
+    "machine_max_acceleration_retracting": [
+        "3100",
+        "5000"
+    ],
+    "machine_max_acceleration_travel": [
+        "20000",
+        "20000"
+    ],
+    "machine_max_acceleration_x": [
+        "3000",
+        "20000"
+    ],
+    "machine_max_acceleration_y": [
+        "3000",
+        "20000"
+    ],
+    "machine_max_acceleration_z": [
+        "200",
+        "200"
+    ],
+    "machine_max_jerk_e": [
+        "4.5",
+        "2.5"
+    ],
+    "machine_max_jerk_x": [
+        "20",
+        "12"
+    ],
+    "machine_max_jerk_y": [
+        "20",
+        "12"
+    ],
+    "machine_max_jerk_z": [
+        "0.4",
+        "0.4"
+    ],
+    "machine_max_speed_e": [
+        "45",
+        "25"
+    ],
+    "machine_max_speed_x": [
+        "250",
+        "200"
+    ],
+    "machine_max_speed_y": [
+        "250",
+        "200"
+    ],
+    "machine_max_speed_z": [
+        "20",
+        "12"
+    ],
+    "machine_min_extruding_rate": [
+        "0",
+        "0"
+    ],
+    "machine_min_travel_rate": [
+        "0",
+        "0"
+    ],
+    "machine_pause_gcode": "M0",
+    "machine_start_gcode": ";Nozzle diameter = [nozzle_diameter]\n;Filament type = [filament_type]\n;Filament name = [filament_vendor] \n;Filament weight = [filament_density]\nPRINT_START BED_TEMP=[hot_plate_temp_initial_layer] EXTRUDER_TEMP=[nozzle_temperature_initial_layer] AREA_START={first_layer_print_min[0]},{first_layer_print_min[1]} AREA_END={first_layer_print_max[0]},{first_layer_print_max[1]}\n",
+    "machine_unload_filament_time": "0",
+    "max_layer_height": [
+        "0.3"
+    ],
+    "min_layer_height": [
+        "0.08"
+    ],
+    "name": "Elegoo Neptune 4 Pro (0.4 nozzle) - USETHIS",
+    "nozzle_diameter": [
+        "0.4"
+    ],
+    "nozzle_hrc": "0",
+    "nozzle_type": "undefine",
+    "nozzle_volume": "0",
+    "parking_pos_retraction": "92",
+    "print_host": "10.10.2.15",
+    "print_host_webui": "",
+    "printable_area": [
+        "0x0",
+        "235x0",
+        "235x235",
+        "0x235"
+    ],
+    "printable_height": "265",
+    "printer_model": "Elegoo Neptune 4 Pro",
+    "printer_notes": "",
+    "printer_settings_id": "Elegoo Neptune 4 Pro (0.4 nozzle) - USETHIS",
+    "printer_technology": "FFF",
+    "printer_variant": "0.4",
+    "printhost_apikey": "",
+    "printhost_authorization_type": "key",
+    "printhost_cafile": "",
+    "printhost_password": "",
+    "printhost_port": "",
+    "printhost_ssl_ignore_revoke": "0",
+    "printhost_user": "",
+    "purge_in_prime_tower": "1",
+    "retract_before_wipe": [
+        "0%"
+    ],
+    "retract_length_toolchange": [
+        "2"
+    ],
+    "retract_lift_above": [
+        "0"
+    ],
+    "retract_lift_below": [
+        "0"
+    ],
+    "retract_lift_enforce": [
+        "All Surfaces"
+    ],
+    "retract_restart_extra": [
+        "0"
+    ],
+    "retract_restart_extra_toolchange": [
+        "0"
+    ],
+    "retract_when_changing_layer": [
+        "0"
+    ],
+    "retraction_length": [
+        "0.3"
+    ],
+    "retraction_minimum_travel": [
+        "2"
+    ],
+    "retraction_speed": [
+        "40"
+    ],
+    "scan_first_layer": "0",
+    "silent_mode": "0",
+    "single_extruder_multi_material": "1",
+    "template_custom_gcode": "",
+    "thumbnails": [
+        "300x300"
+    ],
+    "upward_compatible_machine": [],
+    "use_firmware_retraction": "1",
+    "use_relative_e_distances": "1",
+    "version": "1.7.0.0",
+    "wipe": [
+        "0"
+    ],
+    "wipe_distance": [
+        "0"
+    ],
+    "z_hop": [
+        "0"
+    ],
+    "z_hop_types": [
+        "Auto Lift"
+    ]
+}
