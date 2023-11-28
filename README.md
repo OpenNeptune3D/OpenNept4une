@@ -1,6 +1,6 @@
 # OpenNept4une
 
-## De-Elegoo-izing the Neptune 4 / Pro (Both 0.8A & 1.2A Versions) & MAX
+## De-Elegoo-izing the Neptune 4 / Pro (Both 0.8A & 1.2A Versions)
 **NOTE the touch-screen will not be functional after this!**
 
 ### Image Features
@@ -41,17 +41,15 @@
     \[include adxl.cfg\]
     
     
-  ### Installed Services (Clean/Official) - *Current as of OCT 2023:
+  ### Installed Services (Clean/Official) - *Current as of NOV 2023:
   
--   Klipper v0.11.0-304-gf7567a0d
--   moonraker v0.8.0-188-ga71c5c15
--   Klipper-Adaptive-Meshing-Purging v1.1.2-4-g2389a994
--   fluidd v1.26.1
--   fluidd-config v0.0.0-9-gfcf0d445-inferred
--   mainsail v2.8.0 (Configured on port 81)
--   mainsail-config v1.0.0-16-gc64d3af9
--   crowsnest v4.0.4-6-g767c53aa
--   mobileraker v0.4.0-29-g5a4cae4a
+-   Klipper
+-   moonraker 
+-   Klipper-Adaptive-Meshing-Purging 
+-   fluidd 
+-   mainsail(Configured on port 81)
+-   crowsnest 
+-   mobileraker 
 
 
   ## Install Procedure - Re-flash eMMC with Latest OpenNept4une Release Image
@@ -67,7 +65,7 @@ Alternatively, a spare eMMC & eMMC \> microSD adapter can be purchased (Preferre
 Configured default for N4Pro 1.2A (see Printer Configs folder for one to match your model).\
 \
 OrcaSlicer Configs: (For N4P configure Orca defaults for your model printer before import) - (Remove reference to the Pro if trying to
-import for a standard Neptune 4 or MAX profile)
+import for a standard Neptune 4 or PLUS / MAX profile)
 
 ## Fluidd / Klipper Calibration: -
 
