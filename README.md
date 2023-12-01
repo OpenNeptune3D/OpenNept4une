@@ -1,7 +1,10 @@
 # OpenNept4une
 
-## De-Elegoo-izing the Neptune 4 / Pro (Both 0.8A & 1.2A Versions)
+## De-Elegoo-izing the Neptune 4 Series 3D Printers
 **NOTE the touch-screen will not be functional after this!**
+**LED’s, ADXL & WiFi Working on all v1.0/1.1 Variants**
+
+**If you have a v1.1 N4/Pro please delete LED Control v1.0 in your new printer.cfg & un-comment v1.1 LED section**
 
 ### Image Features
 
@@ -20,7 +23,7 @@
     segments)
 -   Easy WiFi config
 -   Working segmented bed heaters (N4Pro) - also configurable
--   Armbian packages updated (as of Oct 2023)
+-   Armbian packages updated (as of Nov 2023)
 -   No need for Elegoo Firmware Updates going forward (Stock Klipper etc
     Updated in Fluidd GUI or Kiauh)
 -   Crowsnest Current (Main) w/ ustreamer
