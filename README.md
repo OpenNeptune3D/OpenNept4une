@@ -1,82 +1,60 @@
 # OpenNept4une
 
 ## De-Elegoo-izing the Neptune 4 Series 3D Printers
-**NOTE the touch-screen will not be functional after this!**\
-\
+
+**NOTE: The touch-screen will not be functional after this!**  
 **LED’s, ADXL & WiFi Working on all v1.0/1.1 Variants**
 
-**Credit to the following community members for assistance & testing!:**\
-\
-SQUIRRELYMOOSE\
-DanDonut\
-Jaerax\
-SmartHome42/Printernbeer & Tom\'s Basement
-
-**Credit to the following Projects used here:**\
-\
-Armbian - <https://github.com/armbian/build>\
-redrathnure - for the base mkspi image - <https://github.com/redrathnure/armbian-mkspi>\
-KAMP (Klipper-Adaptive-Meshing-Purging) - <https://github.com/kyleisah/Klipper-Adaptive-Meshing-Purging>\
-kiauh (Klipper Installation And Update Helper) - <https://github.com/dw-0/kiauh?>\
-Klipper - <https://github.com/Klipper3d/klipper>\
-moonraker - <https://github.com/Arksine/moonraker>\
-fluidd - <https://github.com/fluidd-core/fluidd>\
-mainsail - <https://github.com/mainsail-crew/mainsail>\
-crowsnest - <https://github.com/mainsail-crew/crowsnest>\
-mobileraker - <https://github.com/Clon1998/mobileraker>\
+**Credits:**
+- Community Members: SQUIRRELYMOOSE, DanDonut, Jaerax, SmartHome42/Printernbeer & Tom's Basement
+- Projects: 
+  - Armbian: [GitHub](https://github.com/armbian/build)
+  - redrathnure for the base mkspi image: [GitHub](https://github.com/redrathnure/armbian-mkspi)
+  - KAMP (Klipper-Adaptive-Meshing-Purging): [GitHub](https://github.com/kyleisah/Klipper-Adaptive-Meshing-Purging)
+  - kiauh (Klipper Installation And Update Helper): [GitHub](https://github.com/dw-0/kiauh)
+  - Klipper: [GitHub](https://github.com/Klipper3d/klipper)
+  - moonraker: [GitHub](https://github.com/Arksine/moonraker)
+  - fluidd: [GitHub](https://github.com/fluidd-core/fluidd)
+  - mainsail: [GitHub](https://github.com/mainsail-crew/mainsail)
+  - crowsnest: [GitHub](https://github.com/mainsail-crew/crowsnest)
+  - mobileraker: [GitHub](https://github.com/Clon1998/mobileraker)
 
 ### Image Features
 
--   Armbian 23.08.0-trunk Bookworm with bleeding edge Linux
-    6.5.9-edge-rockchip64
-    \
-    (**Credit:** [<https://github.com/redrathnure/armbian-mkspi>])
--   Elegoo Services Removed (No Z-Axis Issues)
--   KAMP configured and Installed (Creates a smaller, print area
-    localised bed level mesh before each print + Smart Park + Line
-    Purge)
-    [<https://github.com/kyleisah/Klipper-Adaptive-Meshing-Purging>]
--   Bed Leveling Macros (Bed Screw Tuning macro, Z Probe Calib & Auto
-    Full Bed Mesh)
--   PID Calibration Macros (Extruder + Improved for both heated bed
-    segments)
--   Easy WiFi config
--   Working segmented bed heaters (N4Pro) - also configurable
--   Armbian packages updated (as of Nov 2023)
--   No need for Elegoo Firmware Updates going forward (Stock Klipper etc
-    Updated in Fluidd GUI or Kiauh)
--   Crowsnest Current (Main) w/ ustreamer
--   Orca Slicer Profiles Provided
--   Simplified printer.cfg\
-    (**Credit**: Modified SmartHome42/Printernbeer & Tom\'s Basement
-    Neptune 4 Config)
--   Renamed variables to make it easier to read
--   Corrected instructions for Flashing v0.12 Klipper MCU Firmware
--   Firmware Retraction configured
--   E & Z Steppers configured for 32 microsteps / Interpolation Disabled
-    & stealthChop disabled (Results in higher accuracy without
-    sacrificing much stepper torque)
--   X & Y Steppers remain at 16 microsteps with Interpolation enabled &
-    stealthChop enabled (16 microsteps with interpolation is a common
-    setting, providing a balance of torque and resolution and low noise)
--   Mellow Fly-ADXL345 USB Accelerometer configuration included
-    \[include adxl.cfg\]
-    
-  ## Install Procedure - Re-flash eMMC with Latest OpenNept4une Release Image
-  
-Requires - Makerbase MKS EMMC-ADAPTER V2 USB 3.0 Reader For MKS EMMC Module\
-[[https://www.aliexpress.com/item/1005005614719377.html](https://www.aliexpress.com/item/1005005614719377.html?spm=a2g0o.productlist.main.1.1c772487NAFecQ&algo_pvid=d021b499-e67b-4da5-8975-3bb0653bc16e&algo_exp_id=d021b499-e67b-4da5-8975-3bb0653bc16e-0&pdp_npi=4@dis!GBP!6.08!6.08!!!7.19!!@210318c916965901078338141e8cb7!12000033755356288!sea!UK!801158356!&curPageLogUid=tivQjvYHp000)]\
-\
-Alternatively, a spare eMMC & eMMC \> microSD adapter can be purchased (Preferred as can retain the original eMMC as an Elegoo Official loaded backup.\
-[<https://www.aliexpress.com/item/1005005549477887.html>]\
+- Armbian 23.08.0-trunk Bookworm with Linux 6.5.9-edge-rockchip64 ([Credit](https://github.com/redrathnure/armbian-mkspi))
+- Elegoo Services Removed (No Z-Axis Issues)
+- KAMP configured and installed
+- Bed Leveling Macros
+- PID Calibration Macros
+- Easy WiFi config
+- Working segmented bed heaters (N4Pro)
+- Armbian packages updated (as of Nov 2023)
+- No need for Elegoo Firmware Updates (Updated in Fluidd GUI or Kiauh)
+- Crowsnest Current (Main) w/ ustreamer
+- Orca Slicer Profiles Provided
+- Simplified printer.cfg (Credit: Modified SmartHome42/Printernbeer & Tom's Basement Neptune 4 Config)
+- Renamed variables for readability
+- Corrected instructions for Flashing v0.12 Klipper MCU Firmware
+- Firmware Retraction configured
+- E & Z Steppers configured for 32 microsteps
+- X & Y Steppers at 16 microsteps with Interpolation and stealthChop enabled
+- Mellow Fly-ADXL345 USB Accelerometer configuration included
 
-**See the [Releases](https://github.com/halfmanbear/OpenNept4une/releases/) section for the latest pre-configured OpenNept4une eMMC Image (flash with balenaEtcher or dd). Recommended to Back-Up original eMMC beforehand - select the correct printer model & PCB version v1.0 or v1.1.**\
-\
-**If you have a v1.1 N4/Pro please delete LED Control v1.0 in your new printer.cfg & un-comment v1.1 LED section**
-Configured default for N4Pro 1.2A (see Printer Configs folder for one to match your model).\
-\
-OrcaSlicer Configs: (For N4P configure Orca defaults for your model printer before import) - (Remove reference to the Pro if trying to
-import for a standard Neptune 4 or PLUS / MAX profile)
+## Install Procedure - Re-flash eMMC with Latest OpenNept4une Release Image
+
+**Requirements:**
+- Makerbase MKS EMMC-ADAPTER V2 USB 3.0 Reader For MKS EMMC Module: [AliExpress](https://www.aliexpress.com/item/1005005614719377.html)
+- Alternatively, a spare eMMC & eMMC > microSD adapter: [AliExpress](https://www.aliexpress.com/item/1005005549477887.html)
+
+**Installation:**
+- See the [Releases](https://github.com/halfmanbear/OpenNept4une/releases/) section for the latest pre-configured OpenNept4une eMMC Image. Flash with balenaEtcher or dd.
+- Recommended to Back-Up original eMMC beforehand.
+- If you have a v1.1 N4/Pro, delete LED Control v1.0 in your new printer.cfg & un-comment v1.1 LED section.
+- Configured default for N4Pro 1.2A (see Printer Configs folder for your model).
+
+### OrcaSlicer Configs
+- Configure Orca defaults for your model printer before import.
+- Remove reference to the Pro if trying to import for a standard Neptune 4 or PLUS / MAX profile.
 
 ## Fluidd / Klipper Calibration: -
 
