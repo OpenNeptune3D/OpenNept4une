@@ -1,10 +1,29 @@
 # OpenNept4une
 
 ## De-Elegoo-izing the Neptune 4 Series 3D Printers
-**NOTE the touch-screen will not be functional after this!**
+**NOTE the touch-screen will not be functional after this!**\
+\
 **LED’s, ADXL & WiFi Working on all v1.0/1.1 Variants**
 
-**If you have a v1.1 N4/Pro please delete LED Control v1.0 in your new printer.cfg & un-comment v1.1 LED section**
+**Credit to the following community members for assistance & testing!:**\
+\
+SQUIRRELYMOOSE\
+DanDonut\
+Jaerax\
+SmartHome42/Printernbeer & Tom\'s Basement
+
+**Credit to the following Projects used here:**\
+\
+Armbian - <https://github.com/armbian/build>\
+redrathnure - for the base mkspi image - <https://github.com/redrathnure/armbian-mkspi>\
+KAMP (Klipper-Adaptive-Meshing-Purging) - <https://github.com/kyleisah/Klipper-Adaptive-Meshing-Purging>\
+kiauh (Klipper Installation And Update Helper) - <https://github.com/dw-0/kiauh?>\
+Klipper - <https://github.com/Klipper3d/klipper>\
+moonraker - <https://github.com/Arksine/moonraker>\
+fluidd - <https://github.com/fluidd-core/fluidd>\
+mainsail - <https://github.com/mainsail-crew/mainsail>\
+crowsnest - <https://github.com/mainsail-crew/crowsnest>\
+mobileraker - <https://github.com/Clon1998/mobileraker>\
 
 ### Image Features
 
@@ -32,7 +51,7 @@
     (**Credit**: Modified SmartHome42/Printernbeer & Tom\'s Basement
     Neptune 4 Config)
 -   Renamed variables to make it easier to read
--   Corrected instructions for Flashing v0.11 Klipper MCU Firmware
+-   Corrected instructions for Flashing v0.12 Klipper MCU Firmware
 -   Firmware Retraction configured
 -   E & Z Steppers configured for 32 microsteps / Interpolation Disabled
     & stealthChop disabled (Results in higher accuracy without
@@ -43,18 +62,6 @@
 -   Mellow Fly-ADXL345 USB Accelerometer configuration included
     \[include adxl.cfg\]
     
-    
-  ### Installed Services (Clean/Official) - *Current as of NOV 2023:
-  
--   Klipper
--   moonraker 
--   Klipper-Adaptive-Meshing-Purging 
--   fluidd 
--   mainsail(Configured on port 81)
--   crowsnest 
--   mobileraker 
-
-
   ## Install Procedure - Re-flash eMMC with Latest OpenNept4une Release Image
   
 Requires - Makerbase MKS EMMC-ADAPTER V2 USB 3.0 Reader For MKS EMMC Module\
@@ -63,8 +70,9 @@ Requires - Makerbase MKS EMMC-ADAPTER V2 USB 3.0 Reader For MKS EMMC Module\
 Alternatively, a spare eMMC & eMMC \> microSD adapter can be purchased (Preferred as can retain the original eMMC as an Elegoo Official loaded backup.\
 [<https://www.aliexpress.com/item/1005005549477887.html>]\
 
-**See the [Releases](https://github.com/halfmanbear/OpenNept4une/releases/tag/v0.1.3) section for the latest pre-configured OpenNept4une eMMC Image (flash with balenaEtcher or dd). Recommended to Back-Up original eMMC beforehand.**
-
+**See the [Releases](https://github.com/halfmanbear/OpenNept4une/releases/) section for the latest pre-configured OpenNept4une eMMC Image (flash with balenaEtcher or dd). Recommended to Back-Up original eMMC beforehand - select the correct printer model & PCB version v1.0 or v1.1.**\
+\
+**If you have a v1.1 N4/Pro please delete LED Control v1.0 in your new printer.cfg & un-comment v1.1 LED section**
 Configured default for N4Pro 1.2A (see Printer Configs folder for one to match your model).\
 \
 OrcaSlicer Configs: (For N4P configure Orca defaults for your model printer before import) - (Remove reference to the Pro if trying to
@@ -115,7 +123,7 @@ cold):\
     reboot. Avoid direct power cycles; this ensures changes are saved from
     RAM to eMMC.
     
-## Slicer Settings
+## Slicer Settings 
 (If using the provided OrcaSlicer profiles (for N4P) you can skip
     this)\
     \
@@ -162,30 +170,13 @@ cold):\
 \
     \
     ---\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\--\
-    \
-    **Slicer START CODE (Cura)**
-    \
-    NOTE all text including PRINT_START and after must be on one line
-    
-    
-```
-    ;Nozzle diameter = {machine_nozzle_size}
-    ;Filament type = {material_type}
-    ;Filament name = {material_brand}
-    ;Filament weight = {material_density}
-    PRINT_START BED_TEMP={material_bed_temperature_layer_0} EXTRUDER_TEMP={material_print_temperature_layer_0} AREA_START={print_min_x},{print_min_y} AREA_END={print_max_x},{print_max_y}
-```
-\
-    \
-        ---\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\--
-    
     
 ## Printer Terminal Access Options:
 Terminal / Shell access via SSH (Requires ethernet connection) -\
     \
-    ssh root@printer ip\
+    ssh mks@printer ip\
     Password = makerbase\
-    User: mks is a sudoer also and can login via - mks:makerbase\
+    User: root can login via - root:makerbase\
     \
     ---\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\--\
     \
@@ -194,7 +185,7 @@ Terminal / Shell access via SSH (Requires ethernet connection) -\
     Connect N4P USB-C port to PC Then connect via Serial COM8 (yours
     will be different) set baudrate to 1500000\
     \
-    User: root\
+    User: mks\
     Pass: makerbase\
     \
     ---\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\---
