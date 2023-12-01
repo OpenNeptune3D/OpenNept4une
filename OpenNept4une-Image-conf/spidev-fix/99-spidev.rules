@@ -1,0 +1,2 @@
+SUBSYSTEM=="spidev", KERNEL=="spidev0.[0-2]", MODE="0660", GROUP="spiusers"
+

@@ -1,0 +1,8 @@
+sudo groupadd spiusers
+sudo usermod -a -G spiusers mks
+
+move 99-spidev.rules to /etc/udev/rules.d/
+
+move rockchip-fixup.scr & rockchip-spi-spidev.dtbo to /boot/dtb/rockchip/overlays/
+
+move your printer models fixed dtb file to /boot/dtb/rockchip/

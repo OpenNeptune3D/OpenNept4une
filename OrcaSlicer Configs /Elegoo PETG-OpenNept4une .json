@@ -1,9 +1,12 @@
 {
-    "additional_cooling_fan_speed": [
-        "70"
+    "activate_air_filtration": [
+        "0"
     ],
-    "bed_temperature_difference": [
-        "10"
+    "activate_chamber_temp_control": [
+        "0"
+    ],
+    "additional_cooling_fan_speed": [
+        "0"
     ],
     "chamber_temperature": [
         "0"
@@ -25,6 +28,10 @@
         "Elegoo Neptune 4 (0.4 nozzle)",
         "Elegoo Neptune 4 (0.6 nozzle)",
         "Elegoo Neptune 4 (0.8 nozzle)",
+        "Elegoo Neptune 4 Max (0.2 nozzle)",
+        "Elegoo Neptune 4 Max (0.4 nozzle)",
+        "Elegoo Neptune 4 Max (0.6 nozzle)",
+        "Elegoo Neptune 4 Max (0.8 nozzle)",
         "Elegoo Neptune 4 Pro (0.2 nozzle)",
         "Elegoo Neptune 4 Pro (0.4 nozzle)",
         "Elegoo Neptune 4 Pro (0.6 nozzle)",
@@ -33,14 +40,20 @@
     "compatible_printers_condition": "",
     "compatible_prints": [],
     "compatible_prints_condition": "",
+    "complete_print_exhaust_fan_speed": [
+        "80"
+    ],
     "cool_plate_temp": [
-        "60"
+        "70"
     ],
     "cool_plate_temp_initial_layer": [
-        "60"
+        "70"
     ],
     "default_filament_colour": [
         ""
+    ],
+    "during_print_exhaust_fan_speed": [
+        "60"
     ],
     "enable_overhang_bridge_fan": [
         "1"
@@ -49,19 +62,19 @@
         "0"
     ],
     "eng_plate_temp": [
-        "60"
+        "70"
     ],
     "eng_plate_temp_initial_layer": [
-        "60"
+        "70"
     ],
     "fan_cooling_layer_time": [
-        "100"
+        "30"
     ],
     "fan_max_speed": [
-        "100"
+        "50"
     ],
     "fan_min_speed": [
-        "100"
+        "20"
     ],
     "filament_cooling_final_speed": [
         "3.4"
@@ -76,7 +89,7 @@
         "20"
     ],
     "filament_density": [
-        "1.24"
+        "1.27"
     ],
     "filament_deretraction_speed": [
         "nil"
@@ -88,7 +101,7 @@
         "; filament end gcode \n"
     ],
     "filament_flow_ratio": [
-        "1.03732"
+        "1.0395"
     ],
     "filament_is_support": [
         "0"
@@ -103,7 +116,7 @@
         "3"
     ],
     "filament_max_volumetric_speed": [
-        "21"
+        "10"
     ],
     "filament_minimal_purge_on_wipe_tower": [
         "15"
@@ -151,7 +164,7 @@
         "nil"
     ],
     "filament_settings_id": [
-        "Elegoo Generic PLA - USETHIS"
+        "Elegoo Generic PETG - USETHIS"
     ],
     "filament_shrink": [
         "100%"
@@ -166,7 +179,7 @@
         "0"
     ],
     "filament_type": [
-        "PLA"
+        "PETG"
     ],
     "filament_unload_time": [
         "0"
@@ -194,33 +207,33 @@
     ],
     "from": "",
     "full_fan_speed_layer": [
-        "0"
+        "5"
     ],
     "hot_plate_temp": [
-        "60"
+        "70"
     ],
     "hot_plate_temp_initial_layer": [
-        "60"
+        "70"
     ],
-    "inherits": "Elegoo Generic PLA",
-    "name": "Elegoo Generic PLA - USETHIS",
+    "inherits": "Elegoo Generic PETG",
+    "name": "Elegoo Generic PETG - USETHIS",
     "nozzle_temperature": [
-        "215"
+        "240"
     ],
     "nozzle_temperature_initial_layer": [
-        "215"
+        "240"
     ],
     "nozzle_temperature_range_high": [
-        "230"
+        "240"
     ],
     "nozzle_temperature_range_low": [
-        "190"
+        "230"
     ],
     "overhang_fan_speed": [
-        "100"
+        "90"
     ],
     "overhang_fan_threshold": [
-        "50%"
+        "25%"
     ],
     "pressure_advance": [
         "0.02"
@@ -244,13 +257,13 @@
         "-1"
     ],
     "temperature_vitrification": [
-        "60"
+        "80"
     ],
     "textured_plate_temp": [
-        "60"
+        "70"
     ],
     "textured_plate_temp_initial_layer": [
-        "60"
+        "70"
     ],
     "version": "1.7.0.0"
 }

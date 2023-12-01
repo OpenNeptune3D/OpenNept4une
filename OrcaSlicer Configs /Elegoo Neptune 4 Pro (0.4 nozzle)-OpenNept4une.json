@@ -6,6 +6,8 @@
         "0x0"
     ],
     "before_layer_change_gcode": "",
+    "best_object_pos": "0.5,0.5",
+    "change_extrusion_role_gcode": "",
     "change_filament_gcode": "",
     "cooling_tube_length": "5",
     "cooling_tube_retraction": "91.5",
@@ -14,7 +16,7 @@
     ],
     "default_print_profile": "0.20mm Standard @Elegoo Neptune4Pro (0.4 nozzle)",
     "deretraction_speed": [
-        "30"
+        "45"
     ],
     "enable_filament_ramming": "1",
     "extra_loading_move": "-2",
@@ -43,11 +45,11 @@
         "5000"
     ],
     "machine_max_acceleration_extruding": [
-        "3100",
+        "3000",
         "20000"
     ],
     "machine_max_acceleration_retracting": [
-        "3100",
+        "3000",
         "5000"
     ],
     "machine_max_acceleration_travel": [
@@ -71,11 +73,11 @@
         "2.5"
     ],
     "machine_max_jerk_x": [
-        "20",
+        "5",
         "12"
     ],
     "machine_max_jerk_y": [
-        "20",
+        "5",
         "12"
     ],
     "machine_max_jerk_z": [
@@ -109,6 +111,7 @@
     "machine_pause_gcode": "M0",
     "machine_start_gcode": ";Nozzle diameter = [nozzle_diameter]\n;Filament type = [filament_type]\n;Filament name = [filament_vendor] \n;Filament weight = [filament_density]\nPRINT_START BED_TEMP=[hot_plate_temp_initial_layer] EXTRUDER_TEMP=[nozzle_temperature_initial_layer] AREA_START={first_layer_print_min[0]},{first_layer_print_min[1]} AREA_END={first_layer_print_max[0]},{first_layer_print_max[1]}\n",
     "machine_unload_filament_time": "0",
+    "manual_filament_change": "0",
     "max_layer_height": [
         "0.3"
     ],
@@ -123,7 +126,7 @@
     "nozzle_type": "undefine",
     "nozzle_volume": "0",
     "parking_pos_retraction": "92",
-    "print_host": "10.10.2.15",
+    "print_host": "10.10.3.6",
     "print_host_webui": "",
     "printable_area": [
         "0x0",
@@ -135,6 +138,7 @@
     "printer_model": "Elegoo Neptune 4 Pro",
     "printer_notes": "",
     "printer_settings_id": "Elegoo Neptune 4 Pro (0.4 nozzle) - USETHIS",
+    "printer_structure": "undefine",
     "printer_technology": "FFF",
     "printer_variant": "0.4",
     "printhost_apikey": "",
@@ -170,21 +174,26 @@
         "0"
     ],
     "retraction_length": [
-        "0.3"
+        "0.15"
     ],
     "retraction_minimum_travel": [
         "2"
     ],
     "retraction_speed": [
-        "40"
+        "45"
     ],
     "scan_first_layer": "0",
     "silent_mode": "0",
     "single_extruder_multi_material": "1",
+    "support_air_filtration": "1",
+    "support_chamber_temp_control": "1",
     "template_custom_gcode": "",
     "thumbnails": [
         "300x300"
     ],
+    "thumbnails_format": "PNG",
+    "time_cost": "0",
+    "time_lapse_gcode": "",
     "upward_compatible_machine": [],
     "use_firmware_retraction": "1",
     "use_relative_e_distances": "1",
@@ -200,5 +209,6 @@
     ],
     "z_hop_types": [
         "Auto Lift"
-    ]
+    ],
+    "z_offset": "0"
 }
