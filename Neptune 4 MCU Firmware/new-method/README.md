@@ -13,7 +13,7 @@
    ./mcu-swflash-install.sh
    ```
 
-4. **Run SoftwareFlash Script with the following options when prompted:**
+4. **Run SoftwareFlash Script with the following options (be sure to press , Q , then select "yes" when done):**
 
    ```
    ./mcu-swflash-run.sh
