@@ -1,5 +1,14 @@
 #!/bin/bash
 
+# Navigate to the Klipper directory and run make menuconfig
+echo "Running make menuconfig in the Klipper directory..."
+cd ~/klipper/
+make menuconfig
+
+# Compile the firmware after exiting menuconfig
+echo "Compiling the firmware..."
+make
+
 # Stop the Klipper service
 echo "Stopping the Klipper service..."
 sudo service klipper stop
