@@ -4,7 +4,7 @@
 
 ## Steps:
 
-1. **Solder/Wire bridge the following two sets of jumper pads:**\
+1. **Solder/Wire bridge the following two sets of jumper pads (with machine off):**\
 ![Alt text](/images/pads-bridge.jpg)
 
 3. **Run SoftwareFlash Install Script then reboot:**
