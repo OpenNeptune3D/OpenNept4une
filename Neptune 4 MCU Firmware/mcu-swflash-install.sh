@@ -22,3 +22,11 @@ fi
 sudo sed -i "/^exit 0/i $SCRIPT_PATH" "$RC_LOCAL"
 
 echo "Setup complete."
+
+# Prompt user for reboot
+read -p "Do you want to reboot now? (y/n): " answer
+case $answer in
+    [Yy]* ) sudo reboot;;
+    [Nn]* ) echo "Reboot cancelled.";;
+    * ) echo "Please answer yes or no.";;
+esac
