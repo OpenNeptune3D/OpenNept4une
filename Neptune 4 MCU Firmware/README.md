@@ -54,6 +54,7 @@
    - Repeat the BOOT and RESET process.
    - Then, type:
      ```
+     sudo service klipper stop
      stm32flash -w /home/mks/klipper/out/klipper.bin -v -S 0x08008000 -g 0x08000000 /dev/ttyS0
      ```
 
@@ -65,9 +66,10 @@
    - Download the provided klipper.bin (in this git repo)
    - Then, flash it with:
      ```
+     sudo service klipper stop
      stm32flash -w ./klipper.bin -v /dev/ttyS0
      ```
-   - After this is done you may use the first (compile with kaiuh) method going forward.
+   - After this reboot going forward you may use the first (compile with kaiuh) method.
    ## How to Recover OG MCU Firmware
 
 (Pre-dumped N4Pro (might be the same as N4) firmware-bak.bin)
