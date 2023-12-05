@@ -13,7 +13,7 @@
    ./mcu-swflash-install.sh
    ```
 
-4. **Run SoftwareFlash Script with the following options (be sure to press , Q , then select "yes" when done):**
+4. **Run SoftwareFlash Script ideally copy the klipper.bin here to the same directory and flash that when prompt after this flash you may continue with the configurations below going forward:**
 
    ```
    ./mcu-swflash-run.sh
