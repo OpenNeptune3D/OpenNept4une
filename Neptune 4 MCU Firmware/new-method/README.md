@@ -4,7 +4,7 @@
 
 ## Steps:
 
-1. **Solder/Wire bridge the following two sets of jumper pads (with machine off):**\
+1. **Solder/Wire bridge the following two sets of jumper pads (This is ZNP-K1 v1.0 pad locations will differ on other revisions):**\
 ![Alt text](/pictures/pads-bridge.jpg)
 
 3. **Run SoftwareFlash Install Script then reboot:**
