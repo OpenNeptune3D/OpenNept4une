@@ -61,7 +61,7 @@
    - Repeat the BOOT and RESET process.
    - Then, type:
      ```
-     stm32flash -w /home/mks/klipper/out/klipper.bin -v -g 0x8008000 /dev/ttyS0
+     stm32flash -w /home/mks/klipper/out/klipper.bin -v -g 0x08008000 /dev/ttyS0
      ```
 
 5. **Start Klipper Service:**
