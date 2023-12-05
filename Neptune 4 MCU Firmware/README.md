@@ -48,25 +48,26 @@
      4 Advanced
      2 Build Only
      ```
-   - Follow the instructions for STM32 and USART settings.
-
-3. **Flash Empty Bin:**
-   - Good practice to flash an empty .bin to clear the Flash between updates.
-     ```
-     dd if=/dev/zero bs=1 count=262144 | tr "\000" "\377" > empty.bin
-     stm32flash -w empty.bin -v -g 0x0 /dev/ttyS0
-     ```
+   - Enter these configurations - STMicroelectronics STM32 - STM32F401 - 32KiB Bootloader - and USART PA10/PA9 - settings.
 
 4. **Flash Klipper Firmware:**
    - Repeat the BOOT and RESET process.
    - Then, type:
      ```
-     stm32flash -w /home/mks/klipper/out/klipper.bin -v -g 0x08008000 /dev/ttyS0
+     stm32flash -w /home/mks/klipper/out/klipper.bin -v -S 0x08008000 -g 0x08000000 /dev/ttyS0
      ```
 
 5. **Start Klipper Service:**
    - Type `sudo service klipper start`.
-  
+
+6. **If this doesnt work (usually if you flashed stock MCU firmware before):**
+   - Repeat the BOOT and RESET process.
+   - Download the provided klipper.bin (in this git repo)
+   - Then, flash it with:
+     ```
+     stm32flash -w ./klipper.bin -v /dev/ttyS0
+     ```
+   - After this is done you may use the first (compile with kaiuh) method going forward.
    ## How to Recover OG MCU Firmware
 
 (Pre-dumped N4Pro (might be the same as N4) firmware-bak.bin)
