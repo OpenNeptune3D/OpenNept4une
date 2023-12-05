@@ -5,7 +5,7 @@
 ## Steps:
 
 1. **Solder/Wire bridge the following two sets of jumper pads (with machine off):**\
-![Alt text](/images/pads-bridge.jpg)
+![Alt text](/pictures/pads-bridge.jpg)
 
 3. **Run SoftwareFlash Install Script then reboot:**
 
@@ -19,7 +19,7 @@
    ./mcu-swflash-run.sh
    ```
       
-![Alt text](/images/flash.png)
+![Alt text](/pictures/flash.png)
 
 
 
