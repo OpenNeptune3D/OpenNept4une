@@ -59,7 +59,7 @@ sudo gpioset gpiochip1 14=0
 
 # Flash the new firmware
 echo "Flashing new firmware to STM32F4..."
-stm32flash -w /home/mks/klipper/out/klipper.bin -v -g 0x0 /dev/ttyS0
+stm32flash -w /home/mks/klipper/out/klipper.bin -v -g 0x8008000 /dev/ttyS0
 
 echo "Flashing complete"
 
