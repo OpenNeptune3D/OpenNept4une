@@ -63,11 +63,11 @@
 
 6. **If this doesnt work (usually if you flashed stock MCU firmware before):**
    - Repeat the BOOT and RESET process.
-   - Download the provided klipper.bin (in this git repo)
+   - Download the provided firmware-bak.bin (in this git repo)
    - Then, flash it with:
      ```
      sudo service klipper stop
-     stm32flash -w ./klipper.bin -v /dev/ttyS0
+     stm32flash -w ./firmware-bak.bin -v /dev/ttyS0
      ```
    - After this reboot going forward you may use the first (compile with kaiuh) method.
    ## How to Recover OG MCU Firmware
