@@ -49,8 +49,8 @@
 **Installation:**
 - See the [Releases](https://github.com/halfmanbear/OpenNept4une/releases/) section for the latest pre-configured OpenNept4une eMMC Image. Flash with balenaEtcher or dd.
 - Recommended to Back-Up original eMMC beforehand.
-- If you have a v1.1 N4/Pro, delete LED Control v1.0 in your new printer.cfg & un-comment v1.1 LED section.
 - Be sure to replace the included printer.cfg with the latest one for your model here [printer-confs](https://github.com/halfmanbear/OpenNept4une/tree/main/printer-confs/).
+- If you have a v1.1 N4/Pro, delete LED Control v1.0 in your new printer.cfg & un-comment v1.1 LED section.
 
 ### OrcaSlicer Configs
 - Configure Orca defaults for your model printer before import.
