@@ -3,7 +3,7 @@
 ## De-Elegoo-izing the Neptune 4 Series 3D Printers
 
 **NOTE: The touch-screen will not be functional after this!**  
-**LED’s, ADXL & WiFi Working on all v1.0/1.1 Variants**
+**LED’s, ADXL & WiFi Working on all Variants**
 
 **Credits:**
 - Community Members: SQUIRRELYMOOSE, DanDonut, Jaerax, SmartHome42/Printernbeer & Tom's Basement
