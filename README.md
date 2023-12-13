@@ -52,6 +52,35 @@
 - Be sure to replace the included printer.cfg with the latest one for your model here [printer-confs](https://github.com/halfmanbear/OpenNept4une/tree/main/printer-confs/).
 - If you have a v1.1 N4/Pro, delete LED Control v1.0 in your new printer.cfg & un-comment v1.1 LED section.
 
+# General Configuration Instructions
+
+Follow these steps to configure the basic settings on your Neptune 4 printer's custom Armbian image:
+
+## Configure Correct Timezone
+
+1. **Access Armbian Configuration:**
+   Open the terminal and enter the following command:
+```bash
+  sudo armbian-config
+```
+2. **Set Timezone:**
+- Navigate to `Personal`.
+- Then select `Timezone`.
+- Choose and set your correct timezone.
+
+## Configure Wi-Fi
+
+1. **Access Network Manager:**
+Use the following command in the terminal to open the network manager:
+```bash
+  sudo nmtui
+```
+2. **Connect to Wi-Fi:**
+- In the network manager, navigate to `Activate a connection`.
+- Select your Wi-Fi network and enter the necessary credentials to connect.
+
+Remember to save your settings before exiting any configuration menus. 
+
 ### OrcaSlicer Configs
 - Configure Orca defaults for your model printer before import.
 - Remove reference to the Pro if trying to import for a standard Neptune 4 or PLUS / MAX profile.
