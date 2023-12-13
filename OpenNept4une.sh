@@ -30,6 +30,7 @@ function copy_file {
 if [ -f "$REBOOT_FLAG" ]; then
     sudo nmtui
     clone_repo "https://github.com/kyleisah/Klipper-Adaptive-Meshing-Purging.git" "/home/mks/Klipper-Adaptive-Meshing-Purging"
+    ln -s ~/Klipper-Adaptive-Meshing-Purging/Configuration printer_data/config/KAMP
     clone_repo "https://github.com/dw-0/kiauh.git" "/home/mks/kiauh"
     sync
     /home/mks/kiauh/kiauh.sh
