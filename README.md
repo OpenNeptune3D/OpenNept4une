@@ -21,7 +21,7 @@
 
 ### Image Features
 
-- Armbian 23.08.0-trunk Bookworm with Linux 6.5.9-edge-rockchip64 ([Credit](https://github.com/halfmanbear/Armbian-ZNP-K1-build))
+- Armbian 24.02.0-trunk Bookworm with Linux 6.1.67-current-rockchip64 ([Credit](https://github.com/halfmanbear/Armbian-ZNP-K1-build))
 - Elegoo Services Removed (No Z-Axis Issues)
 - KAMP configured and installed
 - Bed Leveling Macros
