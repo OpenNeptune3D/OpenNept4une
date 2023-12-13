@@ -9,7 +9,7 @@
 - Community Members: SQUIRRELYMOOSE, DanDonut, Jaerax, SmartHome42/Printernbeer & Tom's Basement
 - Projects: 
   - Armbian: [GitHub](https://github.com/armbian/build)
-  - redrathnure for the base mkspi image: [GitHub](https://github.com/redrathnure/armbian-mkspi)
+  - (Fork) Armbian-ZNP-K1-build base image: [GitHub](https://github.com/halfmanbear/Armbian-ZNP-K1-build)
   - KAMP (Klipper-Adaptive-Meshing-Purging): [GitHub](https://github.com/kyleisah/Klipper-Adaptive-Meshing-Purging)
   - kiauh (Klipper Installation And Update Helper): [GitHub](https://github.com/dw-0/kiauh)
   - Klipper: [GitHub](https://github.com/Klipper3d/klipper)
@@ -21,7 +21,7 @@
 
 ### Image Features
 
-- Armbian 23.08.0-trunk Bookworm with Linux 6.5.9-edge-rockchip64 ([Credit](https://github.com/redrathnure/armbian-mkspi))
+- Armbian 23.08.0-trunk Bookworm with Linux 6.5.9-edge-rockchip64 ([Credit](https://github.com/halfmanbear/Armbian-ZNP-K1-build))
 - Elegoo Services Removed (No Z-Axis Issues)
 - KAMP configured and installed
 - Bed Leveling Macros
