@@ -28,7 +28,7 @@
 - PID Calibration Macros
 - Easy WiFi config
 - Working segmented bed heaters (N4Pro)
-- Armbian packages updated (as of Nov 2023)
+- Armbian packages updated (as of Dec 2023)
 - No need for Elegoo Firmware Updates (Updated in Fluidd GUI or Kiauh)
 - Crowsnest Current (Main) w/ ustreamer
 - Orca Slicer Profiles Provided
