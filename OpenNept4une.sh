@@ -2,6 +2,7 @@
 
 # Check if the script has been run before and the system rebooted
 REBOOT_FLAG="/home/mks/OpenNept4une/.opennept4une_rebooted"
+sudo rm -f "$REBOOT_FLAG"
 
 function clone_repo {
     local repo_url=$1
@@ -97,13 +98,13 @@ else
     else
         echo "Error: Invalid DTB file selection."
     fi
-
+    
+    sudo rm -f /usr/local/bin/set_gpio.sh
     echo "The system needs to be rebooted to continue. Reboot now? (y/n)"
-    read -p "Enter your choice: " REBOOT_CHOICE
+    read -p "Enter your choice (highly advised): " REBOOT_CHOICE
     if [ "$REBOOT_CHOICE" == "y" ]; then
         touch "$REBOOT_FLAG"
-        sudo rm -f /usr/local/bin/set_gpio.sh
-        echo "System will reboot now. After rebooting, re-run /home/mks/OpenNept4une/OpenNept4une.sh."
+        echo "System will reboot now."
         sudo reboot
     fi
 fi
