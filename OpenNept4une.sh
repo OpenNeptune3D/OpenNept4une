@@ -28,7 +28,8 @@ function copy_file {
 }
 
 if [ -f "$REBOOT_FLAG" ]; then
-    sudo rm "$REBOOT_FLAG"
+    sudo rm -f "$REBOOT_FLAG"
+    sudo rm -f /usr/local/bin/set_gpio.sh
     sudo nmtui
     clone_repo "https://github.com/kyleisah/Klipper-Adaptive-Meshing-Purging.git" "/home/mks/Klipper-Adaptive-Meshing-Purging"
     # Create a symbolic link if not exists
@@ -101,6 +102,7 @@ else
     read -p "Enter your choice: " REBOOT_CHOICE
     if [ "$REBOOT_CHOICE" == "y" ]; then
         touch "$REBOOT_FLAG"
+        sudo rm -f /usr/local/bin/set_gpio.sh
         echo "System will reboot now. After rebooting, re-run /home/mks/OpenNept4une/OpenNept4une.sh."
         sudo reboot
     fi
