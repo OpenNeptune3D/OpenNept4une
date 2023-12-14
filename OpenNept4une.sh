@@ -41,7 +41,8 @@ if [ -f "$REBOOT_FLAG" ]; then
 else 
     echo "Reboot flag not found, executing else branch"
     sudo usermod -aG gpio,spiusers mks
-
+    sudo rm -f /usr/local/bin/set_gpio.sh
+    
     PRINTER_CFG_DEST="/home/mks/printer_data/config"
     DTB_DEST="/boot/dtb/rockchip/rk3328-roc-cc.dtb"
     DATABASE_DEST="/home/mks/printer_data/database"
@@ -99,7 +100,6 @@ else
         echo "Error: Invalid DTB file selection."
     fi
     
-    sudo rm -f /usr/local/bin/set_gpio.sh
     echo "The system needs to be rebooted to continue. Reboot now? (y/n)"
     read -p "Enter your choice (highly advised): " REBOOT_CHOICE
     if [ "$REBOOT_CHOICE" == "y" ]; then
