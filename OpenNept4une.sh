@@ -28,6 +28,7 @@ function copy_file {
 }
 
 if [ -f "$REBOOT_FLAG" ]; then
+    sudo rm "$REBOOT_FLAG"
     sudo nmtui
     clone_repo "https://github.com/kyleisah/Klipper-Adaptive-Meshing-Purging.git" "/home/mks/Klipper-Adaptive-Meshing-Purging"
     # Create a symbolic link if not exists
