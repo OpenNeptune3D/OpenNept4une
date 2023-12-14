@@ -49,7 +49,11 @@
 **Installation:**
 - See the [Releases](https://github.com/halfmanbear/OpenNept4une/releases/) section for the latest pre-configured OpenNept4une eMMC Image. Flash with balenaEtcher or dd.
 - Recommended to Back-Up original eMMC beforehand.
-- Be sure to replace the included printer.cfg with the latest one for your model here [printer-confs](https://github.com/halfmanbear/OpenNept4une/tree/main/printer-confs/).
+- Run the following startup script to load the correct machine and printer.cfg
+```bash
+chmod +x ~/OpenNept4une/OpenNept4une.sh && ~/OpenNept4une/OpenNept4une.sh
+``` 
+- Be sure to check the latest printer.cfg for your model here [printer-confs](https://github.com/halfmanbear/OpenNept4une/tree/main/printer-confs/). Alternatively update the git repo once your network is configured.
 - If you have a v1.1 N4/Pro, delete LED Control v1.0 in your new printer.cfg & un-comment v1.1 LED section.
 
 # General Configuration Instructions
