@@ -1,0 +1,706 @@
+Atheros:
+ar5523
+ath10k
+ath11k
+ath6kl
+ath9k
+carl9170
+wil6210
+
+Atmel:
+at76c50x-usb
+
+Broadcom:
+b43
+b43legacy
+brcm80211
+
+Intel:
+ipw2x00
+ipw2100
+libipw
+iwlwifi
+
+Marvell:
+libertas_tf
+mwl8k
+
+Mediatek:
+mt76
+mt7603
+mt7615
+mt76x0
+mt76x2
+mt7915e
+mt7921e\s\u
+mt76
+mt76x02-usb
+mt7601u
+
+Ralink:
+rt2500usb
+rt2800usb
+rt2x00usb
+rt73usb
+
+Realtek:
+rtl8xxxu (Note: Not rtl8188GU)
+rtl8187
+rtl8188ee
+rtl8192c
+rtl8192ce
+rtl8192cu
+rtl8192de
+rtl8192ee
+rtl8192se
+rtl8723ae
+rtl8723be
+rtl8723com
+rtl8821ae
+
+Alias Products for above devices - 
+
+Vendor:  Broadcom Corp.
+  - BCM43242 802.11abgn Wireless Adapter
+  - BCM43236 802.11abgn Wireless Adapter
+  - BCM43143 802.11bgn (1x1) Wireless Adapter
+  - Eminent EM4045 [Broadcom 4320 USB]
+Vendor:  LG Electronics USA, Inc.
+  - AN-WF500 802.11abgn + BT Wireless Adapter [Broadcom BCM43242]
+Vendor:  Linksys
+  - AE1200 802.11bgn Wireless Adapter [Broadcom BCM43235]
+  - HU200TS Wireless Adapter
+  - WUSB54GP v4.0 802.11g Adapter [Ralink RT2500USB]
+  - WUSB54G v4 802.11g Adapter [Ralink RT2500USB]
+  - AE3000 802.11abgn (3x3) Wireless Adapter [Ralink RT3573]
+  - AE1000 v1 802.11n [Ralink RT3572]
+  - AM10 v1 802.11n [Ralink RT3072]
+  - WUSB200 802.11g Adapter [Ralink RT2671]
+  - WUSB54GR
+  - WUSB54GC v1 802.11g Adapter [Ralink RT73]
+  - WUSB6300 802.11a/b/g/n/ac Wireless Adapter [Realtek RTL8812AU]
+  - WUSBF54G v1.1 802.11bg
+  - WUSBF54G 802.11bg
+  - WUSB6100M 802.11a/b/g/n/ac Wireless Adapter
+  - Network Everywhere NWU11B
+  - WUSB11 V2.6 802.11b Adapter
+  - AE6000 802.11a/b/g/n/ac Wireless Adapter [MediaTek MT7610U]
+  - WUSB54GS v1 802.11g Adapter [Broadcom 4320 USB]
+  - WUSB54GSC v1 802.11g Adapter [Broadcom 4320 USB]
+  - WUSB54GS v2 802.11g Adapter [Broadcom 4320 USB]
+Vendor:  ARC International
+  - Marvell 88W8388 802.11a/b/g WLAN
+Vendor:  Marvell Semiconductor, Inc.
+  - 88W8388 802.11a/b/g WLAN
+Vendor:  Zinwell
+  - RT2570
+  - 802.11a/b/g/n USB Wireless LAN Card
+  - Metronic 495257 wifi 802.11ng
+Vendor:  VTech Holdings, Ltd
+  - RT2570
+Vendor:  NovaTech
+  - NovaTech NV-902W
+  - RT2573
+Vendor:  Surecom Technology Corp.
+  - RT2570
+  - RT2573
+  - EP-9001-g 802.11g 54M WLAN Adapter
+Vendor:  Sphairon Access Systems GmbH
+  - Turbolink UB801R WLAN Adapter
+  - Turbolink UB801RE Wireless 802.11g 54Mbps Network Adapter [RTL8187]
+Vendor:  Standard Microsystems Corp.
+  - SMC2862W-G v2 EZ Connect 802.11g Adapter [Intersil ISL3887]
+Vendor:  Siemens Information and Communication Products
+  - 54g USB Network Adapter
+  - WLL013
+Vendor:  Sagem
+  - Wi-Fi 11g adapter
+  - XG-76NA 802.11bg
+  - XG-760A 802.11bg
+Vendor:  Ralink Technology, Corp.
+  - RT2500USB Wireless Adapter
+  - RT2570 Wireless Adapter
+  - RT2500USB Wireless Adapter
+  - Conceptronic C54RU v2 802.11bg Wireless Adapter [Ralink RT2571]
+  - RT5572 Wireless Adapter
+  - RT5372 Wireless Adapter
+  - RT5370 Wireless Adapter
+  - RT3573 Wireless Adapter
+  - RT3572 Wireless Adapter
+  - RT3370 Wireless Adapter
+  - RT3072 Wireless Adapter
+  - RT3071 Wireless Adapter
+  - RT2870/RT3070 Wireless Adapter
+  - RT2870 Wireless Adapter
+  - RT2770 Wireless Adapter
+  - RT2070 Wireless Adapter
+  - Keebox W150NU 802.11bgn Wireless Adapter [Ralink RT3070]
+  - Conceptronic C300RU v2 802.11bgn Wireless Adapter [Ralink RT2770]
+  - Airlink101 AWLL6070 802.11bgn Wireless Adapter [Ralink RT2770]
+  - DrayTek Vigor N61 802.11bgn Wireless Adapter [Ralink RT2870]
+  - Airlink101 AWLL6080 802.11bgn Wireless Adapter [Ralink RT2870]
+  - Conceptronic C300RU v1 802.11bgn Wireless Adapter [Ralink RT2870]
+  - RT2601/RT2671 Wireless Adapter
+  - RT2501/RT2573 Wireless Adapter
+  - Conceptronic C54RU v3 802.11bg Wireless Adapter [Ralink RT2571W]
+  - RT2501USB Wireless Adapter
+  - MT7601U Wireless Adapter]
+  - MT7610U ("Archer T2U" 2.4G+5G WLAN Adapter
+Vendor:  Micro Star International
+  - RT2570
+  - MSI-6861 802.11g WiFi adapter
+  - 802.11bgn 1T1R Mini Card Wireless Adapter
+  - MS-3871 802.11bgn Wireless Module [Ralink RT8070]
+  - MS-3870 802.11bgn Wireless Module [Ralink RT3070]
+  - RT2573
+  - 802.11b/g Turbo Wireless Adapter
+  - UB11B/MS-6823 802.11b Wi-Fi adapter
+  - PC2PC WLAN Card
+Vendor:  BUFFALO INC. (formerly MelCo., Inc.)
+  - WLI-U2-KG54-BB
+  - Nintendo Wi-Fi
+  - WLI-U2-KG54-AI WLAN
+  - WLI-U2-KG54 WLAN
+  - WLI-U2-KG54-YB WLAN
+  - WLI-UC-G450 Wireless LAN Adapter
+  - WLI-UC-GNM2 Wireless LAN Adapter [Ralink RT3070]
+  - WLI-UC-GNM Wireless LAN Adapter [Ralink RT8070]
+  - WLI-UC-G301N Wireless LAN Adapter [Ralink RT3072]
+  - WLI-UC-GN Wireless LAN Adapter [Ralink RT3070]
+  - WLI-UC-GNHP Wireless LAN Adapter
+  - WLI-UC-G300N Wireless LAN Adapter [Ralink RT2870]
+  - WLI-U2-G54HP
+  - WLI-U2-SG54HP
+  - WLI-U2-KG54L 802.11bg [ZyDAS ZD1211B]
+  - Sony UWA-BR100 802.11abgn Wireless Adapter [Atheros AR7010+AR9280]
+  - WLI-USB-G54 802.11g Adapter [Broadcom 4320 USB]
+  - WLI-U2-KG125S 802.11g Adapter [Broadcom 4320 USB]
+Vendor:  Guillemot Corp.
+  - HWGUSB2-54 WLAN
+  - HWGUSB2-54V2-AP
+  - HWGUSB2-54-LB
+  - Hercules HWNUp-150 802.11n Wireless N Pico [Realtek RTL8188CUS]
+Vendor:  Chu Yuen Enterprise Co., Ltd
+  - GN-WBKG
+  - GN-54G
+  - GN-WB32L 802.11n USB WLAN Card
+  - GN-WB30N 802.11n WLAN Card
+  - GN-WI05GS
+  - GN-WB01GS
+  - GN-WLBZ201 802.11b Adapter
+  - GN-WLBZ101 802.11b Adapter
+  - GN-WLBM101
+Vendor:  D-Link Corp.
+  - AirPlus G DWL-G122 Wireless Adapter(rev.B1) [Ralink RT2571]
+  - DWA-160 802.11abgn Xtreme N Dual Band Adapter(rev.B2) [Ralink RT5572]
+  - DWA-125 Wireless N 150 Adapter(rev.B1) [Ralink RT5370]
+  - DWA-125 Wireless N 150 Adapter(rev.A3) [Ralink RT5370]
+  - DWA-140 RangeBooster N Adapter(rev.B3) [Ralink RT5372]
+  - DWA-123 Wireless N 150 Adapter(rev.A1) [Ralink RT3370]
+  - DWA-127 Wireless N 150 High-Gain Adapter(rev.A1) [Ralink RT3070]
+  - DWA-137 Wireless N High-Gain Adapter [Ralink RT5372]
+  - DWA-171 AC600 DB Wireless Adapter(rev.A1) [Realtek RTL8811AU]
+  - DWA-182 Wireless AC Dualband Adapter(rev.C) [Realtek RTL8812AU]
+  - DWA-131 802.11n Wireless N Nano Adapter (rev.B1) [Realtek RTL8192CU]
+  - DWA-133 802.11n Wireless N Adapter [Realtek RTL8192CU]
+  - DWA-135 802.11n Wireless N Adapter(rev.A1) [Realtek RTL8192CU]
+  - DWA-121 802.11n Wireless N 150 Pico Adapter [Realtek RTL8188CUS]
+  - DWA-131 Wireless N Nano Adapter (Rev. E1) [Realtek RTL8192EU]
+  - DWA-131 Wireless N Nano Adapter (Rev. E1) [Realtek RTL8192EU]
+  - DWL-AG122 [Atheros AR5523]
+  - DWL-G132 [Atheros AR5523]
+  - DWL-AG132 [Atheros AR5523]
+  - DWL-120 802.11b Wireless Adapter(rev.E1) [Atmel at76c503a]
+Vendor:  Belkin Components
+  - F5D7051 802.11g Adapter v1000 [Broadcom 4320 USB]
+  - F5D7050 Wireless G Adapter v1000/v2000 [Intersil ISL3887]
+  - F9L1103 N750 DB 802.11abgn 2x3:3 [Ralink RT3573]
+  - F7D1101 v2 Basic Wireless Adapter [Ralink RT3370]
+  - F6D4050 N150 Enhanced Wireless Network Adapter v2000 [Ralink RT3070]
+  - F6D4050 N150 Enhanced Wireless Network Adapter v1000 [Ralink RT3070]
+  - F5D8055 N+ Wireless Adapter v2000 [Ralink RT3072]
+  - F5D8055 N+ Wireless Adapter v1000 [Ralink RT2870]
+  - F5D8053 N Wireless USB Adapter v3000 [Ralink RT2870]
+  - F5D8053 N Wireless Adapter v3000 [Ralink RT2870]
+  - F5D8053 N Wireless USB Adapter v1000/v4000 [Ralink RT2870]
+  - F5D9050 Wireless G+ MIMO Network Adapter v4000 [Ralink RT2573]
+  - F5D9050 Wireless G+ MIMO Network Adapter v3000 [Ralink RT2573]
+  - F5D7050 Wireless G Adapter v3000 [Ralink RT2571W]
+  - F5D7050 Wireless G Adapter v1000/v2000 [Intersil ISL3887]
+  - F9L1109v1 802.11a/b/g/n/ac Wireless Adapter [Realtek RTL8812AU]
+  - F9L1106v1 802.11a/b/g/n/ac Wireless Adapter [Broadcom BCM43526]
+  - F7D2102 802.11n N300 Micro Wireless Adapter v3000 [Realtek RTL8192CU]
+  - F9L1004 802.11n Surf N300 XR Wireless Adapter [Realtek RTL8192CU]
+  - ISY Wireless Micro Adapter IWL 2000 [RTL8188CUS]
+  - F7D1102 N150/Surf Micro Wireless Adapter v1000 [Realtek RTL8188CUS]
+  - F5D7050 Wireless G Adapter v5000 [Realtek RTL8187B]
+  - F5D7050 Wireless G Adapter v4000 [Zydas ZD1211B]
+  - F5D6051 802.11b Wireless Network Adapter [ZyDAS ZD1201]
+  - F5D6050 802.11b Wireless Adapter v2000 [Atmel at76c503a]
+Vendor:  ASUSTek Computer, Inc.
+  - WL-167G v1 802.11g Adapter [Ralink RT2571]
+  - WL-167G v1 802.11g Adapter [Ralink RT2571]
+  - USB-N14 802.11b/g/n (2x2) Wireless Adapter [Ralink RT5372]
+  - USB-N53 802.11abgn Network Adapter [Ralink RT3572]
+  - USB-N13 802.11n Network Adapter (rev. A1) [Ralink RT3072]
+  - 802.11n Network Adapter
+  - RT2573
+  - WL-167G v2 802.11g Adapter [Ralink RT2571W]
+  - USB-AC68 802.11a/b/g/n/ac (4x4) Wireless Adapter [Realtek RTL8814AU]
+  - USB-AC56 802.11a/b/g/n/ac Wireless Adapter [Realtek RTL8812AU]
+  - USB-N13 802.11n Network Adapter (rev. B1) [Realtek RTL8192CU]
+  - N10 Nano 802.11n Network Adapter [Realtek RTL8192CU]
+  - A9T wireless 802.11bg
+  - WL-159g 802.11bg [ZyDAS ZD1211B+AL2230]
+  - USB-N10 v2 802.11b/g/n Wireless Adapter [MediaTek MT7601U]
+  - USB-AC55 802.11a/b/g/n/ac Wireless Adapter [MediaTek MT7612U]
+  - USB-AC50 802.11a/b/g/n/ac (1x1) Wireless Adapter [MediaTek MT7610U]
+  - AC51 802.11a/b/g/n/ac Wireless Adapter [Mediatek MT7610U]
+  - WL169gE 802.11g Adapter [Broadcom 4320 USB]
+Vendor:  TRENDnet
+  - TEW-645UB 802.11bgn 1x2:2 Wireless Adapter [Ralink RT2770]
+  - SMC SMCWUSB-N 802.11bgn 2x2:2 Wireless Adapter [Ralink RT2870]
+  - TEW-805UB 300Mbps+867Mbps Wireless AC Adapter [Realtek RTL8812AU]
+  - TEW-648UBM 802.11n 150Mbps Micro Wireless N Adapter [Realtek RTL8188CUS]
+  - TEW-429UB C1 802.11bg
+  - TEW-509UB A1 802.11abg Wireless Adapter [ZyDAS ZD1211]
+  - Allnet ALL0298 v2 802.11bg
+  - TEW-429UB 802.11bg
+  - Allnet ALL0283 [AR5523]
+  - TEW-444UB EU [TRENDnet]
+  - TEW-806UBH 802.11a/b/g/n/ac (1x1) Wireless Adapter [MediaTek MT7610U]
+Vendor:  AVM GmbH
+  - FRITZ WLAN N v2 [RT5572/rt2870.bin]
+  - Fritz!WLAN N 2.4 [Atheros AR9001U]
+  - Fritz!WLAN N [Atheros AR9001U]
+  - Fritz!WLAN N v2 [Atheros AR9271]
+Vendor:  Philips (or NXP)
+  - Wireless Network Adapter
+  - TalkTalk SNU5630NS/05 802.11bg
+  - SNU5600 802.11bg
+  - PTA01 Wireless Adapter
+Vendor:  Panasonic (Matsushita)
+  - DY-WL10 802.11abgn Adapter [Broadcom BCM4323]
+  - N5HBZ0000055 802.11abgn Wireless Adapter [Atheros AR7010+AR9280]
+Vendor:  IMC Networks
+  - 802.11 n/g/b Wireless LAN USB Mini-Card
+  - AW-NU222 802.11bgn Wireless Module [Ralink RT2770+RT2720]
+  - AW-NU137 802.11bgn Wireless Module [Atheros AR9271]
+Vendor:  ZyXEL Communications Corp.
+  - N220 802.11bgn Wireless Adapter
+  - NWD2105 802.11bgn Wireless Adapter [Ralink RT3070]
+  - NWD-270N Wireless N-lite USB Adapter
+  - NWD211AN 802.11abgn Wireless Adapter [Ralink RT2870]
+  - NWD-210N 802.11b/g/n-draft wireless adapter
+  - G-210H 802.11g Wireless Adapter
+  - NWD2205 802.11n Wireless N Adapter [Realtek RTL8192CU]
+  - ZyAIR AG-225H v2 802.11bg
+  - 802.11bg
+  - ZyAIR G-202 802.11bg
+  - G-220 v2 802.11bg
+  - M-202 802.11bg
+  - AG-225H 802.11bg
+  - G-200 v2 802.11bg
+  - ZyAIR G-220F 802.11bg
+  - ZyAIR B-220 IEEE 802.11b Adapter
+  - NWD271N 802.11n Wireless Adapter [Atheros AR9001U-(2)NG]
+  - NWD6505 802.11a/b/g/n/ac Wireless Adapter [MediaTek MT7610U]
+Vendor:  Sitecom Europe B.V.
+  - WLA-5000 802.11abgn [Ralink RT3572]
+  - WL-329 Wireless Dualband USB adapter 300N
+  - WL-349v4 Wireless Micro Adapter 150N X1 [Ralink RT3370]
+  - WLA-4000 802.11bgn [Ralink RT3072]
+  - WL-349v1 Wireless Adapter 150N 002 [Ralink RT3070]
+  - WL-352v1 Wireless USB Adapter 300N 002
+  - WL-345 Wireless USB adapter 300N X3
+  - WL-344 Wireless Adapter 300N X2 [Ralink RT3071]
+  - WL-608 Wireless USB Adapter 54g
+  - WL-343 Wireless USB Adapter 150N X1
+  - WL-324 Wireless USB Adapter 300N
+  - WL-321 Wireless USB Gaming Adapter 300N
+  - WL-315 Wireless-N USB Adapter
+  - WL-302 Wireless Network 300N USB dongle
+  - WL-301 Wireless Network 300N USB Adapter
+  - WL-188 Wireless Network 300N USB Adapter
+  - WL-182 Wireless-N Network USB Card
+  - WL-113 rev 2 Wireless Network USB Adapter
+  - WL-172 Wireless Network USB Adapter 54g Turbo
+  - WL-168 Wireless Network Adapter 54g
+  - WL-603 Wireless Adapter
+  - WL-117 Hi-Speed USB Adapter
+  - WL-113 rev 1 Wireless Network USB Adapter
+Vendor:  PLANEX
+  - GW-USMicroN
+  - GW-US300MiniW 802.11bgn Wireless Adapter
+  - GW-USMini2N 802.11n Wireless Adapter [Ralink RT2870]
+  - GW-US54Mini2
+  - GW-US54HP
+  - GW-USEco300 802.11bgn Wireless Adapter [Realtek RTL8192CU]
+  - GW-USValue-EZ 802.11n Wireless Adapter [Realtek RTL8188CUS]
+  - GW-USNano2 802.11n Wireless Adapter [Realtek RTL8188CUS]
+  - GW-US54GXS 802.11bg
+  - GWUS300 802.11n
+  - GW-US11S WLAN [Atmel AT76C503A]
+Vendor:  NetGear, Inc.
+  - WNDA4100 802.11abgn 3x3:3 [Ralink RT3573]
+  - Nighthawk A7000 802.11ac Wireless Adapter AC1900 [Realtek 8814AU]
+  - A6100 AC600 DB Wireless Adapter [Realtek RTL8811AU]
+  - A6200v2 802.11a/b/g/n/ac (2x2) Wireless Adapter [Realtek RTL8812AU]
+  - On Networks N300MA 802.11bgn [Realtek RTL8192CU]
+  - WNA3100M(v1) Wireless-N 300 [Realtek RTL8192CU]
+  - On Networks N150MA 802.11bgn [Realtek RTL8188CUS]
+  - WNA1000Mv2 802.11bgn [Realtek RTL8188CUS?]
+  - WNA1000M 802.11bgn [Realtek RTL8188CUS]
+  - WG111v3 54 Mbps Wireless [realtek RTL8187B]
+  - WG111v2 54 Mbps Wireless [RealTek RTL8187L]
+  - WN111(v2) RangeMax Next Wireless [Atheros AR9170+AR9101]
+  - WNDA3100v1 802.11abgn [Atheros AR9170+AR9104]
+  - WNA1000 Wireless-N 150 [Atheros AR9170+AR9101]
+  - WNDA3200 802.11abgn Wireless Adapter [Atheros AR7010+AR9280]
+  - WNA1100 Wireless-N 150 [Atheros AR9271]
+  - WPN111 802.11g Wireless Adapter [Atheros AR5523]
+  - WG111U Double 108 Mbps Wireless [Atheros AR5004X / AR5005UX]
+  - MA101 802.11b Adapter
+  - MA101 802.11b Adapter
+  - A6150 Dual Band AC1200 Wireless Adapter [Realtek RTL8812BU]
+Vendor:  Logitec Corp.
+  - LAN-W300AN/U2 Wireless LAN Adapter
+  - LAN-W300N/U2 Wireless LAN Adapter
+  - LAN-W150/U2M Wireless LAN Adapter
+  - LAN-WN12/U2 Wireless LAN Adapter
+  - LAN-WN22/U2 Wireless LAN Adapter
+  - Realtek RTL8187 Wireless 802.11g 54Mbps Network Adapter
+Vendor:  I-O Data Device, Inc.
+  - WHG-AGDN/US Wireless LAN Adapter
+  - WN-G300U Wireless LAN Adapter
+  - WN-G150U Wireless LAN Adapter
+  - WN-GDN/US3 Wireless LAN Adapter
+  - WNGDNUS2 802.11n
+  - USB WN-B11
+Vendor:  Hawking Technologies
+  - Wireless-N Network Adapter [Ralink RT2870]
+  - HAWNU1 Hi-Gain Wireless-150N Network Adapter with Range Amplifier [Ralink RT3070]
+  - HWUN3 Hi-Gain Wireless-N Adapter [Ralink RT3070]
+  - HWDN2 Hi-Gain Wireless-150N Dish Adapter [Ralink RT2770]
+  - HWUN2 Hi-Gain Wireless-150N Adapter w/ Upgradable Antenna [Ralink RT2770]
+  - HWDN1 Hi-Gain Wireless-300N Dish Adapter [Ralink RT2870]
+  - HWUN1 Hi-Gain Wireless-300N Adapter w/ Upgradable Antenna [Ralink RT2870]
+Vendor:  Edimax Technology Co., Ltd
+  - EW-7733UnD 802.11abgn 3x3:3 [Ralink RT3573]
+  - EW-7722UTn 802.11n Wireless Adapter [Ralink RT3072]
+  - EW-7718UN 802.11n Wireless Adapter [Ralink RT2870]
+  - EW-7717UN 802.11n Wireless Adapter [Ralink RT2770]
+  - EW-7711UTn nLite Wireless Adapter [Ralink RT3070]
+  - EW-7811UTC 802.11ac Wireless Adapter
+  - EW-7612UAn V2 802.11n Wireless Adapter [Realtek RTL8192CU]
+  - EW-7811Un 802.11n Wireless Adapter [Realtek RTL8188CUS]
+  - EW-7611ULB 802.11b/g/n and Bluetooth 4.0 Adapter
+  - EW-7722UAC 802.11a/b/g/n/ac (2x2) Wireless Adapter [MediaTek MT7612U]
+  - EW-7722UAC 802.11a/b/g/n/ac (2x2) Wireless Adapter [MediaTek MT7612U]
+  - EW-7711MAC 802.11ac Wireless Adapter
+  - EW-7822ULC 802.11ac Wireless Adapter [Realtek RTL8812AU]
+Vendor:  Ovislink Corp.
+  - AirLive WN-200USB wireless 11b/g/n dongle
+  - AirLive WN-360USB adapter
+  - AirLive WL-1600USB 802.11g Adapter [Realtek RTL8187L]
+  - AirLive X.USB 802.11abgn [Atheros AR9170+AR9104]
+Vendor:  Toshiba Corp.
+  - WLM-10U1 802.11abgn Wireless Adapter [Ralink RT3572]
+  - WLM-20U2/GN-1080 802.11abgn Wireless Adapter [Atheros AR7010+AR9280]
+Vendor:  802.11g Adapter [Linksys WUSB54GC v3]
+  - WUSB600N v2 Dual-Band Wireless-N Network Adapter [Ralink RT3572]
+  - WUSB100 v2 RangePlus Wireless Network Adapter [Ralink RT3070]
+  - WUSB54GC v3 802.11g Adapter [Ralink RT2070L]
+  - WUSB600N v1 Dual-Band Wireless-N Network Adapter [Ralink RT2870]
+  - WUSB100 v1 RangePlus Wireless Network Adapter [Ralink RT2870]
+  - WUSB54GC v2 802.11g Adapter [Realtek RTL8187B]
+Vendor:  Senao
+  - EUB9801 802.11abgn Wireless Adapter [Ralink RT3572]
+  - EUB9706 802.11n Wireless Adapter [Ralink RT3072]
+  - EnGenius 802.11n Wireless USB Adapter
+  - EnGenius 802.11n Wireless USB Adapter
+  - EnGenius 802.11n Wireless USB Adapter
+  - EnGenius 802.11n Wireless USB Adapter
+  - EUB-3701 EXT 802.11g Wireless Adapter [Ralink RT2571W]
+  - EUB1200AC AC1200 DB Wireless Adapter [Realtek RTL8812AU]
+  - NUB-8301 802.11bg
+Vendor:  Askey Computer Corp. [hex]
+  - 802.11n Wireless LAN Card
+  - RT2573
+  - SMCWUSBT-G
+  - AR5523
+  - WLAN
+  - Name: Voyager 1055 Laptop 802.11g Adapter [Broadcom 4320]
+Vendor:  Sweex
+  - LW313 802.11n Adapter [ralink rt2770 + rt2720]
+  - LW153 802.11n Adapter [ralink rt3070]
+Vendor:  Accton Technology Corp.
+  - SMCWUSBS-N2 EZ Connect N Wireless Adapter [Ralink RT2870]
+  - SMCWUSBS-N3 EZ Connect N Wireless Adapter [Ralink RT3070]
+  - SMCWUSBS-N EZ Connect N Draft 11n Wireless Adapter [Ralink RT2870]
+  - Arcadyan 802.11N Wireless Adapter
+  - Arcadyan 802.11N Wireless Adapter
+  - Arcadyan 802.11N Wireless Adapter
+  - Arcadyan 802.11N Wireless Adapter
+  - 802.11n Wireless Adapter
+  - WUS-201 802.11bg
+  - Arcadyan WN4501 802.11b/g
+  - ZD1211B
+  - SMCWUSB-G 802.11bg
+  - Arcadyan WN7512 802.11n
+  - SMCWUSBT-G2 802.11g Wireless Adapter [Atheros AR5523]
+  - 2664W
+Vendor:  Z-Com
+  - 802.11b/g/n USB Wireless Network Adapter
+  - Sphairon Homelink 1202 802.11n Wireless Adapter [Atheros AR9170]
+  - UB82 802.11abgn
+  - UB81 802.11bgn
+  - AR5523
+  - XI-750 802.11b Wireless Adapter [Atmel AT76C503A]
+Vendor:  Gemtek
+  - Wireless 11n USB Adapter
+  - WUBR-208N 802.11abgn Wireless Adapter [Ralink RT2870]
+  - WUBR-177G [Ralink RT2571W]
+Vendor:  CyberTAN Technology
+  - Gigaset USB Adapter 300
+  - 802.11bg
+  - TG54USB 802.11bg
+  - Siemens S30853-S1038-R351 802.11g Wireless Adapter [Atheros AR5523]
+  - Siemens S30853-S1031-R351 802.11g Wireless Adapter [Atheros AR5523]
+Vendor:  Samsung Electronics Co., Ltd
+  - WIS09ABGN LinkStick Wireless LAN Adapter
+Vendor:  Quanta Microsystems, Inc.
+  - 802.11n Wireless LAN Card
+Vendor:  PEGATRON CORPORATION
+  - Ralink RT3070 802.11b/g/n Wireless Lan USB Device
+  - Ralink RT2770/2720 802.11b/g/n Wireless LAN Mini-USB Device
+Vendor:  Netopia, Inc.
+  - Motorola 802.11n Dualband USB Wireless Adapter
+Vendor:  Encore Electronics Inc.
+  - ENUWI-N3 [802.11n Wireless N150 Adapter]
+Vendor:  DrayTek Corp.
+  - BWIFI-USB54AR 802.11bg
+Vendor:  D-Link System
+  - DWA-125 Wireless N 150 Adapter(rev.A2) [Ralink RT3070]
+  - DWA-140 RangeBooster N Adapter(rev.B3) [Ralink RT2870]
+  - DWA-130 802.11n Wireless N Adapter(rev.B) [Ralink RT2870]
+  - DWA-160 Xtreme N Dual Band USB Adapter(rev.B) [Ralink RT2870]
+  - AirPlus G DWL-G122 Wireless Adapter(rev.E1) [Ralink RT2070]
+  - WUA-2340 RangeBooster G Adapter(rev.B) [Ralink RT2070]
+  - DWA-125 Wireless N 150 Adapter(rev.A1) [Ralink RT3070]
+  - DWA-140 RangeBooster N Adapter(rev.B2) [Ralink RT3072]
+  - DWA-140 RangeBooster N Adapter(rev.B1) [Ralink RT2870]
+  - DWA-110 Wireless G Adapter(rev.A1) [Ralink RT2571W]
+  - DWA-111 802.11bg Wireless Adapter [Ralink RT2571W]
+  - WUA-1340
+  - AirPlus G DWL-G122 Wireless Adapter(rev.C1) [Ralink RT2571W]
+  - DWA-130 802.11n Wireless N Adapter(rev.D) [Atheros AR9170+AR9102]
+  - DWA-160 802.11abgn Xtreme N Dual Band Adapter(rev.A2) [Atheros AR9170+AR9104]
+  - DWA-160 802.11abgn Xtreme N Dual Band Adapter(rev.A1) [Atheros AR9170+AR9104]
+  - DWA-126 802.11n Wireless Adapter [Atheros AR9271]
+  - WUA-2340 RangeBooster G Adapter(rev.A) [Atheros AR5523]
+Vendor:  AMIT Technology, Inc.
+  - CG-WLUSB10 Corega Wireless USB Adapter
+  - CG-WLUSB2GO
+Vendor:  Corega K.K.
+  - CG-WLUSB300AGN
+  - CG-WLUSB2GNL
+  - CG-WLUSB2GPX [Ralink RT2571W]
+  - Stick-11 V2 802.11b Adapter
+  - Wireless LAN USB-11 mini 2
+  - Wireless LAN USB-11 mini
+Vendor:  ASUSTek Computer, Inc. (wrong ID)
+  - 802.11n Network Adapter (wrong ID - swapped vendor and device)
+Vendor:  Pressure Profile Systems, Inc.
+  - Advance Multimedia Internet Technology Inc. (AMIT) WL532U 802.11g Adapter
+Vendor:  AirTies Wireless Networks
+  - Air2310 150 Mbps Wireless Adapter
+  - Air2210 54 Mbps Wireless Adapter
+  - Air2210 54 Mbps Wireless Adapter
+Vendor:  AboCom Systems Inc
+  - 802.11n/b/g Mini Wireless LAN USB2.0 Adapter
+  - 802.11n/b/g Wireless LAN USB2.0 Adapter
+  - WUG2700
+  - RT2573
+  - HWU54DM
+  - AboCom Systems Inc [WN2001 Prolink Wireless-N Nano Adapter]
+  - WUG2690 802.11bg Wireless Module [ZyDAS ZD1211+AL2230]
+  - BWU613
+Vendor:  Qcom
+  - RT2573
+  - Wireless 802.11g 54Mbps Network Adapter [RTL8187]
+Vendor:  Huawei-3Com
+  - Aolynk WUB320g
+Vendor:  CNet Technology Inc.
+  - CWD-854 rev F
+  - CWD-854 [RT2573]
+  - CWD-854 Wireless 802.11g 54Mbps Network Adapter [RTL8187]
+  - CNUSB-611 Wireless Adapter [AT76C505]
+  - CNUSB-611 Wireless Adapter [AT76C505] (FiberLine WL-240U)
+  - CNUSB-611AR Wireless Adapter-G [AT76C503] (FiberLine WL-240U)
+  - CNUSB-611AR Wireless Adapter-G [AT76C503]
+  - CNUSB-611 (D) Wireless Adapter [AT76C503]
+Vendor:  Good Way Technology
+  - RT2573
+Vendor:  TP-Link
+  - Archer T9UH v1 [Realtek RTL8814AU]
+  - Archer T2U PLUS [RTL8821AU]
+  - AC600 wireless Realtek RTL8811AU [Archer T2U Nano]
+  - Archer T4UHP [Realtek RTL8812AU]
+  - Archer T4UH v2 [Realtek RTL8812AU]
+  - Archer T4U v2 [Realtek RTL8812AU]
+  - Archer T4UH wireless Realtek 8812AU
+  - RTL8812AU Archer T4U 802.11ac
+  - TL-WN8200ND [Realtek RTL8192CU]
+  - TL-WN823N v2/v3 [Realtek RTL8192EU]
+  - TL-WN822N Version 4 RTL8192EU
+  - TL-WN823N v2/v3 [Realtek RTL8192EU]
+  - TL-WN822N Version 4 RTL8192EU
+  - TL-WN821N v5/v6 [RTL8192EU]
+  - Archer T1U 802.11a/n/ac Wireless Adapter [MediaTek MT7610U]
+  - Archer T2UHP [MediaTek MT7610U]
+  - Archer T4U ver.3
+  - Archer T3U [Realtek RTL8812BU]
+Vendor:  Elecom Co., Ltd
+  - LD-USB/TX
+Vendor:  Realtek Semiconductor Corp.
+  - RTL8811AU 802.11a/b/g/n/ac WLAN Adapter
+  - RTL8821A Bluetooth
+  - Realtek 8812AU/8821AU 802.11ac WLAN Adapter [USB Wireless Dual-Band Adapter 2.4/5Ghz]
+  - RTL8812AU-VS 802.11a/b/g/n/ac 2T2R DB WLAN Adapter
+  - RTL8812AU 802.11a/b/g/n/ac 2T2R DB WLAN Adapter
+  - RTL8192CU 802.11n WLAN Adapter
+  - RTL8188RU 802.11n WLAN Adapter
+  - RTL8188CUS 802.11n WLAN Adapter
+  - RTL8187B Wireless Adapter
+  - RTL8187B Wireless 802.11g 54Mbps Network Adapter
+  - RTL8187 Wireless Adapter
+  - RTL8723BU 802.11b/g/n WLAN Adapter
+  - RTL8192EU 802.11b/g/n WLAN Adapter
+  - RTL8723AU 802.11n WLAN Adapter
+  - RTL8192EU 802.11b/g/n WLAN Adapter
+  - RTL88x2bu [AC1200 Techkey]
+Vendor:  Tenda
+  - U12
+Vendor:  NEC Corp.
+  - Aterm PA-WL54GU
+  - Aterm WL300NU-AG
+  - Aterm WL300NU-G
+Vendor:  A-Max Technology Macao Commercial Offshore Co. Ltd.
+  - Wireless 802.11g 54Mbps Network Adapter [RTL8187]
+Vendor:  HP, Inc
+  - hn210w 802.11b Adapter
+Vendor:  Mercucys INC
+  - MW300UM RTL8192EU wifi
+Vendor:  ZyDAS
+  - Virtual media for 802.11bg
+  - Virtual media for 802.11bg
+  - 802.11bg
+  - ZD1211B 802.11g
+  - ZD1211 802.11b/g Wireless Adapter
+  - ZD1211 802.11g
+  - ZD1201 802.11b
+  - ZD1221 802.11n
+Vendor:  Fiberline
+  - WL-430U 802.11bg
+Vendor:  U.S. Robotics
+  - USR5423 802.11bg Wireless Adapter [ZyDAS ZD1211B]
+  - USR5420 802.11g Adapter [Broadcom 4320 USB]
+  - Wireless MAXg Adapter [Broadcom 4320]
+Vendor:  Sony Corp.
+  - IFU-WLM2 USB Wireless LAN Module (Wireless Mode)
+Vendor:  Planex
+  - GW-US54ZGL 802.11bg
+Vendor:  3Com
+  - 3CRUSB10075 802.11bg [ZyDAS ZD1211]
+Vendor:  Planex Communications
+  - GW-US54Mini 802.11bg
+  - GW-US54GZ
+Vendor:  Wistron NeWeb
+  - UR055G 802.11bg
+  - AR9170+AR9104 802.11abgn Wireless Adapter
+  - AR5523
+Vendor:  TwinMOS
+  - G240 802.11bg
+Vendor:  Tekram Technology Co., Ltd
+  - 802.11bg
+  - QuickWLAN 802.11bg
+  - AIR.Mate 2@net 802.11b Adapter
+Vendor:  Trust International B.V.
+  - NW-3100 802.11b/g 54Mbps Wireless Network Adapter [zd1211]
+Vendor:  Actiontec Electronics, Inc. [hex]
+  - 802AIN Wireless N Network Adapter [Atheros AR9170+AR9101]
+  - 802AIN Wireless N Network Adapter [Atheros AR9170+AR9101]
+  - UAT1 Wireless Ethernet Adapter
+Vendor:  CACE Technologies Inc.
+  - AirPcap NX [Atheros AR9170+AR9104]
+Vendor:  Qualcomm Atheros Communications
+  - 3Com 3CRUSBN275 802.11abgn Wireless Adapter [Atheros AR9170]
+  - TP-Link TL-WN821N v2 / TL-WN822N v1 802.11n [Atheros AR9170]
+  - Thomson TG121N [Atheros AR9001U-(2)NG]
+  - AR9170 802.11n
+
+  - TP-Link TL-WN821N v3 / TL-WN822N v2 802.11n [Atheros AR7010+AR9287]
+  - Ubiquiti WiFiStation 802.11n [Atheros AR9271]
+  - Ubiquiti WiFiStationEXT 802.11n [Atheros AR9271]
+  - TP-Link TL-WN322G v3 / TL-WN422G v2 802.11g [Atheros AR9271]
+  - AR9271 802.11n
+  - AR5523
+Vendor:  VIA Technologies, Inc.
+Vendor:  Lite-On Technology Corp.
+Vendor:  Netgear, Inc
+  - WPN111 RangeMax(TM) Wireless USB 2.0 Adapter
+  - WG111T
+Vendor:  Global Sun Technology, Inc.
+  - AR5523
+  - WL-210 / WU210P 802.11b Wireless Adapter [Atmel AT76C503A]
+  - 802.11b Adapter
+Vendor:  Global Sun Technology
+  - AR5523 
+Vendor:  Atheros Communications
+  - AR5523
+Vendor:  Atmel Corp.
+  - AT76C505AMX Wireless Adapter
+  - AT76C505AS Wireless Adapter
+  - AT76c505a Wireless Adapter
+  - WL-1130 USB
+  - at76c505 802.11b Adapter
+  - AirVast W-Buddie WN210
+  - at76c503a 802.11b Adapter
+  - at76c503a 802.11b Adapter
+  - D-Link DWL-120 802.11b Wireless Adapter [Atmel at76c503a]
+Vendor:  OQO
+  - model 01 WiFi interface
+Vendor:  AIN Comm. Technology Co., Ltd
+  - AWU2000b 802.11b Stick
+Vendor:  Nordic Semiconductor ASA
+  - Linksys WUSB11 v2.8 802.11b Adapter [Atmel AT76C505]
+Vendor:  SMC Networks, Inc.
+  - SMC2662W v2 / SMC2662W-AR / Belkin F5D6050 [Atmel at76c503a]
+  - SMC2662W (v1) EZ Connect 802.11b Wireless Adapter [Atmel AT76C503A]
+Vendor:  Delta Electronics, Inc.
+  - PCW 100 - Wireless 802.11b Adapter
+  - AWU-120
+Vendor:  Compaq Computer Corp.
+  - 802.11b Adapter [ipaq h5400]
+Vendor:  3Com Corp.
+  - 3CRSHEW696 Wireless Adapter
+Vendor:  Acer Peripherals Inc. (now BenQ Corp.)
+  - AWL400 Wireless Adapter
+  - AWL300 Wireless Adapter
+Vendor:  Askey Computer Corp.
+  - Dynalink WLL013 / Compex WLU11A 802.11b Adapter
+  - BT Voyager 1010 802.11b Adapter
+  - IEEE 802.11b Wireless LAN Card
+Vendor:  Samsung Electro-Mechanics Co.
+  - SWL-2100U
+Vendor:  Intel Corp.
+  - AnyPoint(TM) Wireless II Network 11Mbps Adapter [Atmel AT76C503A]
+Vendor:  Linksys, Inc.
+  - WUSB11 802.11b Adapter
+Vendor:  Xiaomi Inc.
+  - MediaTek MT7601U [MI WiFi]
+Vendor:  MediaTek Inc.
+  - MT7612U 802.11a/b/g/n/ac Wireless Adapter
+Vendor:  Microsoft Corp.
+  - Xbox Wireless Adapter for Windows
