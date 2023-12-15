@@ -1,6 +1,6 @@
 # How to Dump/Flash Neptune 4 MCU Firmware
 
-**Warning:** Only flash this firmware on a DE-ELEGOO setup/image, **not** on stock Elegoo software.
+**Warning:** Only for ZNP-K1 V1.0 Boards also only flash this firmware on a DE-ELEGOO setup/image, **not** on stock Elegoo software.
 
 ## Steps:
 
