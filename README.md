@@ -38,7 +38,7 @@
 - Firmware Retraction configured
 - E & Z Steppers configured for 32 microsteps
 - X & Y Steppers at 16 microsteps with Interpolation and stealthChop enabled
-- Mellow Fly-ADXL345 USB Accelerometer configuration included
+- SPI ADXL345 & Mellow Fly-ADXL345 USB Accelerometer configuration included
 
 ## Install Procedure - Re-flash eMMC with Latest OpenNept4une Release Image
 
@@ -131,7 +131,7 @@ cold):\
     \
     Input shaping values will also need your own data\
     [<https://www.klipper3d.org/Resonance_Compensation.html>]\
-    (Mellow Fly-ADXL345 Pre Configured for tuning)\
+    (SPI ADXL345 & Mellow Fly-ADXL345 Pre Configured for tuning)\
     \
     After editing configs or calibrating, save in the fluidd
     interface, then in fluidd select the top right menu \> Host \>
