@@ -87,7 +87,7 @@ Remember to save your settings before exiting any configuration menus.
 
 ### OrcaSlicer Configs 
 - Download the latest Official Release [OrcaSlicer](https://github.com/SoftFever/OrcaSlicer/releases/) 
-- Configure Orca defaults for your Machine model printer before import.
+- Configure Orca defaults for your machines model before import.
 - Check/confirm Bambu Network Engine install
 - Download the latest [OrcaSlicer Profiles](https://github.com/halfmanbear/OpenNept4une/tree/main/orca-profiles)
 - In OrcaSlicer click [File > Import > Import Configs...]
