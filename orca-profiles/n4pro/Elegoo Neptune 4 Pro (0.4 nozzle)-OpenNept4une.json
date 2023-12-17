@@ -12,9 +12,9 @@
     "cooling_tube_length": "5",
     "cooling_tube_retraction": "91.5",
     "default_filament_profile": [
-        "Elegoo Generic PLA-OpenNept4une"
+        "Elegoo Generic PLA @0.4 nozzle"
     ],
-    "default_print_profile": "Elegoo Neptune 4 Pro (0.4 nozzle)-OpenNept4une",
+    "default_print_profile": "0.20mm Standard @Elegoo Neptune4Pro (0.4 nozzle)",
     "deretraction_speed": [
         "45"
     ],
@@ -109,7 +109,7 @@
         "0"
     ],
     "machine_pause_gcode": "M0",
-    "machine_start_gcode": ";Nozzle diameter = [nozzle_diameter]\n;Filament type = [filament_type]\n;Filament name = [filament_vendor] \n;Filament weight = [filament_density]\nPRINT_START BED_TEMP=[hot_plate_temp_initial_layer] EXTRUDER_TEMP=[nozzle_temperature_initial_layer] AREA_START={first_layer_print_min[0]},{first_layer_print_min[1]} AREA_END={first_layer_print_max[0]},{first_layer_print_max[1]}\n",
+    "machine_start_gcode": ";Nozzle diameter = [nozzle_diameter]\n;Filament type = [filament_type]\n;Filament name = [filament_vendor] \n;Filament weight = [filament_density]\nPRINT_START BED_TEMP=[hot_plate_temp_initial_layer] EXTRUDER_TEMP=[nozzle_temperature_initial_layer] AREA_START={first_layer_print_min[0]},{first_layer_print_min[1]} AREA_END={first_layer_print_max[0]},{first_layer_print_max[1]}",
     "machine_unload_filament_time": "0",
     "manual_filament_change": "0",
     "max_layer_height": [
