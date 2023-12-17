@@ -85,7 +85,8 @@ Use the following command in the terminal to open the network manager:
 
 Remember to save your settings before exiting any configuration menus. 
 
-### OrcaSlicer Configs
+### OrcaSlicer Configs 
+- Download the latest Official Release [OrcaSlicer](https://github.com/SoftFever/OrcaSlicer/releases/) 
 - Configure Orca defaults for your model printer before import.
 - Remove reference to the Pro if trying to import for a standard Neptune 4 or PLUS / MAX profile.
 
