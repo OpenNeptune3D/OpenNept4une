@@ -87,8 +87,11 @@ Remember to save your settings before exiting any configuration menus.
 
 ### OrcaSlicer Configs 
 - Download the latest Official Release [OrcaSlicer](https://github.com/SoftFever/OrcaSlicer/releases/) 
-- Configure Orca defaults for your model printer before import.
-- Remove reference to the Pro if trying to import for a standard Neptune 4 or PLUS / MAX profile.
+- Configure Orca defaults for your Machine model printer before import.
+- Check/confirm Bambu Network Engine install
+- Download the latest [OrcaSlicer Profiles](https://github.com/halfmanbear/OpenNept4une/tree/main/orca-profiles)
+- In OrcaSlicer click [File > Import > Import Configs...]
+
 
 ## Fluidd / Klipper Calibration: -
 
@@ -136,8 +139,8 @@ cold):\
     RAM to eMMC.
     
 ## Slicer Settings 
-(If using the provided OrcaSlicer profiles (for N4P) you can skip
-    this)\
+(If using the provided OrcaSlicer profiles you can skip
+    this - also only relevant to n4pro model with the zoned bed heaters)\
     \
     ---\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\--\
     \
