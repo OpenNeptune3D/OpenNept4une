@@ -102,7 +102,7 @@ cold):\
 ------------------------------------\
 \
     BED_LEVEL_SCREWS_TUNE\
-    [[https://www.klipper3d.org/Manual_Level.html#adjusting-bed-leveling-screws-using-the-bed-probe](https://www.klipper3d.org/Manual_Level.html%23adjusting-bed-leveling-screws-using-the-bed-probe)]\
+    [[Klipper Docs](https://www.klipper3d.org/Manual_Level.html#adjusting-bed-leveling-screws-using-the-bed-probe)]
     (Rerun macro after each round of corrections)\
     \
     CALIBRATE_PROBE_Z_OFFSET\
