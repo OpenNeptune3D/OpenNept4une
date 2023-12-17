@@ -164,7 +164,7 @@
         "nil"
     ],
     "filament_settings_id": [
-        "Elegoo Generic PLA - USETHIS"
+        "Elegoo Generic PLA-OpenNept4une"
     ],
     "filament_shrink": [
         "100%"
@@ -216,7 +216,7 @@
         "60"
     ],
     "inherits": "Elegoo Generic PLA",
-    "name": "Elegoo Generic PLA - USETHIS",
+    "name": "Elegoo Generic PLA-OpenNept4une",
     "nozzle_temperature": [
         "210"
     ],
