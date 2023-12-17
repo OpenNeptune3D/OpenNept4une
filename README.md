@@ -49,7 +49,7 @@
 **Installation:**
 - See the [Releases](https://github.com/halfmanbear/OpenNept4une/releases/) section for the latest pre-configured OpenNept4une eMMC Image. Flash with balenaEtcher or dd.
 - Recommended to Back-Up original eMMC beforehand.
-- Run the following startup script to load the correct machine and printer.cfg
+- Run the following startup script (as user mks) to load the correct machine and printer.cfg
 ```bash
 chmod +x ~/OpenNept4une/OpenNept4une.sh && ~/OpenNept4une/OpenNept4une.sh
 ``` 
