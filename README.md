@@ -25,6 +25,7 @@
 - Elegoo Services Removed (No Z-Axis Issues)
 - KAMP configured and installed
 - Bed Leveling Macros
+- Axis_Twist_Comp_Tune - Macro ([Klipper Docs](https://www.klipper3d.org/Axis_Twist_Compensation.html))
 - PID Calibration Macros
 - Easy WiFi config
 - Working segmented bed heaters (N4Pro)
