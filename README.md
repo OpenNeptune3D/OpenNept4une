@@ -46,6 +46,25 @@
 - Makerbase MKS EMMC-ADAPTER V2 USB 3.0 Reader For MKS EMMC Module: [AliExpress](https://www.aliexpress.com/item/1005005614719377.html)
 - Alternatively, a spare eMMC & eMMC > microSD adapter: [AliExpress](https://www.aliexpress.com/item/1005005549477887.html)
 
+## Printer Terminal Access Options:
+Terminal / Shell access via SSH (Requires ethernet connection) -\
+    \
+    ssh mks@printer ip\
+    Password = makerbase\
+    User: root can login via - root:makerbase\ (not advised)
+    \
+    ---\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\--\
+    \
+    PuTTY / Serial terminal access (Without Ethernet) -\
+    \
+    Connect N4P USB-C port to PC Then connect via Serial COM8 (yours
+    will be different) set baudrate to 1500000\
+    \
+    User: mks\
+    Pass: makerbase\
+    \
+    ---\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\---
+
 **Installation:**
 - See the [Releases](https://github.com/halfmanbear/OpenNept4une/releases/) section for the latest pre-configured OpenNept4une eMMC Image. Flash with balenaEtcher or dd.
 - Recommended to Back-Up original eMMC beforehand.
@@ -186,21 +205,3 @@ cold):\
     \
     ---\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\--\
     
-## Printer Terminal Access Options:
-Terminal / Shell access via SSH (Requires ethernet connection) -\
-    \
-    ssh mks@printer ip\
-    Password = makerbase\
-    User: root can login via - root:makerbase\
-    \
-    ---\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\--\
-    \
-    PuTTY / Serial terminal access (Without Ethernet) -\
-    \
-    Connect N4P USB-C port to PC Then connect via Serial COM8 (yours
-    will be different) set baudrate to 1500000\
-    \
-    User: mks\
-    Pass: makerbase\
-    \
-    ---\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\---
