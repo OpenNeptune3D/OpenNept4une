@@ -71,10 +71,6 @@ echo "Running make menuconfig in the Klipper directory..."
 cd ~/klipper/
 make menuconfig
 
-# Compile the firmware after exiting menuconfig
-echo "Compiling the firmware..."
-make
-
 # Enable bootloader mode again
 echo "Enabling bootloader mode again..."
 sudo gpioset gpiochip1 15=0
@@ -85,9 +81,9 @@ sudo gpioset gpiochip1 15=1
 sleep 0.5
 sudo gpioset gpiochip1 14=0
 
-# Flash the new firmware
-echo "Flashing new firmware to STM32F4..."
-stm32flash -w /home/mks/klipper/out/klipper.bin -v -S 0x08008000 -g 0x08000000 /dev/ttyS0
+# Compile the firmware after exiting menuconfig
+echo "Compiling the firmware..."
+make serialflash FLASH_DEVICE=/dev/ttyS0
 
 echo "Flashing complete"
 gpioset gpiochip1 15=0; sleep 0.5; gpioset gpiochip1 15=1; sleep 1
