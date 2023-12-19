@@ -3,49 +3,51 @@
 # Path to the script
 SCRIPT="/home/mks/OpenNept4une/OpenNept4une.sh"
 
-# Function to update the repository
+# Function to check and update the repository
 update_repo() {
     cd /home/mks/OpenNept4une
 
-    # Ask the user for permission to update
-    read -p "Would you like to update the repository? (y/n): " -r
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        echo "Checking for updates..."
+    # Fetch updates silently to check for new commits
+    git fetch origin main --quiet
 
-        # Fetch updates and check for errors
-        if git fetch origin main; then
-            LOCAL=$(git rev-parse @)
-            REMOTE=$(git rev-parse @{u})
+    # Compare local and remote
+    LOCAL=$(git rev-parse @)
+    REMOTE=$(git rev-parse @{u})
 
-            if [ $LOCAL != $REMOTE ]; then
-                echo "Updating repository..."
+    if [ $LOCAL != $REMOTE ]; then
+        echo "Updates are available for the repository."
 
-                # Reset and clean local changes
-                git reset --hard
-                git clean -fd
+        # Ask the user for permission to update
+        read -p "Would you like to update the repository? (y/n): " -r
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            echo "Updating repository..."
 
-                # Pull the updates
-                git pull origin main --force
+            # Reset and clean local changes
+            git reset --hard
+            git clean -fd
 
-                # Ensure the script is executable
-                chmod +x "$SCRIPT"
+            # Pull the updates
+            git pull origin main --force
 
-                # Re-execute the script and exit
-                exec "$SCRIPT"
-                exit 0
-            else
-                echo "Your repository is already up-to-date."
-            fi
+            # Ensure the script is executable
+            chmod +x "$SCRIPT"
+
+            # Re-execute the script and exit
+            exec "$SCRIPT"
+            exit 0
         else
-            echo "Network error: Unable to update the repository."
+            echo "Update skipped."
         fi
     else
-        echo "Update skipped."
+        echo "Your repository is already up-to-date."
     fi
 }
 
 # Call the update function
 update_repo
+
+# The rest of your script starts here
+echo "Continuing with the rest of the script..."
 
 # Check if the script has been run before and the system rebooted
 REBOOT_FLAG="/home/mks/OpenNept4une/.opennept4une_rebooted"
