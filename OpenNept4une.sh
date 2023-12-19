@@ -2,9 +2,14 @@
 
 # Path to the script
 SCRIPT="/home/mks/OpenNept4une/OpenNept4une.sh"
+DISPLAY_SERVICE_INSTALLER="/home/mks/OpenNept4une/display/display-service-installer.sh"
 
 # Function to check and update the repository
 update_repo() {
+    echo "======================================"
+    echo "Checking for updates..."
+    echo "======================================"
+
     cd /home/mks/OpenNept4une
 
     # Fetch updates silently to check for new commits
@@ -41,13 +46,34 @@ update_repo() {
     else
         echo "Your repository is already up-to-date."
     fi
+    echo "======================================"
 }
 
 # Call the update function
 update_repo
 
+# Ask if the user wants to install the Alfa Screen implementation
+echo "Do you want to install the Alfa Screen implementation? (barely functional, frequent updates)"
+read -p "Enter 'y' to install, any other key to skip: " install_alfa
+
+if [[ $install_alfa == "y" ]]; then
+    echo "Installing Alfa Screen..."
+    if [ -f "$DISPLAY_SERVICE_INSTALLER" ]; then
+        chmod +x "$DISPLAY_SERVICE_INSTALLER"
+        "$DISPLAY_SERVICE_INSTALLER"
+    else
+        echo "Error: Display service installer script not found."
+    fi
+    echo "======================================"
+fi
+
 # The rest of your script starts here
 echo "Continuing with the rest of the script..."
+echo "======================================"
+
+# Check if the script has been run before and the system rebooted
+REBOOT_FLAG="/home/mks/OpenNept4une/.opennept4une_rebooted"
+sudo rm -f "$REBOOT_FLAG"
 
 # Check if the script has been run before and the system rebooted
 REBOOT_FLAG="/home/mks/OpenNept4une/.opennept4une_rebooted"
