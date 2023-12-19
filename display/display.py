@@ -94,6 +94,7 @@ if ser.isOpen():
                         break
                     else:
                         time.sleep(0.2)
+
             except KeyboardInterrupt:
                 print("\nInsert command (page 1, page 2, ...) for Elegoo Display: (Ctrl-C for exit)")
                 data = input()
