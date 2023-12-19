@@ -27,8 +27,11 @@ update_repo() {
                 # Pull the updates
                 git pull origin main --force
 
+                # Ensure the script is executable
+                chmod +x "$SCRIPT"
+
                 # Re-execute the script and exit
-                exec $SCRIPT
+                exec "$SCRIPT"
                 exit 0
             else
                 echo "Your repository is already up-to-date."
