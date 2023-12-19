@@ -1,5 +1,52 @@
 #!/bin/bash
 
+# Path to the script
+SCRIPT="/home/mks/OpenNept4une/OpenNept4une.sh"
+
+# Function to update the repository
+update_repo() {
+    cd /home/mks/OpenNept4une
+
+    # Ask the user for permission to update
+    read -p "Would you like to update the repository? (y/n): " -r
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        echo "Checking for updates..."
+
+        # Fetch updates and check for errors
+        if git fetch origin main; then
+            LOCAL=$(git rev-parse @)
+            REMOTE=$(git rev-parse @{u})
+
+            if [ $LOCAL != $REMOTE ]; then
+                echo "Updating repository..."
+
+                # Reset and clean local changes
+                git reset --hard
+                git clean -fd
+
+                # Pull the updates
+                git pull origin main --force
+
+                # Re-execute the script and exit
+                exec $SCRIPT
+                exit 0
+            else
+                echo "Your repository is already up-to-date."
+            fi
+        else
+            echo "Network error: Unable to update the repository."
+        fi
+    else
+        echo "Update skipped."
+    fi
+}
+
+# Call the update function
+update_repo
+
+# The rest of your script starts here
+echo "Continuing with the rest of the script..."
+
 # Check if the script has been run before and the system rebooted
 REBOOT_FLAG="/home/mks/OpenNept4une/.opennept4une_rebooted"
 sudo rm -f "$REBOOT_FLAG"
