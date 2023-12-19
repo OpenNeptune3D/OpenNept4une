@@ -73,7 +73,10 @@ Terminal / Shell access via SSH (Requires ethernet connection) -\
 ```bash
 chmod +x ~/OpenNept4une/OpenNept4une.sh && ~/OpenNept4une/OpenNept4une.sh
 ``` 
-- Be sure to check the latest printer.cfg for your model here [printer-confs](https://github.com/halfmanbear/OpenNept4une/tree/main/printer-confs/). Alternatively update the git repo once your network is configured.
+- Be sure to check the latest printer.cfg for your model here [printer-confs](https://github.com/halfmanbear/OpenNept4une/tree/main/printer-confs/). Alternatively update the git repo once your network is configured with.
+```bash
+cd ~/OpenNept4une/ && git reset --hard && git clean -fd && git pull origin main --force
+```
 - If you have a v1.1 N4/Pro, delete LED Control v1.0 in your new printer.cfg & un-comment v1.1 LED section.
 
 # General Configuration Instructions
