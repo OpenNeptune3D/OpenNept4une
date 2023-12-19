@@ -9,6 +9,7 @@ response_actions = {
 	('65', '02', '02', 'ff', 'ff', 'ff'): "page 3", # Next Page Print Files ->
 	('65', '02', '01', 'ff', 'ff', 'ff'): "page 2", # Previous Print Files Page <-
 	# PREPARE PAGE OPTIONS
+	('65', '08', '0c', 'ff', 'ff', 'ff'): "printer.send_gcode('G28')", # Home Printer > Moonraker command
 	('65', '08', '0f', 'ff', 'ff', 'ff'): "page 6", # Prepare Page (Move) > Prepare Page (Temp)
 	('65', '06', '07', 'ff', 'ff', 'ff'): "page 8", # Prepare Page (Temp) > Prepare Page (Move)
 	('65', '06', '08', 'ff', 'ff', 'ff'): "page 9", # Prepare Page (Temp) > Prepare Page (Extruder)
