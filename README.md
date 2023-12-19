@@ -74,12 +74,11 @@ Terminal / Shell access via SSH (Requires ethernet connection) -\
 chmod +x ~/OpenNept4une/OpenNept4une.sh && cd ~/OpenNept4une; git pull origin main; ~/OpenNept4une/OpenNept4une.sh
 ``` 
 - Be sure to check the latest printer.cfg for your model here [printer-confs](https://github.com/halfmanbear/OpenNept4une/tree/main/printer-confs/).
+- If you have a v1.1 N4/Pro, delete LED Control v1.0 in your new printer.cfg & un-comment v1.1 LED section.
 - A force update of the git repo might be required once your network is configured.
 ```bash
 cd ~/OpenNept4une/ && git reset --hard && git clean -fd && git pull origin main --force
 ```
-- If you have a v1.1 N4/Pro, delete LED Control v1.0 in your new printer.cfg & un-comment v1.1 LED section.
-
 # General Configuration Instructions
 
 Follow these steps to configure the basic settings on your Neptune 4 printer's custom Armbian image:
