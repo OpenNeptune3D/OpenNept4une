@@ -69,7 +69,7 @@ Terminal / Shell access via SSH (Requires ethernet connection) -\
 **Installation:**
 - See the [Releases](https://github.com/halfmanbear/OpenNept4une/releases/) section for the latest pre-configured OpenNept4une eMMC Image. Flash with balenaEtcher or dd.
 - Recommended to Back-Up original eMMC beforehand.
-- Run the following startup scripts (as user mks) to load the correct machine and printer.cfg
+- Run the following startup scripts with Ethernet connected (as user mks) to load the correct machine and printer.cfg
 ```bash
 cd ~/OpenNept4une/ && git reset --hard && git clean -fd && git pull origin main --force
 ```
