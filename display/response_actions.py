@@ -29,14 +29,14 @@ response_actions = {
 	('65', '0b', '09', 'ff', 'ff', 'ff'): "page 42", # Settings Page > Advanced Settings
 	# LIGHT CONTROL
 	('65', '0b', '03', 'ff', 'ff', 'ff'): "page 84", # Settings Page > Light Control
-	('65', '54', '01', 'ff', 'ff', 'ff'): "Part_Light_toggle", # Light Control > Part Light toggle
-	('65', '54', '02', 'ff', 'ff', 'ff'): "Frame_Light_toggle", # Light Control > Frame Light toggle  
+	('65', '54', '01', 'ff', 'ff', 'ff'): "printer.send_gcode('Part_Light_ON')", # Light Control > Part Light toggle
+	('65', '54', '02', 'ff', 'ff', 'ff'): "printer.send_gcode('Frame_Light_ON')", # Light Control > Frame Light toggle  
 	# FAN CONTROL
-	('5a', 'a5', '06', '83', '10', '3e'): "Fan_Toggle", # Settings Page > Fan Control Toggle
+	('5a', 'a5', '06', '83', '10', '3e'): "printer.send_gcode('M106 S255')", # Settings Page > Fan Control Toggle
 	# MOTORS OFF
-	('65', '0b', '05', 'ff', 'ff', 'ff'): "Motor_OFF", # Settings Page > Motor-off
+	('65', '0b', '05', 'ff', 'ff', 'ff'): "printer.send_gcode('M84')", # Settings Page > Motor-off
 	# FILAMENT DETECTOR 
-	('65', '0b', '06', 'ff', 'ff', 'ff'): "Filament_Detector_Toggle", # Settings Page > Filament Detector Toggle
+	('65', '0b', '06', 'ff', 'ff', 'ff'): "printer.send_gcode('SET_FILAMENT_SENSOR SENSOR=fila ENABLE=1')", # Settings Page > Filament Detector Toggle
 	# FACTORY SETTINGS
 	('65', '0b', '07', 'ff', 'ff', 'ff'): "factorysettingspage", # Settings Page >  Factory Settings
 }
