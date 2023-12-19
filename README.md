@@ -75,7 +75,7 @@ chmod +x ~/OpenNept4une/OpenNept4une.sh && cd ~/OpenNept4une; git pull origin ma
 ``` 
 - Be sure to check the latest printer.cfg for your model here [printer-confs](https://github.com/halfmanbear/OpenNept4une/tree/main/printer-confs/).
 - If you have a v1.1 N4/Pro, delete LED Control v1.0 in your new printer.cfg & un-comment v1.1 LED section.
-- A force update of the git repo might be required once your network is configured.
+- A force update of the git repo might be required once your network is configured (you may re-run the above afterwards).
 ```bash
 cd ~/OpenNept4une/ && git reset --hard && git clean -fd && git pull origin main --force
 ```
