@@ -52,12 +52,12 @@ update_repo() {
 # Call the update function
 update_repo
 
-# Ask if the user wants to install the Alfa Screen implementation
-echo "Do you want to install the Alfa Screen implementation? (barely functional, frequent updates)"
-read -p "Enter 'y' to install, any other key to skip: " install_alfa
+# Ask if the user wants to install the Screen implementation (ALPHA)
+echo "Do you want to install the ALPHA Screen implementation? (barely functional, frequent updates)"
+read -p "Enter 'y' to install, any other key to skip: " install_alpha
 
-if [[ $install_alfa == "y" ]]; then
-    echo "Installing Alfa Screen..."
+if [[ $install_alpha == "y" ]]; then
+    echo "Installing ALPHA Screen..."
     if [ -f "$DISPLAY_SERVICE_INSTALLER" ]; then
         chmod +x "$DISPLAY_SERVICE_INSTALLER"
         "$DISPLAY_SERVICE_INSTALLER"
