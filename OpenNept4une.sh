@@ -47,9 +47,6 @@ update_repo() {
 # Call the update function
 update_repo
 
-# The rest of your script starts here
-echo "Continuing with the rest of the script..."
-
 # Check if the script has been run before and the system rebooted
 REBOOT_FLAG="/home/mks/OpenNept4une/.opennept4une_rebooted"
 sudo rm -f "$REBOOT_FLAG"
