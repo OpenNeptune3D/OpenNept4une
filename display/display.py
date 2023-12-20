@@ -7,13 +7,29 @@ from response_actions import response_actions
 
 class NavigationController:
     def __init__(self, printer, serial_device):
-        self.history = ["page 1"]
+        self.history = ["1"]
         self.printer = printer
         self.serial_device = serial_device
         self.part_light_state = False
         self.frame_light_state = False
         self.fan_state = False
         self.filament_sensor_state = False
+
+    def printer_status(self):
+        temps = self.printer.query_temperatures()
+        extruder = temps['extruder']['temperature']
+        bed = temps['heater_bed']['temperature']
+        toolhead = printer.query_status('toolhead')
+        x_pos = toolhead['position'][0]
+        y_pos = toolhead['position'][1]
+        z_pos = toolhead['position'][2]
+
+        self._write(f'nozzletemp.txt="{extruder}°C"')
+        self._write(f'bedtemp.txt="{bed}°C"')
+        self._write(f'out_bedtemp.txt="0°C"')
+        self._write(f'x_pos.txt="{x_pos}"')
+        self._write(f'y_pos.txt="{y_pos}"')
+        self._write(f'z_pos.txt="{z_pos}"')
 
     def move_axis(self, axis, distance):
         self.printer.send_gcode('G91')  # Set to relative positioning
@@ -38,7 +54,7 @@ class NavigationController:
         elif action == "go_back":
             self._go_back()
         else:
-            self._navigate_to_page(action)
+            self._write(action)
 
     def _toggle_light(self, light_name, current_state):
         gcode = f"{light_name}_{'OFF' if current_state else 'ON'}"
@@ -67,10 +83,14 @@ class NavigationController:
         self._change_display(page)
 
     def _change_display(self, page):
-        padding = [0xFF, 0xFF, 0xFF]
-        self.serial_device.write(str.encode(page))
-        self.serial_device.write(serial.to_bytes(padding))
+        self._write(page)
         print(f"Navigating to {page}")
+
+    def _write(self, data):
+        print(f"Write {data}")
+        padding = [0xFF, 0xFF, 0xFF]
+        self.serial_device.write(str.encode(data))
+        self.serial_device.write(serial.to_bytes(padding))
 
 
 def generate_key(readData):
@@ -99,7 +119,11 @@ print('Starting Up...')
 try:
     ser.close()
     ser.open()
+
+    nav_controller.execute_action("page 109")
+    nav_controller.printer_status()
     nav_controller.execute_action("page 1")
+
     while True:
         print("Waiting for user interaction from Display (Ctrl-C to navigate)")
         readData = []
