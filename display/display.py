@@ -7,7 +7,7 @@ from response_actions import response_actions
 
 class NavigationController:
     def __init__(self, printer, serial_device):
-        self.history = ["1"]
+        self.history = ["page 1"]
         self.printer = printer
         self.serial_device = serial_device
         self.part_light_state = False
