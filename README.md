@@ -71,7 +71,7 @@ Terminal / Shell access via SSH (Requires ethernet connection) -\
 - Recommended to Back-Up original eMMC beforehand.
 - Run the following startup scripts with Ethernet connected (as user mks) to load the correct machine and printer.cfg
 ```bash
-cd ~/OpenNept4une/ && git reset --hard && git clean -fd && git pull origin main --force
+cd ~/OpenNept4une/ && git fetch --all && git reset --hard origin/main && git clean -fd
 ```
 ```bash
 chmod +x ~/OpenNept4une/OpenNept4une.sh && ~/OpenNept4une/OpenNept4une.sh
