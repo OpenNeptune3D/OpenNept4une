@@ -2,6 +2,7 @@ import serial
 import time
 import moonrakerpy as moonpy
 import re
+import threading
 
 from response_actions import response_actions
 
@@ -15,6 +16,34 @@ class NavigationController:
         self.fan_state = False
         self.filament_sensor_state = False
 
+    def start_continuous_update(self):
+        def update_loop():
+            time.sleep(3)
+            while True:
+                if self.history[-1] == "page 1":
+                    self.update_if_page1(print_to_terminal=False)
+                time.sleep(0.5)
+
+        self.update_thread = threading.Thread(target=update_loop)
+        self.update_thread.daemon = True
+        self.update_thread.start()
+
+    def update_if_page1(self, print_to_terminal=False):
+        temps = self.printer.query_temperatures()
+        extruder = temps['extruder']['temperature']
+        bed = temps['heater_bed']['temperature']
+        outbed = temps.get('heater_generic heater_bed_outer', {}).get('temperature', 'N/A')
+        toolhead = self.printer.query_status('toolhead')
+        x_pos = toolhead['position'][0]
+        y_pos = toolhead['position'][1]
+        z_pos = toolhead['position'][2]
+        self._write(f'nozzletemp.txt="{extruder}°C"', print_to_terminal)
+        self._write(f'bedtemp.txt="{bed}°C"', print_to_terminal)
+        self._write(f'out_bedtemp.txt="{outbed}°C"', print_to_terminal)
+        self._write(f'x_pos.txt="{x_pos}"', print_to_terminal)
+        self._write(f'y_pos.txt="{y_pos}"', print_to_terminal)
+        self._write(f'z_pos.txt="{z_pos}"', print_to_terminal)
+
     def _navigate_to_page(self, page):
         if self.history[-1] != page:
             self.history.append(page)
@@ -22,27 +51,7 @@ class NavigationController:
             print(f"Navigate to {page}. Current history: {self.history}")
 
     def printer_status(self):
-        temps = self.printer.query_temperatures()
-        extruder = temps['extruder']['temperature']
-        bed = temps['heater_bed']['temperature']
-        outbed = temps['heater_generic heater_bed_outer']['temperature']
-        toolhead = self.printer.query_status('toolhead')
-        x_pos = toolhead['position'][0]
-        y_pos = toolhead['position'][1]
-        z_pos = toolhead['position'][2]
-        self._write(f'main.q4.picc=213') # 213=N4 214=N4Pro
-        self._write(f'main.disp_q5.val=1') # N4Pro Outer Bed Symbol (Bottom Right Show = 1)
-        self._write(f'page 1')
-        self._write(f'vis q5,1')
-        self._write(f'vis out_bedtemp,1') # Only N4Pro
-        self._write(f'page 109')
-        self._write(f'page 1')
-        self._write(f'nozzletemp.txt="{extruder}°C"')
-        self._write(f'bedtemp.txt="{bed}°C"')
-        self._write(f'out_bedtemp.txt="{outbed}°C"')
-        self._write(f'x_pos.txt="{x_pos}"')
-        self._write(f'y_pos.txt="{y_pos}"')
-        self._write(f'z_pos.txt="{z_pos}"')
+        self.update_if_page1()
 
     def move_axis(self, axis, distance):
         self.printer.send_gcode('G91')  # Set to relative positioning
@@ -51,8 +60,9 @@ class NavigationController:
 
     def execute_action(self, action):
         if action.startswith("move_"):
-            axis = action.split('_')[1].upper()  # 'X', 'Y', or 'Z'
-            distance = action.split('_')[2]  # e.g., '1mm', '-10mm'
+            parts = action.split('_')
+            axis = parts[1].upper()
+            distance = parts[2]
             self.move_axis(axis, distance)
         elif action == "toggle_part_light":
             self._toggle_light("Part_Light", self.part_light_state)
@@ -62,31 +72,49 @@ class NavigationController:
             self.frame_light_state = not self.frame_light_state
         elif action == "toggle_filament_sensor":
             self._toggle_filament_sensor()
+        elif action == "toggle_fan_ON":
+            self._toggle_fan(True)
+        elif action == "toggle_fan_OFF":
+            self._toggle_fan(False)
         elif action.startswith("printer.send_gcode"):
-            self._send_gcode(action)
+            gcode = action.split("'")[1]
+            self.printer.send_gcode(gcode)
         elif action == "go_back":
             self._go_back()
-        else:
-            if action.startswith("page"):
-                self._navigate_to_page(action)
-            else:
-                self._write(action)
+        elif action.startswith("page"):
+            self._navigate_to_page(action)
 
     def _toggle_light(self, light_name, current_state):
-        gcode = f"{light_name}_{'OFF' if current_state else 'ON'}"
+        new_state = not current_state
+        gcode = f"{light_name}_{'ON' if new_state else 'OFF'}"
         self.printer.send_gcode(gcode)
+        self._update_light_visual(light_name, new_state)
+
+    def _update_light_visual(self, light_name, state):
+        pic_value = '77' if state else '76'
+        if light_name == "Part_Light":
+            self._write(f'led.led1.pic={pic_value}')
+        elif light_name == "Frame_Light":
+            self._write(f'led.led2.pic={pic_value}')
 
     def _toggle_filament_sensor(self):
-        gcode = f"SET_FILAMENT_SENSOR SENSOR=fila ENABLE={'0' if self.filament_sensor_state else '1'}"
+        new_state = not self.filament_sensor_state
+        gcode = f"SET_FILAMENT_SENSOR SENSOR=fila ENABLE={'0' if new_state else '1'}"
         self.printer.send_gcode(gcode)
-        self.filament_sensor_state = not self.filament_sensor_state
+        self.filament_sensor_state = new_state
+        self._update_filament_visual(new_state)
 
-    def _send_gcode(self, action):
-        gcode = action.split("'")[1]
+    def _update_filament_visual(self, state):
+        filament_value = '76' if state else '77'
+        self._write(f'filamentdec.pic={filament_value}')
+
+    def _toggle_fan(self, state):
+        gcode = f"M106 S{'255' if state else '0'}"
         self.printer.send_gcode(gcode)
+        self.fan_state = state
+        self._write(f"fanstatue.pic={'77' if state else '76'}")
 
     def _go_back(self):
-        print(f"Attempting to go back from {self.history[-1]}. Current history: {self.history}")
         if len(self.history) > 1:
             self.history.pop()
             back_page = self.history[-1]
@@ -96,21 +124,19 @@ class NavigationController:
 
     def _change_display(self, page):
         self._write(page)
-        print(f"Navigating to {page}")
 
-    def _write(self, data):
-        print(f"Write {data}")
+    def _write(self, data, print_to_terminal=True):
+        if print_to_terminal:
+            print(f"Write {data}")
         padding = [0xFF, 0xFF, 0xFF]
         self.serial_device.write(str.encode(data))
         self.serial_device.write(serial.to_bytes(padding))
-
 
 def generate_key(readData):
     return ''.join(readData)
 
 def match_key(pattern, key):
-    pattern_regex = pattern.replace('??', '..')
-    return re.match(pattern_regex, key) is not None
+    return re.match(pattern.replace('??', '..'), key) is not None
 
 def handle_response(readData, nav_controller):
     action_key = generate_key(readData)
@@ -125,6 +151,7 @@ printer = moonpy.MoonrakerPrinter('http://127.0.0.1')
 ser = serial.Serial("/dev/ttyS1", 115200, timeout=2, writeTimeout=0)
 
 nav_controller = NavigationController(printer, ser)
+nav_controller.start_continuous_update()
 
 print('Starting Up...')
 
