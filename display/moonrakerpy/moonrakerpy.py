@@ -118,7 +118,8 @@ class MoonrakerPrinter(object):
     def list_temp_sensors(self):
         sensor_sections = ('temperature_sensor',
                            'extruder',
-                           'heater_bed')
+                           'heater_bed',
+                           'heater_generic heater_bed_outer')
         sensors = []
         for heading in self.config:
             if heading.startswith(sensor_sections):
