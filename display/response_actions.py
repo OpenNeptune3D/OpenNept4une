@@ -39,8 +39,8 @@ response_actions = {
     '655401ffffff': "toggle_part_light", # Light Control > Part Light toggle
     '655402ffffff': "toggle_frame_light", # Light Control > Frame Light toggle
     # FAN CONTROL
-    '5aa50683103e': "printer.send_gcode('M106 S255')", # Settings Page > Fan Control Toggle
-    'ffffff5aa506': "printer.send_gcode('M106 S0')", # Settings Page > Fan Control Toggle
+    '5aa50683103e': "toggle_fan_ON", # Settings Page > Fan Control Toggle printer.send_gcode('M106 S255')
+    'ffffff5aa506': "toggle_fan_OFF", # Settings Page > Fan Control Toggle printer.send_gcode('M106 S0')
     # MOTORS OFF
     '650b05ffffff': "printer.send_gcode('M84')", # Settings Page > Motor-off
     # FILAMENT DETECTOR 
