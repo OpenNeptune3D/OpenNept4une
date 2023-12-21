@@ -15,18 +15,31 @@ class NavigationController:
         self.fan_state = False
         self.filament_sensor_state = False
 
+    def _navigate_to_page(self, page):
+        if self.history[-1] != page:
+            self.history.append(page)
+            self._change_display(page)
+            print(f"Navigate to {page}. Current history: {self.history}")
+
     def printer_status(self):
         temps = self.printer.query_temperatures()
         extruder = temps['extruder']['temperature']
         bed = temps['heater_bed']['temperature']
-        toolhead = printer.query_status('toolhead')
+        outbed = temps['heater_generic heater_bed_outer']['temperature']
+        toolhead = self.printer.query_status('toolhead')
         x_pos = toolhead['position'][0]
         y_pos = toolhead['position'][1]
         z_pos = toolhead['position'][2]
-
+        self._write(f'main.q4.picc=213') # 213=N4 214=N4Pro
+        self._write(f'main.disp_q5.val=1') # N4Pro Outer Bed Symbol (Bottom Right Show = 1)
+        self._write(f'page 1')
+        self._write(f'vis q5,1')
+        self._write(f'vis out_bedtemp,1') # Only N4Pro
+        self._write(f'page 109')
+        self._write(f'page 1')
         self._write(f'nozzletemp.txt="{extruder}°C"')
         self._write(f'bedtemp.txt="{bed}°C"')
-        self._write(f'out_bedtemp.txt="0°C"')
+        self._write(f'out_bedtemp.txt="{outbed}°C"')
         self._write(f'x_pos.txt="{x_pos}"')
         self._write(f'y_pos.txt="{y_pos}"')
         self._write(f'z_pos.txt="{z_pos}"')
@@ -54,7 +67,10 @@ class NavigationController:
         elif action == "go_back":
             self._go_back()
         else:
-            self._write(action)
+            if action.startswith("page"):
+                self._navigate_to_page(action)
+            else:
+                self._write(action)
 
     def _toggle_light(self, light_name, current_state):
         gcode = f"{light_name}_{'OFF' if current_state else 'ON'}"
@@ -70,17 +86,13 @@ class NavigationController:
         self.printer.send_gcode(gcode)
 
     def _go_back(self):
+        print(f"Attempting to go back from {self.history[-1]}. Current history: {self.history}")
         if len(self.history) > 1:
             self.history.pop()
             back_page = self.history[-1]
             self._change_display(back_page)
         else:
             print("Already at the main page.")
-
-    def _navigate_to_page(self, page):
-        if self.history[-1] != page:
-            self.history.append(page)
-        self._change_display(page)
 
     def _change_display(self, page):
         self._write(page)
