@@ -51,6 +51,26 @@ class NavigationController:
             print(f"Navigate to {page}. Current history: {self.history}")
 
     def printer_status(self):
+        temps = self.printer.query_temperatures()
+        extruder = temps['extruder']['temperature']
+        bed = temps['heater_bed']['temperature']
+        outbed = temps['heater_generic heater_bed_outer']['temperature']
+        toolhead = self.printer.query_status('toolhead')
+        x_pos = toolhead['position'][0]
+        y_pos = toolhead['position'][1]
+        z_pos = toolhead['position'][2]
+        self._write(f'main.q4.picc=213') # 213=N4 214=N4Pro
+        self._write(f'main.disp_q5.val=1') # N4Pro Outer Bed Symbol (Bottom Rig>
+        self._write(f'page 1')
+        self._write(f'vis q5,1')
+        self._write(f'vis out_bedtemp,1') # Only N4Pro
+        self._write(f'page 109')
+        self._write(f'page 1')
+        self._write(f'nozzletemp.txt="{extruder}°C"')
+        self._write(f'bedtemp.txt="{bed}°C"')
+        self._write(f'out_bedtemp.txt="{outbed}°C"')
+        self._write(f'x_pos.txt="{x_pos}"')
+        self._write(f'y_pos.txt="{y_pos}"')
         self.update_if_page1()
 
     def move_axis(self, axis, distance):
