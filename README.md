@@ -29,6 +29,7 @@
 - Axis_Twist_Comp_Tune - Macro ([Klipper Docs](https://www.klipper3d.org/Axis_Twist_Compensation.html))
 - PID Calibration Macros
 - Easy WiFi config
+- Axis Twist Compensation Configured
 - Working segmented bed heaters (N4Pro)
 - Armbian packages updated (as of Dec 2023)
 - No need for Elegoo Firmware Updates (Updated in Fluidd GUI or Kiauh)
@@ -164,7 +165,7 @@ cold):\
     
 ## Slicer Settings 
 (If using the provided OrcaSlicer profiles you can skip
-    this - also only relevant to n4pro model with the zoned bed heaters)\
+    this)\
     \
     ---\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\--\
     \
