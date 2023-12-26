@@ -2,41 +2,29 @@
 # LED Control ZNP-K1 v1.1
 #####################################################################
 
-[gcode_shell_command Frame_Light_ON]
-command: gpioset gpiochip2 2=1
-timeout: 2.
-verbose: True
+#[output_pin Frame_Light]
+#pin: rpi:gpiochip2/gpio2
 
-[gcode_shell_command Frame_Light_OFF]
-command: gpioset gpiochip2 2=0
-timeout: 2.
-verbose: True
+#[output_pin Part_Light]
+#pin: rpi:gpiochip2/gpio15
 
-[gcode_shell_command Part_Light_ON]
-command: gpioset gpiochip2 15=1
-timeout: 2.
-verbose: True
 
-[gcode_shell_command Part_Light_OFF]
-command: gpioset gpiochip2 15=0
-timeout: 2.
-verbose: True 
+#####################################################################
+# Generic LED Macros (All Versions)
+#####################################################################
 
 [gcode_macro Frame_Light_ON]
 gcode:
-  RUN_SHELL_COMMAND CMD=Frame_Light_ON
-
+  SET_PIN PIN=Frame_Light VALUE=1
 
 [gcode_macro Frame_Light_OFF]
 gcode:
-  RUN_SHELL_COMMAND CMD=Frame_Light_OFF
-
+  SET_PIN PIN=Frame_Light VALUE=0
 
 [gcode_macro Part_Light_ON]
 gcode:
-  RUN_SHELL_COMMAND CMD=Part_Light_ON
-
+  SET_PIN PIN=Part_Light VALUE=1
 
 [gcode_macro Part_Light_OFF]
 gcode:
-  RUN_SHELL_COMMAND CMD=Part_Light_OFF
+  SET_PIN PIN=Part_Light VALUE=0
