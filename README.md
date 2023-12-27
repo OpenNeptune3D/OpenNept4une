@@ -147,7 +147,7 @@ cold):\
     \
     PID_TUNE_EXTRUDER\
     PID_TUNE_INNER_BED\
-    PID_TUNE_OUTER_BED\
+    PID_TUNE_OUTER_BED (N4Pro only)\
     \
     ---\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\--\
     \
