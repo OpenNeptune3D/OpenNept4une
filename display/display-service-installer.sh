@@ -1,5 +1,10 @@
 #!/bin/bash
 
+SCRIPT_DIR="/home/mks/OpenNept4une/display"
+
+# Run the first script
+"$SCRIPT_DIR/display-env-install.sh"
+
 # Define the service file path, script path, and log file path
 SERVICE_FILE="/etc/systemd/system/display.service"
 SCRIPT_PATH="/home/mks/OpenNept4une/display/display.py"
