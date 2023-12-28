@@ -21,7 +21,7 @@ After=network.target
 
 [Service]
 ExecStartPre=/bin/sleep 30
-ExecStart=/bin/bash -c 'source $VENV_PATH/bin/activate && exec python $SCRIPT_PATH >> $LOG_FILE 2>&1'
+ExecStart=/home/mks/OpenNept4une/display/venv/bin/python /home/mks/OpenNept4une/display/display.py >> /var/log/display.log 2>&1
 WorkingDirectory=$(dirname $SCRIPT_PATH)
 Restart=always
 User=$(whoami)
