@@ -83,6 +83,8 @@ update_repo() {
     echo "======================================"
 }
 
+update_repo
+
 # Function to install the Screen Service
 install_screen_service() {
     clear_screen
