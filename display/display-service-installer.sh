@@ -38,8 +38,4 @@ echo "Enabling and starting the service..."
 sudo systemctl enable display.service
 sudo systemctl start display.service
 
-# Display the status of the service
-echo "Service status:"
-sudo systemctl status display.service
-
 echo "Service setup complete."
