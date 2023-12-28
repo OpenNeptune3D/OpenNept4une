@@ -32,14 +32,14 @@ class NavigationController:
         temps = self.printer.query_temperatures()
         extruder = temps['extruder']['temperature']
         bed = temps['heater_bed']['temperature']
-        outbed = temps.get('heater_generic heater_bed_outer', {}).get('temperature', 'N/A')
+#        outbed = temps.get('heater_generic heater_bed_outer', {}).get('temperature', 'N/A')
         toolhead = self.printer.query_status('toolhead')
         x_pos = toolhead['position'][0]
         y_pos = toolhead['position'][1]
         z_pos = toolhead['position'][2]
         self._write(f'nozzletemp.txt="{extruder}°C"', print_to_terminal)
         self._write(f'bedtemp.txt="{bed}°C"', print_to_terminal)
-        self._write(f'out_bedtemp.txt="{outbed}°C"', print_to_terminal)
+#        self._write(f'out_bedtemp.txt="{outbed}°C"', print_to_terminal)
         self._write(f'x_pos.txt="{x_pos}"', print_to_terminal)
         self._write(f'y_pos.txt="{y_pos}"', print_to_terminal)
         self._write(f'z_pos.txt="{z_pos}"', print_to_terminal)
@@ -54,13 +54,13 @@ class NavigationController:
         temps = self.printer.query_temperatures()
         extruder = temps['extruder']['temperature']
         bed = temps['heater_bed']['temperature']
-        outbed = temps['heater_generic heater_bed_outer']['temperature']
+#        outbed = temps['heater_generic heater_bed_outer']['temperature']
         toolhead = self.printer.query_status('toolhead')
         x_pos = toolhead['position'][0]
         y_pos = toolhead['position'][1]
         z_pos = toolhead['position'][2]
         self._write(f'main.q4.picc=213') # 213=N4 214=N4Pro
-        self._write(f'main.disp_q5.val=1') # N4Pro Outer Bed Symbol (Bottom Rig>
+#        self._write(f'main.disp_q5.val=1') # N4Pro Outer Bed Symbol (Bottom Rig>
         self._write(f'page 1')
         self._write(f'vis q5,1')
         self._write(f'vis out_bedtemp,1') # Only N4Pro
