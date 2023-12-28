@@ -3,6 +3,7 @@
 # Define the service file path, script path, and log file path
 SERVICE_FILE="/etc/systemd/system/display.service"
 SCRIPT_PATH="/home/mks/OpenNept4une/display/display.py"
+VENV_PATH="/home/mks/OpenNept4une/display/venv"
 LOG_FILE="/var/log/display.log"
 
 # Check if the script exists
@@ -20,7 +21,7 @@ After=network.target
 
 [Service]
 ExecStartPre=/bin/sleep 30
-ExecStart=/usr/bin/python3 $SCRIPT_PATH >> $LOG_FILE 2>&1
+ExecStart=/bin/bash -c 'source $VENV_PATH/bin/activate && exec python $SCRIPT_PATH >> $LOG_FILE 2>&1'
 WorkingDirectory=$(dirname $SCRIPT_PATH)
 Restart=always
 User=$(whoami)
