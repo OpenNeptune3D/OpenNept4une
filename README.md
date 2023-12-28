@@ -78,7 +78,8 @@ cd ~/OpenNept4une/ && git fetch --all && git reset --hard origin/main && git cle
 ```bash
 chmod +x ~/OpenNept4une/OpenNept4une.sh && ~/OpenNept4une/OpenNept4une.sh
 ``` 
-- Be sure to check the latest printer.cfg for your model here [printer-confs](https://github.com/halfmanbear/OpenNept4une/tree/main/printer-confs/).
+- Run **Install latest OpenNept4une Printer.cfg**
+
 - If you have a v1.1 N4/Pro, delete LED Control v1.0 in your new printer.cfg & un-comment v1.1 LED section.
 
 # General Configuration Instructions
