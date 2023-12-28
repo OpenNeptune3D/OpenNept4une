@@ -1,9 +1,7 @@
 #!/bin/bash
 
-SCRIPT_DIR="/home/mks/OpenNept4une/display"
-
 # Run the first script
-"sudo $SCRIPT_DIR/display-env-install.sh"
+chmod +x /home/mks/OpenNept4une/display/display-env-install.sh && sudo /home/mks/OpenNept4une/display/display-env-install.sh
 
 # Define the service file path, script path, and log file path
 SERVICE_FILE="/etc/systemd/system/display.service"
