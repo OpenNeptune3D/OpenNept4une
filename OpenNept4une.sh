@@ -97,7 +97,7 @@ install_screen_service() {
         echo "Installing Touch-Screen Service..."
         if [ -f "$DISPLAY_SERVICE_INSTALLER" ]; then
             chmod +x "$DISPLAY_SERVICE_INSTALLER"
-            "sudo $DISPLAY_SERVICE_INSTALLER"
+            "$DISPLAY_SERVICE_INSTALLER"
         else
             echo "Error: Display service installer script not found."
         fi
