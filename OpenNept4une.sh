@@ -170,7 +170,7 @@ copy_file() {
 # Function to apply configuration
 apply_configuration() {
     if [[ -n "$PRINTER_CFG_SOURCE" ]]; then
-        copy_file "$PRINTER_CFG_SOURCE" "$PRINTER_CFG_DEST/printer.cfg" true
+        copy_file "$PRINTER_CFG_SOURCE" "$PRINTER_CFG_DEST/printer.cfg" false
     else
         echo "Error: Invalid printer configuration file."
         return 1
@@ -182,8 +182,11 @@ apply_configuration() {
         echo "Error: Invalid DTB file selection."
         return 1
     fi
+    
+    cp -r /home/mks/OpenNept4une/img-config/printer-data/* /home/mks/printer_data/config/
+    mv /home/mks/printer_data/config/data.mdb /home/mks/printer_data/database/data.mdb
 }
-
+    
 install_printer_cfg() {
     clear_screen
     echo -e "\033[0;33m$OPENNEPT4UNE_ART\033[0m"
@@ -199,7 +202,7 @@ install_printer_cfg() {
     DATABASE_DEST="/home/mks/printer_data/database"
 
     mkdir -p "$PRINTER_CFG_DEST" "$DATABASE_DEST"
-
+    
     update_flag_file() {
     local flag_value=$1
     sudo awk -v line="$flag_value" '
@@ -272,7 +275,7 @@ install_printer_cfg() {
             return
             ;;
     esac
-
+    
     update_flag_file "$FLAG_LINE"
     apply_configuration
     reboot_system
