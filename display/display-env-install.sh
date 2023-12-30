@@ -13,7 +13,7 @@ python3 -m venv venv
 source venv/bin/activate
 
 # Install required Python packages
-pip install pyserial moonrakerpy
+pip install pyserial moonrakerpy nextion
 
 # Deactivate the virtual environment
 deactivate
