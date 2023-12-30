@@ -83,6 +83,7 @@ sudo gpioset gpiochip1 14=0
 
 # Compile the firmware after exiting menuconfig
 echo "Compiling the firmware..."
+make clean
 make
 # Flash the new firmware
 echo "Flashing new firmware to STM32F4..."
