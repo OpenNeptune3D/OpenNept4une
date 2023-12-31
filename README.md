@@ -45,11 +45,49 @@
 
 ## Install Procedure - Re-flash eMMC with Latest OpenNept4une Release Image
 
+**Overview:**
+
+1. Determine stepper motor current & PCB version
+2. Flash eMMC with latest OpenNept4une release image
+3. Run the install script to upgrade / make further settings
+4. (Optional) Flash MCU as [described here](mcu-firmware)
+5. Update third party modules in Kiauh / Fluidd or Mailsail
+
+**Preparation:**
+
+The setup script will prompt you for two inputs: the stepper motor current, as well as the PCB version. ELEGOO has released the printers with two different types of steppers using different current and multiple board revisions. **Warning:** Choosing the wrong current might damage the stepper motors permanently, so it is better to double check, before picking a value.
+
+*Determining Stepper Motor Current:*
+There are multiple ways to determine which current the steppers are running at, you may chose either of them to determine which current your servos use:
+
+1. Checking the serial number (as suggested by ELEGOO):
+   In the official firmware upgrade guide ELEGOO suggests to use the serial number that is printed onto the bar code of your printer, to determine which servo is used:
+
+   ![serial number composition](pictures/serial-number.png)
+
+   For **Neptune 4**: Before July 2023, it is using the 0.8A steppers, in and after July 2023 the 1.2A ones.
+
+   For **Neptune 4 Pro**: Before June 2023, it is using the 0.8A steppers, in and after June 2023 the 1.2A ones.
+
+2. Checking the stock `printer.cfg` that shipped with your printer:
+   If you still have access to your printers files, you can check the `printer.cfg` for the current value. In the "TMC UART configuration" section, you will find the `tmc2209` stepper configuration. The `run_current` value of the `stepper_x` and `stepper_y` will either say "0.8" or "1.2", that is your printers stepper motor current to input into the install script.
+
+3. (Most safe) checking the inscription on the steppers themselves:
+   Check the side of the X/Y stepper motors, they should either say "BJ42**D15-26V77**" which is the 0.8A or "BJ42**D22-53V04**" which is the 1.2A current variant. See [this image](pictures/stepper-current.png) for a comparison.
+
+*Determining the PBC Version:*
+
+The second value needed by the install script is the PCB version. When you remove the eMMC for flashing make sure you keep an eye on the silkscreening on the PCB, it should either state V1.0 or V1.1, that is the input value when prompted in the script (see the yellow squares in these images for reference):
+
+![version 1.0](pictures/pads-bridge-version10.jpg) ![version 1.1](pictures/version11.jpg)
+
 **Requirements:**
+
 - Makerbase MKS EMMC-ADAPTER V2 USB 3.0 Reader For MKS EMMC Module: [AliExpress](https://www.aliexpress.com/item/1005005614719377.html)
 - Alternatively, a spare eMMC & eMMC > microSD adapter: [AliExpress](https://www.aliexpress.com/item/1005005549477887.html)
 
-## Printer Terminal Access Options:
+**Printer Terminal Access Options:**
+
 Terminal / Shell access via SSH (Requires ethernet connection) -\
     \
     ssh mks@printer ip\
@@ -69,6 +107,7 @@ Terminal / Shell access via SSH (Requires ethernet connection) -\
     ---\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\---
 
 **Installation:**
+
 - See the [Releases](https://github.com/halfmanbear/OpenNept4une/releases/) section for the latest pre-configured OpenNept4une eMMC Image. Flash with balenaEtcher or dd.
 - Recommended to Back-Up original eMMC beforehand.
 - Run the following startup scripts with Ethernet connected (as user mks) to load the correct machine and printer.cfg
