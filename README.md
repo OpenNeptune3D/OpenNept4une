@@ -45,11 +45,18 @@
 
 ## Install Procedure - Re-flash eMMC with Latest OpenNept4une Release Image
 
+**Overview:**
+1. Determine stepper motor current & PCB version
+2. Flash eMMC with latest OpenNept4une release image
+3. Run the install script to upgrade / make further settings
+4. (Optional) Flash MCU as [described here](mcu-firmware)
+5. Update third party modules in Kiauh / Fluidd or Mailsail
+
 **Requirements:**
 - Makerbase MKS EMMC-ADAPTER V2 USB 3.0 Reader For MKS EMMC Module: [AliExpress](https://www.aliexpress.com/item/1005005614719377.html)
 - Alternatively, a spare eMMC & eMMC > microSD adapter: [AliExpress](https://www.aliexpress.com/item/1005005549477887.html)
 
-## Printer Terminal Access Options:
+**Printer Terminal Access Options:**
 Terminal / Shell access via SSH (Requires ethernet connection) -\
     \
     ssh mks@printer ip\
