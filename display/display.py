@@ -463,8 +463,9 @@ class DisplayController:
                         self._navigate_to_page(f'page 1')
 
             if "display_status" in new_data and "progress" in new_data["display_status"] and "print_duration" in new_data["print_stats"]:
-                total_time = new_data["print_stats"]["print_duration"] / new_data["display_status"]["progress"]
-                self._write(f'p[19].b[37].txt="{format_time(total_time - new_data["print_stats"]["print_duration"])}"')
+                if new_data["display_status"]["progress"] > 0:
+                    total_time = new_data["print_stats"]["print_duration"] / new_data["display_status"]["progress"]
+                    self._write(f'p[19].b[37].txt="{format_time(total_time - new_data["print_stats"]["print_duration"])}"')
 
         if "output_pin Part_Light" in new_data:
             self.part_light_state = int(new_data["output_pin Part_Light"]["value"]) == 1
