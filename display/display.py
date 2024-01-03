@@ -301,7 +301,7 @@ class DisplayController:
             "extruder": ["temperature"],
             "heater_generic heater_bed_outer": ["temperature"],
             "display_status": ["progress"],
-            "print_stats": ["state", "print_duration", "filename"],
+            "print_stats": ["state", "print_duration", "filename", "total_duration"],
             "output_pin Part_Light": ["value"],
             "output_pin Frame_Light": ["value"],
             "configfile": ["config"],
@@ -461,6 +461,10 @@ class DisplayController:
                 else:
                     if len(self.history) == 0 or self.history[-1] in PRINTING_PAGES:
                         self._navigate_to_page(f'page 1')
+
+            if "display_status" in new_data and "progress" in new_data["display_status"] and "print_duration" in new_data["print_stats"]:
+                total_time = new_data["print_stats"]["print_duration"] / new_data["display_status"]["progress"]
+                self._write(f'p[19].b[37].txt="{format_time(total_time - new_data["print_stats"]["print_duration"])}"')
 
         if "output_pin Part_Light" in new_data:
             self.part_light_state = int(new_data["output_pin Part_Light"]["value"]) == 1
