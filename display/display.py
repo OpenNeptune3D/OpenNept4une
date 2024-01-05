@@ -299,8 +299,8 @@ class DisplayController:
             parts = action.split('_')
             direction = parts[2]
             current_speed = self.printing_target_speeds[self.printing_selected_speed_type]
-            change = (int(direction + self.printing_selected_speed_increment) * (1 if direction == '+' else -1))
-            self.send_speed_update(self.printing_selected_speed_type, current_speed + (change / 100.0))
+            change = (int(self.printing_selected_speed_increment) * (1 if direction == '+' else -1))
+            self.send_speed_update(self.printing_selected_speed_type, (current_speed + (change / 100.0)) * 100)
         elif action == "speed_reset":
             self.send_speed_update(self.printing_selected_speed_type, 1.0)
         elif action.startswith("files_page_"):
@@ -350,7 +350,7 @@ class DisplayController:
         self._write(f'p[135].b0.picc=' + str(59 if self.printing_selected_speed_type == "print" else 58))
         self._write(f'p[135].b1.picc=' + str(59 if self.printing_selected_speed_type == "flow" else 58))
         self._write(f'p[135].b2.picc=' + str(59 if self.printing_selected_speed_type == "fan" else 58))
-        self._write(f'p[135].targetspeed.val={self.printing_target_speeds[self.printing_selected_speed_type*100]:.0f}')
+        self._write(f'p[135].targetspeed.val={self.printing_target_speeds[self.printing_selected_speed_type]*100:.0f}')
 
     def update_printing_speed_increment_ui(self):
         self._write(f'p[135].b[14].picc=' + str(59 if self.printing_selected_speed_increment == "1" else 58))
@@ -629,6 +629,7 @@ class DisplayController:
         if "fan" in new_data:
             self.fan_state = float(new_data["fan"]["speed"]) > 0
             self.printing_target_speeds["fan"] = float(new_data["fan"]["speed"])
+            self.update_printing_speed_settings_ui()
         if "filament_switch_sensor fila" in new_data:
             self.filament_sensor_state = int(new_data["filament_switch_sensor fila"]["enabled"]) == 1
         if "configfile" in new_data:
@@ -647,8 +648,10 @@ class DisplayController:
         if "gcode_move" in new_data:
             if "extrude_factor" in new_data["gcode_move"]:
                 self.printing_target_speeds["flow"] = float(new_data["gcode_move"]["extrude_factor"])
+                self.update_printing_speed_settings_ui()
             if "speed_factor" in new_data["gcode_move"]:
                 self.printing_target_speeds["print"] = float(new_data["gcode_move"]["speed_factor"])
+                self.update_printing_speed_settings_ui()
 
         is_dict = isinstance(new_data, dict)
         for key in new_data if is_dict else range(len(new_data)):
