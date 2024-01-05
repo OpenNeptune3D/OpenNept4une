@@ -52,35 +52,38 @@ class MappingLeaf:
 
 DATA_MAPPING = {
     "extruder": {
-        "temperature": [MappingLeaf(["p[1].nozzletemp", "p[6].nozzletemp", "p[19].nozzletemp"], formatter=format_temp)]
+        "temperature": [MappingLeaf(["p[1].nozzletemp", "p[6].nozzletemp", "p[19].nozzletemp", "p[27].nozzletemp", "p[28].nozzletemp"], formatter=format_temp)],
+        "target": [MappingLeaf(["p[27].nozzletemp_t", "p[28].nozzletemp_t"], formatter=format_temp)]
     },
     "heater_bed": {
-        "temperature": [MappingLeaf(["p[1].bedtemp", "p[6].bedtemp", "p[19].bedtemp"], formatter=format_temp)]
+        "temperature": [MappingLeaf(["p[1].bedtemp", "p[6].bedtemp", "p[19].bedtemp", "p[27].bedtemp", "p[28].bedtemp"], formatter=format_temp)],
+        "target": [MappingLeaf(["p[27].bedtemp_t", "p[28].bedtemp_t"], formatter=format_temp)]
     },
     "heater_generic heater_bed_outer": {
-        "temperature": [MappingLeaf(["p[1].out_bedtemp", "p[6].out_bedtemp"], formatter=format_temp)]
+        "temperature": [MappingLeaf(["p[1].out_bedtemp", "p[6].out_bedtemp", "p[27].out_bedtemp"], formatter=format_temp)],
+        "target": [MappingLeaf(["p[27].out_bedtemp_t", "p[28].out_bedtemp_t"], formatter=format_temp)]
     },
     "motion_report": {
         "live_position": {
             0: [MappingLeaf(["p[1].x_pos"]), MappingLeaf(["p[19].x_pos"], formatter=lambda x: f"X[{x:3.2f}]")],
             1: [MappingLeaf(["p[1].y_pos"]), MappingLeaf(["p[19].y_pos"], formatter=lambda y: f"Y[{y:3.2f}]")],
-            2: [MappingLeaf(["p[1].z_pos", "p[19].b[33]"])],
+            2: [MappingLeaf(["p[1].z_pos", "p[19].zvalue"])],
         },
-        "live_velocity": [MappingLeaf(["p[19].b[34]"], formatter=lambda x: f"{x:3.2f}mm/s")],
+        "live_velocity": [MappingLeaf(["p[19].pressure_val"], formatter=lambda x: f"{x:3.2f}mm/s")],
     },
     "print_stats": {
         "print_duration": [MappingLeaf(["p[19].b[6]"], formatter=format_time)],
-        "filename": [MappingLeaf(["p[19].b[5]"])],
+        "filename": [MappingLeaf(["p[19].t0"])],
     },
     "gcode_move": {
-        "extrude_factor": [MappingLeaf(["p[19].b[35]"], formatter=format_percent)],
-        "speed_factor": [MappingLeaf(["p[19].b[9]"], formatter=format_percent)],
+        "extrude_factor": [MappingLeaf(["p[19].flow_speed"], formatter=format_percent)],
+        "speed_factor": [MappingLeaf(["p[19].printspeed"], formatter=format_percent)],
     },
     "fan": {
-        "speed": [MappingLeaf(["p[19].b[10]"], formatter=format_percent), MappingLeaf(["p[11].b[12]"], field_type="pic", formatter=lambda x: "77" if int(x) == 1 else "76")]
+        "speed": [MappingLeaf(["p[19].fanspeed"], formatter=format_percent), MappingLeaf(["p[11].b[12]"], field_type="pic", formatter=lambda x: "77" if int(x) == 1 else "76")]
     },
     "display_status": {
-        "progress": [MappingLeaf(["p[19].b[17]"], formatter=lambda x: f"{x * 100:2.1f}")]
+        "progress": [MappingLeaf(["p[19].printvalue"], formatter=lambda x: f"{x * 100:2.1f}"), MappingLeaf(["p[19].printprocess"], field_type="val", formatter=lambda x: f"{x * 100:2.0f}")]
     },
     "output_pin Part_Light": {"value": [MappingLeaf(["p[84].led1"], field_type="pic", formatter=lambda x: "77" if int(x) == 1 else "76")]},
     "output_pin Frame_Light": {"value": [MappingLeaf(["p[84].led2"], field_type="pic", formatter= lambda x: "77" if int(x) == 1 else "76")]},
@@ -108,6 +111,10 @@ TABBED_PAGES = [
     "page 30",
 ]
 
+TRANSITION_PAGES = [
+    "page 130",
+]
+
 MODEL_REGULAR = 0
 MODEL_PRO = 1
 MODEL_PLUS = 2
@@ -120,6 +127,10 @@ class DisplayController:
 
     def __init__(self):
         self.connected = False
+        self.part_light_state = False
+        self.frame_light_state = False
+        self.fan_state = False
+        self.filament_sensor_state = False
         self.is_blocking_serial = False
         self.move_distance = '1'
         self.z_offset_distance = '0.1'
@@ -135,6 +146,22 @@ class DisplayController:
 
         self.printable_files = []
         self.files_page = 0
+
+        self.printing_selected_heater = "extruder"
+        self.printing_target_temps = {
+            "extruder": 0,
+            "heater_bed": 0,
+            "heater_bed_outer": 0
+        }
+        self.printing_selected_temp_increment = "10"
+        self.printing_selected_speed_type = "print"
+        self.printing_target_speeds = {
+            "print": 1.0,
+            "flow": 1.0,
+            "fan": 1.0
+        }
+        self.printing_selected_speed_increment = "10"
+        
 
         self.current_filename = None
 
@@ -167,17 +194,25 @@ class DisplayController:
         self.send_gcode(f'G91\nG1 {axis}{distance}\nG90')
 
     def special_page_handling(self):
-        if len(self.history) > 0:
-            if self.history[-1] == "page 35":
-                self._write('fill 0,400,320,60,' + str(BACKGROUND_GRAY))
-                self._write('xstr 0,400,320,30,1,65535,' + str(BACKGROUND_GRAY) + ',1,1,1,"OpenNept4une"')
-                self._write('xstr 0,430,320,30,2,GRAY,' + str(BACKGROUND_GRAY) + ',1,1,1,"github.com/halfmanbear/OpenNept4une"')
+        current_page = self._get_current_page()
+        if current_page == "page 2":
+            self.show_files_page()
+        elif current_page == "page 35":
+            self._write('fill 0,400,320,60,' + str(BACKGROUND_GRAY))
+            self._write('xstr 0,400,320,30,1,65535,' + str(BACKGROUND_GRAY) + ',1,1,1,"OpenNept4une"')
+            self._write('xstr 0,430,320,30,2,GRAY,' + str(BACKGROUND_GRAY) + ',1,1,1,"github.com/halfmanbear/OpenNept4une"')
+        elif current_page == "page 27":
+            self.update_printing_heater_settings_ui()
+            self.update_printing_temperature_increment_ui()
+        elif current_page == "page 135":
+            self.update_printing_speed_settings_ui()
+            self.update_printing_speed_increment_ui()
 
     def _navigate_to_page(self, page):
         if len(self.history) == 0 or self.history[-1] != page:
             if page in TABBED_PAGES and self.history[-1] in TABBED_PAGES:
                 self.history[-1] = page
-            else:
+            elif page not in TRANSITION_PAGES:
                 self.history.append(page)
             self._write(page)
             logger.info(f"Navigating {page}")
@@ -236,23 +271,57 @@ class DisplayController:
         elif action == "files_picker":
             self._navigate_to_page(f'page 2')
             self._loop.create_task(self._load_files())
+        elif action.startswith("temp_heater_"):
+            parts = action.split('_')
+            self.printing_selected_heater = "_".join(parts[2:])
+            self.update_printing_heater_settings_ui()
+        elif action.startswith("temp_increment_"):
+            parts = action.split('_')
+            self.printing_selected_temp_increment = parts[2]
+            self.update_printing_temperature_increment_ui()
+        elif action.startswith("temp_adjust_"):
+            parts = action.split('_')
+            direction = parts[2]
+            current_temp = self.printing_target_temps[self.printing_selected_heater]
+            self.send_gcode(f"SET_HEATER_TEMPERATURE HEATER=" + self.printing_selected_heater + " TARGET=" + 
+                            str(current_temp + (int(direction + self.printing_selected_temp_increment) * (1 if direction == '+' else -1))))
+        elif action == "temp_reset":
+            self.send_gcode(f"SET_HEATER_TEMPERATURE HEATER=" + self.printing_selected_heater + " TARGET=0")
+        elif action.startswith("speed_type_"):
+            parts = action.split('_')
+            self.printing_selected_speed_type = parts[2]
+            self.update_printing_speed_settings_ui()
+        elif action.startswith("speed_increment_"):
+            parts = action.split('_')
+            self.printing_selected_speed_increment = parts[2]
+            self.update_printing_speed_increment_ui()
+        elif action.startswith("speed_adjust_"):
+            parts = action.split('_')
+            direction = parts[2]
+            current_speed = self.printing_target_speeds[self.printing_selected_speed_type]
+            change = (int(direction + self.printing_selected_speed_increment) * (1 if direction == '+' else -1))
+            self.send_speed_update(self.printing_selected_speed_type, current_speed + (change / 100.0))
+        elif action == "speed_reset":
+            self.send_speed_update(self.printing_selected_speed_type, 1.0)
         elif action.startswith("files_page_"):
             parts = action.split('_')
             direction = parts[2]
-            self.files_page = int(max(0, min((len(self.printable_files)/5) - 1, self.files_page + (1 if direction == 'next' else -1))))
+            self.files_page = int(max(0, min((len(self.printable_files)/5), self.files_page + (1 if direction == 'next' else -1))))
             self.show_files_page()
         elif action.startswith("open_file_"):
+            self._navigate_to_page('page 130')
             parts = action.split('_')
             index = int(parts[2])
             self.current_filename = self.printable_files[(self.files_page * 5) + index]["path"]
             self._navigate_to_page(f'page 18')
             self._write(f'p[18].b[2].txt="{self.current_filename}"')
-            self.load_thumbnail_for_page(self.current_filename, "18")
+            self._loop.create_task(self.load_thumbnail_for_page(self.current_filename, "18"))
         elif action == "print_opened_file":
             self._go_back()
             self._navigate_to_page('page 130')
             self._loop.create_task(self._send_moonraker_request("printer.print.start", {"filename": self.current_filename}))
         elif action == "confirm_complete":
+            logger.info("Clearing SD Card")
             self.send_gcode("SDCARD_RESET_FILE")
 
     def _write(self, data):
@@ -268,6 +337,33 @@ class DisplayController:
         gcode = f"SET_FILAMENT_SENSOR SENSOR=fila ENABLE={'1' if state else '0'}"
         self.send_gcode(gcode)
 
+    def update_printing_heater_settings_ui(self):
+        self._write(f'p[27].b0.picc=' + str(90 if self.printing_selected_heater == "extruder" else 89))
+        self._write(f'p[27].b1.picc=' + str(90 if self.printing_selected_heater == "heater_bed" else 89))
+        self._write(f'p[27].b2.picc=' + str(90 if self.printing_selected_heater == "heater_bed_outer" else 89))
+        self._write(f'p[27].targettemp.val=' + str(self.printing_target_temps[self.printing_selected_heater]))
+
+    def update_printing_temperature_increment_ui(self):
+        self._write(f'p[27].p1.pic={56 + ["1", "5", "10"].index(self.printing_selected_temp_increment)}')
+
+    def update_printing_speed_settings_ui(self):
+        self._write(f'p[135].b0.picc=' + str(59 if self.printing_selected_speed_type == "print" else 58))
+        self._write(f'p[135].b1.picc=' + str(59 if self.printing_selected_speed_type == "flow" else 58))
+        self._write(f'p[135].b2.picc=' + str(59 if self.printing_selected_speed_type == "fan" else 58))
+        self._write(f'p[135].targetspeed.val={self.printing_target_speeds[self.printing_selected_speed_type*100]:.0f}')
+
+    def update_printing_speed_increment_ui(self):
+        self._write(f'p[135].b[14].picc=' + str(59 if self.printing_selected_speed_increment == "1" else 58))
+        self._write(f'p[135].b[15].picc=' + str(59 if self.printing_selected_speed_increment == "5" else 58))
+        self._write(f'p[135].b[16].picc=' + str(59 if self.printing_selected_speed_increment == "10" else 58))
+
+    def send_speed_update(self, speed_type, new_speed):
+        if speed_type == "print":
+            self.send_gcode(f"M220 S{new_speed:.0f}")
+        elif speed_type == "flow":
+            self.send_gcode(f"M221 S{new_speed:.0f}")
+        elif speed_type == "fan":
+            self.send_gcode(f"SET_FAN_SPEED FAN=fan SPEED={new_speed}")
 
     def _toggle_fan(self, state):
         gcode = f"M106 S{'255' if state else '0'}"
@@ -285,12 +381,15 @@ class DisplayController:
             file = self.printable_files[index]
             self._write(f'p[2].b[{component_index + 18}].txt="{file["path"]}"')
             component_index += 1
+        for index in range(component_index, page_size):
+            self._write(f'p[2].b[{index + 18}].txt=""')
 
     def _go_back(self):
         if len(self.history) > 1:
             self.history.pop()
             back_page = self.history[-1]
             self._write(back_page)
+            self.special_page_handling()
         else:
             logger.info("Already at the main page.")
 
@@ -305,9 +404,9 @@ class DisplayController:
             "gcode_move": ["extrude_factor", "speed_factor"],
             "motion_report": ["live_position", "live_velocity"],
             "fan": ["speed"],
-            "heater_bed": ["temperature"],
-            "extruder": ["temperature"],
-            "heater_generic heater_bed_outer": ["temperature"],
+            "heater_bed": ["temperature", "target"],
+            "extruder": ["temperature", "target"],
+            "heater_generic heater_bed_outer": ["temperature", "target"],
             "display_status": ["progress"],
             "print_stats": ["state", "print_duration", "filename", "total_duration"],
             "output_pin Part_Light": ["value"],
@@ -502,18 +601,20 @@ class DisplayController:
                 filename = new_data["print_stats"]["filename"]
                 if filename != self.current_filename:
                     self.current_filename = filename
-                    self._loop.create_task(self.load_thumbnail_for_page(self.current_filename, "19"))
+                    if filename is not None and filename != "":
+                        self._loop.create_task(self.load_thumbnail_for_page(self.current_filename, "19"))
             if "state" in new_data["print_stats"]:
                 state = new_data["print_stats"]["state"]
                 logger.info(f"Status Update: {state}")
+                current_page = self._get_current_page()
                 if state == "printing" or state == "paused":
-                    if self._get_current_page() not in PRINTING_PAGES:
+                    if current_page == None or current_page not in PRINTING_PAGES:
                         self._navigate_to_page(f'page 19')
                 elif state == "complete":
-                    if self._get_current_page() != "page 24":
+                    if current_page == None or current_page != "page 24":
                         self._navigate_to_page(f'page 24')
                 else:
-                    if self._get_current_page() in PRINTING_PAGES:
+                    if current_page == None or current_page in PRINTING_PAGES or current_page == "page 24":
                         self._navigate_to_page(f'page 1')
 
             if "display_status" in new_data and "progress" in new_data["display_status"] and "print_duration" in new_data["print_stats"]:
@@ -526,11 +627,29 @@ class DisplayController:
         if "output_pin Frame_Light" in new_data:
             self.part_light_state = int(new_data["output_pin Frame_Light"]["value"]) == 1
         if "fan" in new_data:
-            self.fan_state = int(new_data["fan"]["speed"]) > 0
+            self.fan_state = float(new_data["fan"]["speed"]) > 0
+            self.printing_target_speeds["fan"] = float(new_data["fan"]["speed"])
         if "filament_switch_sensor fila" in new_data:
             self.filament_sensor_state = int(new_data["filament_switch_sensor fila"]["enabled"]) == 1
         if "configfile" in new_data:
             self.handle_config_change(new_data["configfile"])
+
+        if "extruder" in new_data:
+            if "target" in new_data["extruder"]:
+                self.printing_target_temps["extruder"] = new_data["extruder"]["target"]
+        if "heater_generic heater_bed" in new_data:
+            if "target" in new_data["heater_bed"]:
+                self.printing_target_temps["heater_bed"] = new_data["heater_generic heater_bed"]["target"]
+        if "heater_generic heater_bed_outer" in new_data:
+            if "target" in new_data["heater_generic heater_bed_outer"]:
+                self.printing_target_temps["heater_bed_outer"] = new_data["heater_generic heater_bed_outer"]["target"]
+
+        if "gcode_move" in new_data:
+            if "extrude_factor" in new_data["gcode_move"]:
+                self.printing_target_speeds["flow"] = float(new_data["gcode_move"]["extrude_factor"])
+            if "speed_factor" in new_data["gcode_move"]:
+                self.printing_target_speeds["print"] = float(new_data["gcode_move"]["speed_factor"])
+
         is_dict = isinstance(new_data, dict)
         for key in new_data if is_dict else range(len(new_data)):
             if key in data_mapping:
