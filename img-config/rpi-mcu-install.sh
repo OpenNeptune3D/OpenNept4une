@@ -20,6 +20,7 @@ read -p "Press [Enter] key to open the menuconfig interface..."
 
 # Open menuconfig for user configuration
 cd ~/klipper/
+make clean
 make menuconfig
 
 # The script pauses here allowing the user to make the necessary changes manually.
