@@ -89,22 +89,22 @@ The second value needed by the install script is the PCB version. When you remov
 **Printer Terminal Access Options:**
 
 Terminal / Shell access via SSH (Requires ethernet connection) -\
-    \
-    ssh mks@printer ip\
-    Password = makerbase\
-    User: root can login via - root:makerbase\ (not advised)
-    \
-    ---\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\--\
-    \
-    PuTTY / Serial terminal access (Without Ethernet) -\
-    \
-    Connect N4P USB-C port to PC Then connect via Serial COM8 (yours
-    will be different) set baudrate to 1500000\
-    \
-    User: mks\
-    Pass: makerbase\
-    \
-    ---\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\---
+\
+ssh mks@printer ip\
+Password = makerbase\
+User: root can login via - root:makerbase\ (not advised)
+\
+---\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\--\
+\
+PuTTY / Serial terminal access (Without Ethernet) -\
+\
+Connect N4P USB-C port to PC Then connect via Serial COM8 (yours
+will be different) set baudrate to 1500000\
+\
+User: mks\
+Pass: makerbase\
+\
+---\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\---
 
 **Installation:**
 
@@ -205,49 +205,54 @@ cold):\
     
 ## Slicer Settings 
 (If using the provided OrcaSlicer profiles you can skip
-    this)\
-    \
-    ---\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\--\
-    \
-    **Slicer START CODE (OrcaSlicer)**
-    \
-    NOTE all text including PRINT_START and after must be on one line
+    this)
+
+### Orcaslicer
+
+**START CODE**
+
+NOTE all text including PRINT_START and after must be on one line
 
     
 
 ```
-    ;Nozzle diameter = [nozzle_diameter]
-    ;Filament type = [filament_type]
-    ;Filament name = [filament_vendor] 
-    ;Filament weight = [filament_density]
-    PRINT_START BED_TEMP=[hot_plate_temp_initial_layer] EXTRUDER_TEMP=[nozzle_temperature_initial_layer] AREA_START={first_layer_print_min[0]},{first_layer_print_min[1]} AREA_END={first_layer_print_max[0]},{first_layer_print_max[1]}
+;Nozzle diameter = [nozzle_diameter]
+;Filament type = [filament_type]
+;Filament name = [filament_vendor] 
+;Filament weight = [filament_density]
+PRINT_START BED_TEMP=[hot_plate_temp_initial_layer] EXTRUDER_TEMP=[nozzle_temperature_initial_layer] AREA_START={first_layer_print_min[0]},{first_layer_print_min[1]} AREA_END={first_layer_print_max[0]},{first_layer_print_max[1]}
 ```
- \
- \
-    ---\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\--\
-    \
-    **Slicer PRINT END CODE (Use for all Slicers)**\
-    \
-    ```
-    PRINT_END
-    ```
-    \
-    \
-    ---\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\--\
-    \
-    **Slicer START CODE (PrusaSlicer)**
-    \
-    NOTE all text including PRINT_START and after must be on one line
-    
+
+**PRINT END CODE**
+
+```
+PRINT_END
+```
+
+
+
+
+**Displaying Thumbnails on the Original Display**
+
+Currently only Orcaslicer is capable of generating the required thumbnail data. In the Advanced section of the printer settings select `ColPic` for `Format of G-code thumbnails`. The sizes for `G-code thumbnails` need to have `160x160` as the first size. Additional sizes can optionally be added after that.
+
+### Prusaslicer
+
+**START CODE**
+
+NOTE all text including PRINT_START and after must be on one line
+
     
 ```
-    ;Nozzle diameter = [nozzle_diameter]
-    ;Filament type = [filament_type]
-    ;Filament name = [filament_vendor]
-    ;Filament weight = [filament_density]
-    PRINT_START BED_TEMP=[first_layer_bed_temperature] EXTRUDER_TEMP=[first_layer_temperature] AREA_START={first_layer_print_min[0]},{first_layer_print_min[1]} AREA_END={first_layer_print_max[0]},{first_layer_print_max[1]}
+;Nozzle diameter = [nozzle_diameter]
+;Filament type = [filament_type]
+;Filament name = [filament_vendor]
+;Filament weight = [filament_density]
+PRINT_START BED_TEMP=[first_layer_bed_temperature] EXTRUDER_TEMP=[first_layer_temperature] AREA_START={first_layer_print_min[0]},{first_layer_print_min[1]} AREA_END={first_layer_print_max[0]},{first_layer_print_max[1]}
 ```
-\
-    \
-    ---\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\--\
-    
+
+**PRINT END CODE**
+
+```
+PRINT_END
+```
