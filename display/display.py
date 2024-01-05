@@ -78,6 +78,9 @@ DATA_MAPPING = {
     "gcode_move": {
         "extrude_factor": [MappingLeaf(["p[19].flow_speed"], formatter=format_percent)],
         "speed_factor": [MappingLeaf(["p[19].printspeed"], formatter=format_percent)],
+        "homing_origin": {
+            2: [MappingLeaf(["p[127].b[15]"], formatter=lambda x: f"{x:.3f}")],
+        }
     },
     "fan": {
         "speed": [MappingLeaf(["p[19].fanspeed"], formatter=format_percent), MappingLeaf(["p[11].b[12]"], field_type="pic", formatter=lambda x: "77" if int(x) == 1 else "76")]
@@ -133,7 +136,7 @@ class DisplayController:
         self.filament_sensor_state = False
         self.is_blocking_serial = False
         self.move_distance = '1'
-        self.z_offset_distance = '0.1'
+        self.z_offset_distance = '0.01'
         self.out_fd = sys.stdout.fileno()
         os.set_blocking(self.out_fd, False)
         self.pending_req = {}
@@ -162,6 +165,7 @@ class DisplayController:
         }
         self.printing_selected_speed_increment = "10"
         
+        self.ips = "--"
 
         self.current_filename = None
 
@@ -188,6 +192,7 @@ class DisplayController:
         self._write(f'p[35].b[8].txt="{self.get_device_name()}"')
 
     def send_gcode(self, gcode):
+        logger.debug("Sending GCODE: " + gcode")
         self._loop.create_task(self._send_moonraker_request("printer.gcode.script", {"script": gcode}))
 
     def move_axis(self, axis, distance):
@@ -204,6 +209,9 @@ class DisplayController:
         elif current_page == "page 27":
             self.update_printing_heater_settings_ui()
             self.update_printing_temperature_increment_ui()
+        elif current_page == "page 127":
+            self.update_printing_zoffset_increment_ui()
+            self._write("p[127].b[20].txt=\"" + self.ips + "\"")
         elif current_page == "page 135":
             self.update_printing_speed_settings_ui()
             self.update_printing_speed_increment_ui()
@@ -230,11 +238,12 @@ class DisplayController:
             self.move_distance = parts[2]
         if action.startswith("zoffset_"):
             parts = action.split('_')
-            direction = parts[2]
-            #self.move_axis(axis, direction + self.z_offset_distance)
+            direction = parts[1]
+            self.send_gcode(f"SET_GCODE_OFFSET Z_ADJUST={direction}{self.z_offset_distance} MOVE=1")
         elif action.startswith("zoffsetchange_"):
             parts = action.split('_')
-            self.z_offset_distance = parts[2]
+            self.z_offset_distance = parts[1]
+            self.update_printing_zoffset_increment_ui()
         elif action == "toggle_part_light":
             self.part_light_state = not self.part_light_state
             self._set_light("Part_Light", self.part_light_state)
@@ -357,6 +366,11 @@ class DisplayController:
         self._write(f'p[135].b[15].picc=' + str(59 if self.printing_selected_speed_increment == "5" else 58))
         self._write(f'p[135].b[16].picc=' + str(59 if self.printing_selected_speed_increment == "10" else 58))
 
+    def update_printing_zoffset_increment_ui(self):
+        self._write(f'p[127].b[23].picc=' + str(36 if self.z_offset_distance == "0.01" else 65))
+        self._write(f'p[127].b[24].picc=' + str(36 if self.z_offset_distance == "0.1" else 65))
+        self._write(f'p[127].b[25].picc=' + str(36 if self.z_offset_distance == "1" else 65))
+
     def send_speed_update(self, speed_type, new_speed):
         if speed_type == "print":
             self.send_gcode(f"M220 S{new_speed:.0f}")
@@ -401,7 +415,7 @@ class DisplayController:
         self._loop.create_task(self._process_serial(self.serial_reader))
         await self._connect()
         ret = await self._send_moonraker_request("printer.objects.subscribe", {"objects": {
-            "gcode_move": ["extrude_factor", "speed_factor"],
+            "gcode_move": ["extrude_factor", "speed_factor", "homing_origin"],
             "motion_report": ["live_position", "live_velocity"],
             "fan": ["speed"],
             "heater_bed": ["temperature", "target"],
@@ -473,9 +487,9 @@ class DisplayController:
         logger.debug(f"Client Identified With Moonraker: {ret}")
 
         system = (await self._send_moonraker_request("machine.system_info"))["result"]["system_info"]
-        ips = ", ".join(self._find_ips(system["network"]))
-        self._write("p[35].b[16].txt=\"" + ips + "\"")
-        self._write("p[127].b[20].txt=\"" + ips + "\"")
+        self.ips = ", ".join(self._find_ips(system["network"]))
+        self._write("p[35].b[16].txt=\"" + self.ips + "\"")
+        self._write("p[127].b[20].txt=\"" + self.ips + "\"")
         software_version = (await self._send_moonraker_request("printer.info"))["result"]["software_version"]
         self._write("p[35].b[10].txt=\"" + software_version.split("-")[0] + "\"")
 
