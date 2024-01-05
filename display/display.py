@@ -242,6 +242,7 @@ class DisplayController:
             self.active_file = self.printable_files[(self.files_page * 5) + index]
             self._navigate_to_page(f'page 18')
             self._write(f'p[18].b[2].txt="{self.active_file["path"]}"')
+            self.load_thumbnail_for_page(self.active_file["path"], "18")
         elif action == "print_opened_file":
             self._go_back()
             self._navigate_to_page('page 130')
@@ -456,14 +457,13 @@ class DisplayController:
             return self.history[-1]
         return None
     
-    async def load_new_gcode(self):
+    async def load_thumbnail_for_page(self, filename, page_number):
         self.current_gcode = None
-        print("Loading new GCode for " + self.current_filename)
-        gcode = requests.get(f"http://127.0.0.1/server/files/gcodes/{requests.utils.quote(self.current_filename)}").text
-        self.current_gcode = gcode
+        print("Loading new GCode for " + filename)
+        gcode = requests.get(f"http://127.0.0.1/server/files/gcodes/{requests.utils.quote(filename)}").text
         lines = gcode.splitlines()
         print("GCode Lines: " + str(len(lines)))
-        if len(lines) < 1000:
+        if len(lines) < 100:
             print("GCode too short to parse")
             print(gcode)
             return
@@ -471,7 +471,6 @@ class DisplayController:
             if line.startswith(";gimage:"):
                 print("Found image in GCode")
                 image = line[8:]
-                print(image)
 
                 parts = []
                 start = 0
@@ -483,10 +482,10 @@ class DisplayController:
 
                 parts.append(image[start:len(image)])
                 self.is_blocking_serial = True
-                self._write("p[19].vis cp0,1")
-                self._write("p[19].cp0.close()")
+                self._write("p[" + str(page_number) + "].vis cp0,1")
+                self._write("p[" + str(page_number) + "].cp0.close()")
                 for part in parts:
-                    self._write("p[19].cp0.write(\"" + str(part) + "\")")
+                    self._write("p[" + str(page_number) + "].cp0.write(\"" + str(part) + "\")")
                 self.is_blocking_serial = False
                 return
 
@@ -498,7 +497,7 @@ class DisplayController:
                 filename = new_data["print_stats"]["filename"]
                 if filename != self.current_filename:
                     self.current_filename = filename
-                    self._loop.create_task(self.load_new_gcode())
+                    self._loop.create_task(self.load_new_gcode(self.current_filename, "19"))
             if "state" in new_data["print_stats"]:
                 state = new_data["print_stats"]["state"]
                 print(f"Status Update: {state}")
