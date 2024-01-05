@@ -1,6 +1,8 @@
 import json
 import pathlib
 import sys
+
+import requests
 import serial_asyncio
 import serial
 import time
@@ -113,10 +115,7 @@ class DisplayController:
 
     def __init__(self):
         self.connected = False
-        self.part_light_state = False
-        self.frame_light_state = False
-        self.fan_state = False
-        self.filament_sensor_state = False
+        self.is_blocking_serial = False
         self.move_distance = '1'
         self.z_offset_distance = '0.1'
         self.out_fd = sys.stdout.fileno()
@@ -131,6 +130,8 @@ class DisplayController:
 
         self.printable_files = []
         self.files_page = 0
+
+        self.current_filename = None
 
     def get_device_name(self):
         if self.printer_model == MODEL_REGULAR:
@@ -450,8 +451,54 @@ class DisplayController:
             if max_x > 0 and max_y > 0 and max_z > 0:
                 self._write(f'p[35].b[9].txt="{max_x}x{max_y}x{max_z}"')
 
+    def _get_current_page(self):
+        if len(self.history) > 0:
+            return self.history[-1]
+        return None
+    
+    async def load_new_gcode(self):
+        self.current_gcode = None
+        print("Loading new GCode for " + self.current_filename)
+        gcode = requests.get(f"http://127.0.0.1/server/files/gcodes/{requests.utils.quote(self.current_filename)}").text
+        self.current_gcode = gcode
+        lines = gcode.splitlines()
+        print("GCode Lines: " + str(len(lines)))
+        if len(lines) < 1000:
+            print("GCode too short to parse")
+            print(gcode)
+            return
+        for line in lines:
+            if line.startswith(";gimage:"):
+                print("Found image in GCode")
+                image = line[8:]
+                print(image)
+
+                parts = []
+                start = 0
+                end = 1024
+                while (start + 1024 < len(image)):
+                    parts.append(image[start:end])
+                    start = start + 1024
+                    end = end + 1024
+
+                parts.append(image[start:len(image)])
+                self.is_blocking_serial = True
+                self._write("p[19].vis cp0,1")
+                self._write("p[19].cp0.close()")
+                for part in parts:
+                    self._write("p[19].cp0.write(\"" + str(part) + "\")")
+                self.is_blocking_serial = False
+                return
+
     def handle_status_update(self, new_data, data_mapping=DATA_MAPPING):
+        if self.is_blocking_serial:
+            return
         if "print_stats" in new_data:
+            if "filename" in new_data["print_stats"]:
+                filename = new_data["print_stats"]["filename"]
+                if filename != self.current_filename:
+                    self.current_filename = filename
+                    self._loop.create_task(self.load_new_gcode())
             if "state" in new_data["print_stats"]:
                 state = new_data["print_stats"]["state"]
                 print(f"Status Update: {state}")
