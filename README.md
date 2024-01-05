@@ -50,8 +50,8 @@
 1. Determine stepper motor current & PCB version
 2. Flash eMMC with latest OpenNept4une release image
 3. Run the install script to upgrade / make further settings
-4. (Optional) Flash MCU as [described here](mcu-firmware)
-5. Update third party modules in Kiauh / Fluidd or Mailsail
+4. Update third party modules in Kiauh / Fluidd or Mailsail
+5. (Optional) Flash MCU as [described here](mcu-firmware)
 
 **Preparation:**
 
