@@ -453,13 +453,16 @@ class DisplayController:
     def handle_status_update(self, new_data, data_mapping=DATA_MAPPING):
         if "print_stats" in new_data:
             if "state" in new_data["print_stats"]:
-                print(f"Status Update: {new_data['print_stats']['state']}")
-                if new_data["print_stats"]["state"] != "standby":
-                    print(self.history)
-                    if len(self.history) == 0 or self.history[-1] not in PRINTING_PAGES:
+                state = new_data["print_stats"]["state"]
+                print(f"Status Update: {state}")
+                if state == "printing" or state == "paused":
+                    if self._get_current_page() not in PRINTING_PAGES:
                         self._navigate_to_page(f'page 19')
+                elif state == "complete":
+                    if self._get_current_page() != "page 24":
+                        self._navigate_to_page(f'page 24')
                 else:
-                    if len(self.history) == 0 or self.history[-1] in PRINTING_PAGES:
+                    if self._get_current_page() in PRINTING_PAGES:
                         self._navigate_to_page(f'page 1')
 
             if "display_status" in new_data and "progress" in new_data["display_status"] and "print_duration" in new_data["print_stats"]:
