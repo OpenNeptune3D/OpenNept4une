@@ -214,7 +214,7 @@ class DisplayController:
             self._toggle_fan(self.fan_state)
         elif action.startswith("printer.send_gcode"):
             gcode = action.split("'")[1]
-            self._loop.create_task(self._send_moonraker_request("printer.gcode.script", {"script": gcode}))
+            self.send_gcode(gcode)
         elif action == "go_back":
             self._go_back()
         elif action.startswith("page"):
@@ -244,17 +244,18 @@ class DisplayController:
         elif action.startswith("open_file_"):
             parts = action.split('_')
             index = int(parts[2])
-            self.active_file = self.printable_files[(self.files_page * 5) + index]
+            self.current_filename = self.printable_files[(self.files_page * 5) + index]["path"]
             self._navigate_to_page(f'page 18')
-            self._write(f'p[18].b[2].txt="{self.active_file["path"]}"')
-            self.load_thumbnail_for_page(self.active_file["path"], "18")
+            self._write(f'p[18].b[2].txt="{self.current_filename}"')
+            self.load_thumbnail_for_page(self.current_filename, "18")
         elif action == "print_opened_file":
             self._go_back()
             self._navigate_to_page('page 130')
-            self._loop.create_task(self._send_moonraker_request("printer.print.start", {"filename": self.active_file["path"]}))
+            self._loop.create_task(self._send_moonraker_request("printer.print.start", {"filename": self.current_filename}))
+        elif action == "confirm_complete":
+            self.send_gcode("SDCARD_RESET_FILE")
 
     def _write(self, data):
-        #print(f"<= {data}")
         message = str.encode(data)
         self.serial_writer.write(message)
         self.serial_writer.write(self.serial_padding)
@@ -463,7 +464,6 @@ class DisplayController:
         return None
     
     async def load_thumbnail_for_page(self, filename, page_number):
-        self.current_gcode = None
         logger.info("Loading new GCode for " + filename)
         gcode = requests.get(f"http://127.0.0.1/server/files/gcodes/{requests.utils.quote(filename)}").text
         lines = gcode.splitlines()

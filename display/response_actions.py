@@ -3,6 +3,7 @@ response_actions = {
     '651300ffffff': "page 27", # Printing Page > Settings
     '651302ffffff': "pause_print", # Printing Page > Confirm Pause
     '651a00ffffff': "stop_print", # Printing Page > Confirm Stop
+    '651800ffffff': "confirm_complete",
     '65??00ffffff': "go_back",  # Return to Previous Page
     # MAIN PAGE OPTIONS (page 1)
     '650101ffffff': "files_picker",  # Page 1 > Print Files Page 1
@@ -87,6 +88,8 @@ response_actions = {
     '657f01ffffff': 'zoffsetchange_0.1', # Printing Page > Adjust > Z Offset Change 0.1mm
     '657f02ffffff': 'zoffsetchange_1', # Printing Page > Adjust > Z Offset Change 1mm
     '657f03ffffff': 'zoffsetchange_10', # Printing Page > Adjust > Z Offset Change 10mm
+
+    '651801ffffff': 'print_opened_file', # Completed Print Page > Print Again
 }
 
 response_errors = {
