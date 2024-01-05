@@ -1,6 +1,7 @@
 import json
 import pathlib
 import sys
+import logging
 
 import requests
 import serial_asyncio
@@ -14,6 +15,10 @@ import asyncio
 import traceback
 
 from response_actions import response_actions, response_errors
+
+logger = logging.getLogger(__name__)
+
+log_file = "/home/mks/printer_data/logs/display_connector.log"
 
 def format_temp(value):
     if value is None:
@@ -175,7 +180,7 @@ class DisplayController:
             else:
                 self.history.append(page)
             self._write(page)
-            print(f"Navigate to {page}. Current history: {self.history}")
+            logger.info(f"Navigating {page}")
 
             self.special_page_handling()
 
@@ -286,7 +291,7 @@ class DisplayController:
             back_page = self.history[-1]
             self._write(back_page)
         else:
-            print("Already at the main page.")
+            logger.info("Already at the main page.")
 
     def start_listening(self):
         loop.create_task(self.listen())
@@ -312,7 +317,7 @@ class DisplayController:
         data = ret["result"]["status"]
         if "temperature" in data["heater_generic heater_bed_outer"] and data["heater_generic heater_bed_outer"]["temperature"] is not None:
             self.printer_model = MODEL_PRO
-        print("Printer Model:", self.printer_model)
+        logger.info("Printer Model: " + str(self.printer_model))
         self.initialize_display()
         self.handle_status_update(data)
 
@@ -343,7 +348,7 @@ class DisplayController:
     async def _connect(self) -> None:
         sockfile = "/home/mks/printer_data/comms/moonraker.sock"
         sockpath = pathlib.Path(sockfile).expanduser().resolve()
-        print(f"Connecting to Moonraker at {sockpath}")
+        logger.info(f"Connecting to Moonraker at {sockpath}")
         while True:
             try:
                 reader, writer = await asyncio.open_unix_connection(
@@ -358,14 +363,14 @@ class DisplayController:
         self.writer = writer
         self._loop.create_task(self._process_stream(reader))
         self.connected = True
-        print("Connected to Moonraker")
+        logger.info("Connected to Moonraker")
         ret = await self._send_moonraker_request("server.connection.identify", {
                 "client_name": "OpenNept4une Display Connector",
                 "version": "0.0.1",
                 "type": "other",
                 "url": "https://github.com/halfbearman/opennept4une"
             })
-        print(f"Client Identified With Moonraker: {ret}")
+        logger.debug(f"Client Identified With Moonraker: {ret}")
 
         system = (await self._send_moonraker_request("machine.system_info"))["result"]["system_info"]
         self._write("p[35].b[16].txt=\"" + ", ".join(self._find_ips(system["network"])) + "\"")
@@ -396,15 +401,15 @@ class DisplayController:
         else:
             for key in response_errors.keys():
                 if self.match_key(key, action_key):
-                    print("Error:", response_errors[key])
+                    logger.error(response_errors[key])
                     return
-            print("No action for response:", readData)
+            logger.debug("No action for response: " + readData)
 
     async def _process_serial(self, reader):
         while True:
             data = await reader.readuntil(self.serial_padding)
             message = data.rstrip().hex()
-            print(f"=> {message}")
+            logger.debug(f"=> {message}")
             self.handle_response(message)
 
     
@@ -433,7 +438,7 @@ class DisplayController:
                     fut.set_result(item)
             elif item["method"] == "notify_status_update":
                 self.handle_status_update(item["params"][0])
-        print("Unix Socket Disconnection from _process_stream()")
+        logger.info("Unix Socket Disconnection from _process_stream()")
         await self.close()
 
     def handle_config_change(self, new_data):
@@ -459,17 +464,17 @@ class DisplayController:
     
     async def load_thumbnail_for_page(self, filename, page_number):
         self.current_gcode = None
-        print("Loading new GCode for " + filename)
+        logger.info("Loading new GCode for " + filename)
         gcode = requests.get(f"http://127.0.0.1/server/files/gcodes/{requests.utils.quote(filename)}").text
         lines = gcode.splitlines()
-        print("GCode Lines: " + str(len(lines)))
+        logger.debug("GCode Lines: " + str(len(lines)))
         if len(lines) < 100:
-            print("GCode too short to parse")
-            print(gcode)
+            logger.error("GCode too short to parse")
+            logger.debug(gcode)
             return
         for line in lines:
             if line.startswith(";gimage:"):
-                print("Found image in GCode")
+                logger.info("Found thumbnail in GCode")
                 image = line[8:]
 
                 parts = []
@@ -497,10 +502,10 @@ class DisplayController:
                 filename = new_data["print_stats"]["filename"]
                 if filename != self.current_filename:
                     self.current_filename = filename
-                    self._loop.create_task(self.load_new_gcode(self.current_filename, "19"))
+                    self._loop.create_task(self.load_thumbnail_for_page(self.current_filename, "19"))
             if "state" in new_data["print_stats"]:
                 state = new_data["print_stats"]["state"]
-                print(f"Status Update: {state}")
+                logger.info(f"Status Update: {state}")
                 if state == "printing" or state == "paused":
                     if self._get_current_page() not in PRINTING_PAGES:
                         self._navigate_to_page(f'page 19')
@@ -550,11 +555,22 @@ class DisplayController:
 
 
 try:
+    ch_log = logging.StreamHandler(sys.stdout)
+    ch_log.setLevel(logging.DEBUG)
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    ch_log.setFormatter(formatter)
+    logger.addHandler(ch_log)
+    file_log = logging.FileHandler(log_file)
+    file_log.setLevel(logging.ERROR)
+    file_log.setFormatter(formatter)
+    logger.addHandler(file_log)
+    logger.setLevel(logging.DEBUG)
+
     loop = asyncio.get_event_loop()
     controller = DisplayController()
     controller._loop = loop
     loop.call_later(1, controller.start_listening)
     loop.run_forever()
 except Exception as e:
-    print("Error communicating...: " + str(e))
-    print(traceback.format_exc())
+    logger.error("Error communicating...: " + str(e))
+    logger.error(traceback.format_exc())
