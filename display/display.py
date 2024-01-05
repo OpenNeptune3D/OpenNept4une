@@ -87,7 +87,7 @@ DATA_MAPPING = {
     },
     "output_pin Part_Light": {"value": [MappingLeaf(["p[84].led1"], field_type="pic", formatter=lambda x: "77" if int(x) == 1 else "76")]},
     "output_pin Frame_Light": {"value": [MappingLeaf(["p[84].led2"], field_type="pic", formatter= lambda x: "77" if int(x) == 1 else "76")]},
-    "filament_switch_sensor fila": {"enabled": [MappingLeaf(["p[11].b[11]"], field_type="pic", formatter= lambda x: "77" if int(x) == 1 else "76")]}
+    "filament_switch_sensor fila": {"enabled": [MappingLeaf(["p[11].b[11]", "p[127].b[16]"], field_type="pic", formatter= lambda x: "77" if int(x) == 1 else "76")]}
 }
 
 PRINTING_PAGES = [
@@ -473,7 +473,9 @@ class DisplayController:
         logger.debug(f"Client Identified With Moonraker: {ret}")
 
         system = (await self._send_moonraker_request("machine.system_info"))["result"]["system_info"]
-        self._write("p[35].b[16].txt=\"" + ", ".join(self._find_ips(system["network"])) + "\"")
+        ips = ", ".join(self._find_ips(system["network"]))
+        self._write("p[35].b[16].txt=\"" + ips + "\"")
+        self._write("p[127].b[20].txt=\"" + ips + "\"")
         software_version = (await self._send_moonraker_request("printer.info"))["result"]["software_version"]
         self._write("p[35].b[10].txt=\"" + software_version.split("-")[0] + "\"")
 
