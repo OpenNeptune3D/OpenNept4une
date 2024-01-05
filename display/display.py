@@ -192,7 +192,7 @@ class DisplayController:
         self._write(f'p[35].b[8].txt="{self.get_device_name()}"')
 
     def send_gcode(self, gcode):
-        logger.debug("Sending GCODE: " + gcode")
+        logger.debug("Sending GCODE: " + gcode)
         self._loop.create_task(self._send_moonraker_request("printer.gcode.script", {"script": gcode}))
 
     def move_axis(self, axis, distance):
