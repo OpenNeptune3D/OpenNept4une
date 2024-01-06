@@ -75,7 +75,7 @@ There are multiple ways to determine which current the steppers are running at, 
 3. (Most safe) checking the inscription on the steppers themselves:
    Check the side of the X/Y stepper motors, they should either say "BJ42**D15-26V77**" which is the 0.8A or "BJ42**D22-53V04**" which is the 1.2A current variant. See [this image](pictures/stepper-current.png) for a comparison.
 
-*Determining the PBC Version:*
+*Determining the PCB Version:*
 
 The second value needed by the install script is the PCB version. When you remove the eMMC for flashing make sure you keep an eye on the silkscreening on the PCB, it should either state V1.0 or V1.1, that is the input value when prompted in the script (see the yellow squares in these images for reference):
 
