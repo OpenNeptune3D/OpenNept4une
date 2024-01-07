@@ -5,17 +5,7 @@ echo "Stopping the Klipper service..."
 sudo service klipper stop
 
 # Short delay to ensure the service has stopped
-sleep 1
-
-# Enable bootloader mode
-echo "Enabling bootloader mode..."
-sudo gpioset gpiochip1 15=0
-sleep 0.5
-sudo gpioset gpiochip1 14=1
-sleep 0.5
-sudo gpioset gpiochip1 15=1
-sleep 0.5
-sudo gpioset gpiochip1 14=0
+sleep .5
 
 # Prompt for backup
 echo "Do you want to create a firmware backup? (y/n)"
@@ -32,6 +22,15 @@ if [[ $create_backup == "y" ]]; then
             BACKUP_FILE=~/${new_backup_file}
         fi
     fi
+    # Enable bootloader mode
+    echo "Enabling bootloader mode..."
+    sudo gpioset gpiochip1 15=0
+    sleep 0.5
+    sudo gpioset gpiochip1 14=1
+    sleep 0.5
+    sudo gpioset gpiochip1 15=1
+    sleep 0.5
+    sudo gpioset gpiochip1 14=0
     echo "Backing up current firmware to $BACKUP_FILE..."
     stm32flash -r "$BACKUP_FILE" -g 0x0 /dev/ttyS0
 else
@@ -72,7 +71,7 @@ cd ~/klipper/
 make menuconfig
 
 # Enable bootloader mode again
-echo "Enabling bootloader mode again..."
+echo "Enabling bootloader mode..."
 sudo gpioset gpiochip1 15=0
 sleep 0.5
 sudo gpioset gpiochip1 14=1
