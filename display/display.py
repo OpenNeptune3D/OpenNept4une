@@ -118,10 +118,10 @@ TRANSITION_PAGES = [
     "page 130",
 ]
 
-MODEL_REGULAR = 0
-MODEL_PRO = 1
-MODEL_PLUS = 2
-MODEL_MAX = 3
+MODEL_REGULAR = 'N4'
+MODEL_PRO = 'N4Pro'
+MODEL_PLUS = 'N4Plus'
+MODEL_MAX = 'N4Max'
 
 BACKGROUND_GRAY = 10665
 
@@ -145,7 +145,7 @@ class DisplayController:
         padding = [0xFF, 0xFF, 0xFF]
         self.serial_padding = serial.to_bytes(padding)
 
-        self.printer_model = MODEL_REGULAR
+        self.printer_model = self.get_printer_model_from_file()
 
         self.printable_files = []
         self.files_page = 0
@@ -169,16 +169,27 @@ class DisplayController:
 
         self.current_filename = None
 
+    def get_printer_model_from_file(self):
+        try:
+            with open('/boot/.OpenNept4une.txt', 'r') as file:
+                for line in file:
+                    if line.startswith(tuple([MODEL_REGULAR, MODEL_PRO, MODEL_PLUS, MODEL_MAX])):
+                        model_part = line.split('-')[0]
+                        print(f"Extracted Model: {model_part}")
+                        return model_part
+        except FileNotFoundError:
+            print("File not found")
+        except Exception as e:
+            print(f"Error reading file: {e}")
+        return None
+
     def get_device_name(self):
-        if self.printer_model == MODEL_REGULAR:
-            return "Neptune 4"
-        elif self.printer_model == MODEL_PRO:
-            return "Neptune 4 Pro"
-        elif self.printer_model == MODEL_PLUS:
-            return "Neptune 4 Plus"
-        elif self.printer_model == MODEL_MAX:
-            return "Neptune 4 Max"
-        return "Unknown"
+        model_map = {
+            MODEL_REGULAR: "Neptune 4",
+            MODEL_PRO: "Neptune 4 Pro",
+            MODEL_PLUS: "Neptune 4 Plus",
+            MODEL_MAX: "Neptune 4 Max",
+        }
 
     def initialize_display(self):
         if self.printer_model == MODEL_REGULAR:
@@ -187,7 +198,10 @@ class DisplayController:
             self._write(f'p[1].q4.picc=214') #214=N4Pro
             self._write(f'p[1].disp_q5.val=1') # N4Pro Outer Bed Symbol (Bottom Rig>
             self._write(f'vis out_bedtemp,1') # Only N4Pro
-
+        elif self.printer_model == MODEL_PLUS:
+            self._write(f'p[1].q4.picc=213') # 213=N4
+        elif self.printer_model == MODEL_MAX:
+            self._write(f'p[1].q4.picc=213') # 213=N4
 
         self._write(f'p[35].b[8].txt="{self.get_device_name()}"')
 
