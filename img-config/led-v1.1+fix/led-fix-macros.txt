@@ -2,11 +2,11 @@
 # LED Control ZNP-K1 v1.1
 #####################################################################
 
-#[output_pin Frame_Light]
-#pin: rpi:gpiochip2/gpio2
+[output_pin Frame_Light]
+pin: rpi:gpiochip2/gpio2
 
-#[output_pin Part_Light]
-#pin: rpi:gpiochip2/gpio15
+[output_pin Part_Light]
+pin: rpi:gpiochip2/gpio15
 
 
 #####################################################################
@@ -28,3 +28,4 @@ gcode:
 [gcode_macro Part_Light_OFF]
 gcode:
   SET_PIN PIN=Part_Light VALUE=0
+
