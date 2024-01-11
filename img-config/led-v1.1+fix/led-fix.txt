@@ -1,13 +1,3 @@
-~/kiauh/kiauh.sh
-
-Advanced - (Option 4)
-
-G-Code Shell Command - (Option 8)
-
-Y
-N
-Exit
-
 Paste this command to the terminal as a one-liner:
 
 sudo groupadd gpio || true && sudo usermod -a -G gpio mks && echo 'SUBSYSTEM=="gpio", KERNEL=="gpiochip*", GROUP="gpio", MODE="0660"' | sudo tee /etc/udev/rules.d/99-gpio.rules > /dev/null && sudo reboot
