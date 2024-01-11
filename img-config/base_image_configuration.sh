@@ -78,8 +78,13 @@ sudo apt autoremove -y
 sudo rm -rf /var/log/*
 
 # Create gpio and spi groups if they don't exist (for led control v.1.1+ & ADXL SPI
-sudo groupadd gpio || true
-sudo groupadd spiusers || true
+sudo groupadd gpio || true && sudo usermod -a -G gpio mks && echo 'SUBSYSTEM=="gpio", KERNEL=="gpiochip*", GROUP="gpio", MODE="0660"' | sudo tee /etc/udev/rules.d/99-gpio.rules > /dev/null 
+sudo groupadd spiusers || true $$ sudo usermod -a -G spiusers mks 
+
+sudo cp ~/OpenNept4une/img-config/spidev-fix/rockchip-fixup.scr /boot/dtb/rockchip/overlay/
+sudo cp ~/OpenNept4une/img-config/spidev-fix/rockchip-spi-spidev.dtbo /boot/dtb/rockchip/overlay/
+
+sudo cp ~/OpenNept4une/img-config/spidev-fix/99-spidev.rules /etc/udev/rules.d/
 
 sudo sh -c 'echo "$(date)" > /boot/.OpenNept4une.txt'
 
