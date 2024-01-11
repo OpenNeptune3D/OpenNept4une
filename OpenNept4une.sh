@@ -5,6 +5,10 @@ SCRIPT="/home/mks/OpenNept4une/OpenNept4une.sh"
 DISPLAY_SERVICE_INSTALLER="/home/mks/OpenNept4une/display/display-service-installer.sh"
 MCU_RPI_INSTALLER="/home/mks/OpenNept4une/img-config/rpi-mcu-install.sh"
 USB_STORAGE_AUTOMOUNT="/home/mks/OpenNept4une/img-config/usb-storage-automount.sh"
+ANDROID_RULE_INSTALLER="/home/mks/OpenNept4une/img-config/adb-automount.sh"
+CROWSNEST_FIX_INSTALLER="/home/mks/OpenNept4une/img-config/crowsnest-lag-fix.sh"
+BASE_IMAGE_INSTALLER="/home/mks/OpenNept4une/img-config/base_image_configuration.sh"
+DE_ELEGOO_IMAGE_CLEANSER="/home/mks/OpenNept4une/img-config/de_elegoo_cleanser.sh"
 FLAG_FILE="/boot/.OpenNept4une.txt"
 
 # Image Fixes 
@@ -24,15 +28,14 @@ fi
 
 # ASCII art for OpenNept4une 
 OPENNEPT4UNE_ART=$(cat <<'EOF'
- _____                         __  __                 __    __ __
-/\  __`\                      /\ \/\ \               /\ \__/\ \\ \
-\ \ \/\ \  _____     __    ___\ \ `\\ \     __  _____\ \ ,_\ \ \\ \     ___      __
- \ \ \ \ \/\ '__`\ /'__`\/' _ `\ \ , ` \  /'__`/\ '__`\ \ \/\ \ \\ \_ /' _ `\  /'__`\
-  \ \ \_\ \ \ \L\ /\  __//\ \/\ \ \ \`\ \/\  __\ \ \L\ \ \ \_\ \__ ,__/\ \/\ \/\  __/
-   \ \_____\ \ ,__\ \____\ \_\ \_\ \_\ \_\ \____\ \ ,__/\ \__\\/_/\_\_\ \_\ \_\ \____\
-    \/_____/\ \ \/ \/____/\/_/\/_/\/_/\/_/\/____/\ \ \/  \/__/   \/_/  \/_/\/_/\/____/
-             \ \_\                                \ \_\
-              \/_/                                 \/_/
+
+  ____                _  __         __  ____              
+ / __ \___  ___ ___  / |/ /__ ___  / /_/ / /__ _____  ___ 
+/ /_/ / _ \/ -_) _ \/    / -_) _ \/ __/_  _/ // / _ \/ -_)
+\____/ .__/\__/_//_/_/|_/\__/ .__/\__/ /_/ \_,_/_//_/\__/ 
+    /_/                    /_/                            
+
+
 EOF
 )
 
@@ -84,6 +87,119 @@ update_repo() {
 }
 
 update_repo
+
+advanced_more() {
+clear_screen
+    echo -e "\033[0;33m$OPENNEPT4UNE_ART\033[0m"
+    echo "======================================"
+    echo "Welcome to OpenNept4une"
+    echo "======================================"
+    echo "1) Install Android ADB rules (klipperscreen)"
+    echo ""
+    echo "2) Install Crowsnest FPS Fix"
+    echo ""
+    echo "3) Base Compiled Image Config (Dont use on release images)"
+    echo ""
+    echo "4) Elegoo Image Cleanser Script (De-Elegoo)"
+    echo ""
+    echo "5) Return Main Menu"
+    echo "======================================"
+
+read -p "Enter your choice: " choice
+    case $choice in
+        1)
+            android_rules
+            ;;
+        2)
+            crowsnest_fix
+            ;;
+        3)
+            base_image_config
+            ;;
+        4)
+            de_elegoo_image_cleanser
+            ;;
+        5)
+            print_menu
+            ;;
+    esac
+}
+
+android_rules() {
+    clear_screen
+    echo -e "\033[0;33m$OPENNEPT4UNE_ART\033[0m"
+    echo "======================================"
+    echo "Do you want to install the android ADB rules? (may fix klipperscreen issues)"
+    read -p "Enter 'y' to install, any other key to skip: " install_android_rules
+
+    if [[ $install_android_rules == "y" ]]; then
+        echo "Running ADB Rule Installer..."
+        if [ -f "$ANDROID_RULE_INSTALLER" ]; then
+            chmod +x "$ANDROID_RULE_INSTALLER"
+            "$ANDROIF_RULE_INSTALLER"
+        else
+            echo "Error: Android rule installer script not found."
+        fi
+        echo "======================================"
+    fi
+}
+
+crowsnest_fix() {
+    clear_screen
+    echo -e "\033[0;33m$OPENNEPT4UNE_ART\033[0m"
+    echo "======================================"
+    echo "Do you want to install the crowsnest fps fix?"
+    read -p "Enter 'y' to install, any other key to skip: " install_crowsnest_fix
+
+    if [[ $install_crowsnest_fix == "y" ]]; then
+        echo "Running crowsnest Fix Installer..."
+        if [ -f "$CROWSNEST_FIX_INSTALLER" ]; then
+            chmod +x "$CROWSNEST_FIX_INSTALLER"
+            "$CROWSNEST_FIX_INSTALLER"
+        else
+            echo "Error: crowsnest fix installer script not found."
+        fi
+        echo "======================================"
+    fi
+}
+
+base_image_config() {
+    clear_screen
+    echo -e "\033[0;33m$OPENNEPT4UNE_ART\033[0m"
+    echo "======================================"
+    echo "Do you want to configure a base/fresh armbian image that you compiled?"
+    read -p "Enter 'y' to install, any other key to skip: " install_base_image_config
+
+    if [[ $install_base_image_config == "y" ]]; then
+        echo "Running base/fresh image Installer..."
+        if [ -f "$BASE_IMAGE_INSTALLER" ]; then
+            chmod +x "$BASE_IMAGE_INSTALLER"
+            "$BASE_IMAGE_INSTALLER"
+        else
+            echo "Error: Base Image installer script not found."
+        fi
+        echo "======================================"
+    fi
+}
+
+de_elegoo_image_cleanser() {
+    clear_screen
+    echo -e "\033[0;33m$OPENNEPT4UNE_ART\033[0m"
+    echo "======================================"
+    echo "DO NOT run this on an OpenNept4une GitHub Image, for Elegoo images only! Continue at your own risk?"
+    read -p "Enter 'y' to install, any other key to skip: " install_de_elegoo_image_cleanser
+
+    if [[ $install_de_elegoo_image_cleanser == "y" ]]; then
+        echo "Running De-Elegoo Script..."
+        if [ -f "$DE_ELEGOO_IMAGE_CLEANSER" ]; then
+            chmod +x "$DE_ELEGOO_IMAGE_CLEANSER"
+            "$DE_ELEGOO_IMAGE_CLEANSER"
+        else
+            echo "Error: De-Elegoo script not found."
+        fi
+        echo "======================================"
+    fi
+}
 
 # Function to install the Screen Service
 install_screen_service() {
@@ -319,7 +435,7 @@ print_menu() {
     echo ""
     echo "5) Install (WIP) Touch Screen Implementation"
     echo ""
-    echo "6) Re-Install latest DTB file"
+    echo "6) Advanced / More"
     echo ""
     echo "7) Update repository"
     echo ""
@@ -348,7 +464,7 @@ while true; do
             install_screen_service
             ;;
         6)
-            reinstall_dtb
+            advanced_more
             ;;
         7)
             update_repo
