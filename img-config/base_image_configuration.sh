@@ -70,12 +70,28 @@ fi
 
 # System updates and cleanups
 sudo apt update 
-sudo apt install ustreamer -y
+sudo apt install ustreamer git python3-numpy python3-matplotlib libatlas-base-dev -y
 sudo apt dist-upgrade -y
 sudo apt clean -y
 sudo apt autoclean -y
 sudo apt autoremove -y
 sudo rm -rf /var/log/*
+
+# Create gpio and spi groups if they don't exist (for led control v.1.1+ & ADXL SPI
+sudo groupadd gpio || true
+sudo groupadd spiusers || true
+
+sudo sh -c 'echo "$(date)" > /boot/.OpenNept4une.txt'
+
+# Add extraargs to armbianEnv.txt if not exists - makes net interface naming start from 0
+FILE_PATH="/boot/armbianEnv.txt"
+LINE_TO_ADD="extraargs=net.ifnames=0"
+if grep -q "$LINE_TO_ADD" "$FILE_PATH"; then
+    echo "The line '$LINE_TO_ADD' already exists in $FILE_PATH."
+else
+    echo "$LINE_TO_ADD" | sudo tee -a "$FILE_PATH" > /dev/null
+    echo "Added '$LINE_TO_ADD' to $FILE_PATH."
+fi
 
 # Add sync command to crontab if not exists
 CRON_ENTRY="*/10 * * * * /bin/sync"
