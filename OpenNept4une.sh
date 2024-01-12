@@ -136,7 +136,7 @@ android_rules() {
         echo "Running ADB Rule Installer..."
         if [ -f "$ANDROID_RULE_INSTALLER" ]; then
             chmod +x "$ANDROID_RULE_INSTALLER"
-            "$ANDROIF_RULE_INSTALLER"
+            "$ANDROID_RULE_INSTALLER"
         else
             echo "Error: Android rule installer script not found."
         fi
