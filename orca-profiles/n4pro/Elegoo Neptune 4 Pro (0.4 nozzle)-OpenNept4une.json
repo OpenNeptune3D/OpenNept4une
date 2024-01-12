@@ -6,6 +6,7 @@
         "0x0"
     ],
     "before_layer_change_gcode": "",
+  	"change_filament_gcode": "M600",
     "best_object_pos": "0.5,0.5",
     "change_extrusion_role_gcode": "",
     "change_filament_gcode": "",
