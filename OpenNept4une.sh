@@ -301,8 +301,18 @@ apply_configuration() {
         return 1
     fi
     
-    cp -r /home/mks/OpenNept4une/img-config/printer-data/* /home/mks/printer_data/config/
-    mv /home/mks/printer_data/config/data.mdb /home/mks/printer_data/database/data.mdb
+    # User prompt for installing KAMP/moonraker and fluidd GUI configuration
+    echo "Do you wish to install the latest KAMP/moonraker/fluiddGUI configurations? (yes/no)"
+    read -p "If this is a first-time install, it is recommended. If just updating printer.cfg & you have custom KAMP configurations, it is best to skip: " user_choice
+
+    if [[ "$user_choice" == "yes" ]]; then
+        # Commands to install the latest configurations
+        echo "Installing latest configurations..."
+        cp -r /home/mks/OpenNept4une/img-config/printer-data/* /home/mks/printer_data/config/
+        mv /home/mks/printer_data/config/data.mdb /home/mks/printer_data/database/data.mdb
+    else
+        echo "Skipping the installation of latest configurations."
+    fi
 }
     
 install_printer_cfg() {
