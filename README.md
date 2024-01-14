@@ -119,7 +119,7 @@ chmod +x ~/OpenNept4une/OpenNept4une.sh && ~/OpenNept4une/OpenNept4une.sh
 ``` 
 - Run **Install latest OpenNept4une Printer.cfg**
 
-- If you have a v1.1 N4/Pro, delete LED Control v1.0 in your new printer.cfg & un-comment v1.1 LED section.
+When prompted answer (yes) to updating other configurations (KAMP / moonraker etc).
 
 # General Configuration Instructions
 
