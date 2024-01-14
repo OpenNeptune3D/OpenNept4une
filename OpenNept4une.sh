@@ -328,6 +328,7 @@ install_printer_cfg() {
     PRINTER_CFG_DEST="/home/mks/printer_data/config"
     DTB_DEST="/boot/dtb/rockchip/rk3328-roc-cc.dtb"
     DATABASE_DEST="/home/mks/printer_data/database"
+    PRINTER_CFG_FILE="$PRINTER_CFG_DEST/printer.cfg"
     BACKUP_PRINTER_CFG_FILE="$PRINTER_CFG_DEST/backup-printer.cfg.bak"
 
     # Backup existing printer.cfg if it exists
