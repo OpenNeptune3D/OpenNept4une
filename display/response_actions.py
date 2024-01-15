@@ -9,7 +9,7 @@ response_actions = {
     '650101ffffff': "files_picker",  # Page 1 > Print Files Page 1
     '650102ffffff': "page 8",  # Page 1 > Prepare Page (Move)
     '650103ffffff': "page 11", # Page 1 > Settings Page
-    '650104ffffff': "page 14", # Page 1 > Level Page
+    #'650104ffffff': "page 14", # Page 1 > Level Page
     # PRINT PAGE OPTIONS
     '650202ffffff': "files_page_next",  # Next Page Print Files ->
     '650201ffffff': "files_page_prev",  # Previous Print Files Page <-
