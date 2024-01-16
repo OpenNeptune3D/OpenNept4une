@@ -704,3 +704,451 @@ Vendor:  MediaTek Inc.
   - MT7612U 802.11a/b/g/n/ac Wireless Adapter
 Vendor:  Microsoft Corp.
   - Xbox Wireless Adapter for Windows
+
+aic8800                            mt7662.bin
+ap6210                             mt7662_rom_patch.bin
+ap6212                             novatek
+ap6275p                            nvram_ap6255.txt
+ath10k                             nvram_ap6256.txt
+ath11k                             nvram_ap6398s.txt
+BCM4345C0.hcd                      qca
+BCM4345C5.hcd                      qcom
+bootsplash.armbian                 README.md
+brcm                               regulatory.db
+bt_configure_pskey.ini             regulatory.db-debian
+bt_configure_rf.ini                regulatory.db.p7s
+cirrus                             regulatory.db.p7s-debian
+dvb-demod-mn88472-02.fw            regulatory.db.p7s-upstream
+dvb-demod-mn88473-01.fw            regulatory.db-upstream
+dvb-demod-si2168-d60-01.fw         rkwifi
+dvb-fe-xc4000-1.4.1.fw             rockchip
+dvb-fe-xc4000-1.4.fw               rt2870.bin
+dvb-fe-xc5000-1.6.114.fw           RTL8192SU
+dvb-fe-xc5000c-4.1.30.7.fw         rtl8852au_config
+dvb-tuner-si2141-a10-01.fw         rtl8852au_fw
+dvb-usb-tbs5520.fw                 rtl8852bu_config
+eagle_fw_ate_config_v19.bin        rtl8852bu_fw
+eagle_fw_first_init_v19.bin        rtl8852cu_config
+eagle_fw_second_init_v19.bin       rtl8852cu_fw
+edid                               rtl_bt
+fw_bcm43455c0_ag_apsta.bin         rtlbt
+fw_bcm43455c0_ag.bin               rtl_nic
+fw_bcm43455c0_ag_p2p.bin           rtlwifi
+fw_bcm43456c5_ag_apsta.bin         rtw88
+fw_bcm43456c5_ag.bin               s5p-mfc-v8.fw
+fw_bcm43456c5_ag_p2p.bin           sdma
+fw_bcm4359c0_ag.bin                ssv6051-sw.bin
+imx                                ssv6051-wifi.cfg
+intel                              ssv6x5x-sw.bin
+iwlwifi-3160-17.ucode              ssv6x5x-wifi.cfg
+iwlwifi-3168-29.ucode              ti-connectivity
+iwlwifi-7260-17.ucode              uwe5621ds
+iwlwifi-7265-17.ucode              uwe5622
+iwlwifi-7265D-29.ucode             v4l-coda960-imx6dl.bin
+iwlwifi-8000C-36.ucode             v4l-coda960-imx6q.bin
+iwlwifi-8265-36.ucode              video
+iwlwifi-9260-th-b0-jf-b0-46.ucode  vpu
+iwlwifi-cc-a0-59.ucode             wcnmodem.bin
+iwlwifi-ty-a0-gf-a0-59.ucode       wifi_2355b001_1ant.ini
+mediatek                           xc3028L-v36.fw
+meson                              xc3028-v27.fw
+mt7601.bin                         xc4000-1.4.fw
+mt7601u.bin                        xr819
+mt7610u.bin
+
+./aic8800:
+PCIE  SDIO  USB
+
+./aic8800/PCIE:
+aic_userconfig_8800d80.txt  fw_patch_8800d80_u02.bin
+fmacfw_8800D80_pcie.bin     fw_patch_table_8800d80_u02.bin
+fw_adid_8800d80_u02.bin     lmacfw_rf_pcie.bin
+
+./aic8800/SDIO:
+aic8800  aic8800D80  aic8800DC
+
+./aic8800/SDIO/aic8800:
+aic_userconfig.txt        fw_adid.bin         fw_patch_table_u03.bin
+fmacfw_8800m_custmsg.bin  fw_adid_u03.bin     fw_patch_test.bin
+fmacfw.bin                fw_patch.bin        fw_patch_u03.bin
+fmacfw_rf.bin             fw_patch_table.bin
+
+./aic8800/SDIO/aic8800D80:
+aic_userconfig_8800d80.txt  fw_patch_8800d80_u02.bin
+fmacfw_8800d80_u02.bin      fw_patch_table_8800d80_u02.bin
+fw_adid_8800d80_u02.bin     lmacfw_rf_8800d80_u02.bin
+
+./aic8800/SDIO/aic8800DC:
+aic_userconfig_8800dc.txt            fmacfw_patch_tbl_8800dc_u02.bin
+aic_userconfig_8800dw.txt            fw_adid_8800dc_u02.bin
+fmacfw_calib_8800dc_h_u02.bin        fw_adid_8800dc_u02h.bin
+fmacfw_calib_8800dc_u02.bin          fw_patch_8800dc_u02.bin
+fmacfw_patch_8800dc_h_u02.bin        fw_patch_8800dc_u02h.bin
+fmacfw_patch_8800dc_ipc_u02.bin      fw_patch_table_8800dc_u02.bin
+fmacfw_patch_8800dc_u02.bin          fw_patch_table_8800dc_u02h.bin
+fmacfw_patch_tbl_8800dc_h_u02.bin    lmacfw_rf_8800dc.bin
+fmacfw_patch_tbl_8800dc_ipc_u02.bin
+
+./aic8800/USB:
+aic8800  aic8800D80  aic8800DC
+
+./aic8800/USB/aic8800:
+aic_userconfig.txt       fw_ble_scan_ad_filter_dcdc.bin
+fmacfw.bin               fw_ble_scan_ad_filter_ldo.bin
+fmacfw_m2d.bin           fw_ble_scan.bin
+fmacfw_no_msg_ep.bin     fw_patch.bin
+fmacfw_no_msg_ep_rf.bin  fw_patch_rf.bin
+fmacfw_rf.bin            fw_patch_table.bin
+fw_adid.bin              fw_patch_table_u03.bin
+fw_adid_rf.bin           fw_patch_u03.bin
+fw_adid_u03.bin          m2d_ota.bin
+
+./aic8800/USB/aic8800D80:
+aic_userconfig_8800d80.txt  fw_ble_scan_ad_filter.bin
+calibmode_8800d80.bin       fw_patch_8800d80_u02.bin
+fmacfw_8800d80_u02.bin      fw_patch_table_8800d80_u02.bin
+fw_adid_8800d80_u02.bin     lmacfw_rf_8800d80_u02.bin
+
+./aic8800/USB/aic8800DC:
+aic_userconfig_8800dc.txt          fmacfw_patch_tbl_8800dc_ipc_u02.bin
+aic_userconfig_8800dw.txt          fmacfw_patch_tbl_8800dc_u02.bin
+fmacfw_calib_8800dc_h_u02.bin      fw_adid_8800dc_u02h.bin
+fmacfw_calib_8800dc_u02.bin        fw_patch_8800dc_u02.bin
+fmacfw_patch_8800dc_h_u02.bin      fw_patch_8800dc_u02h.bin
+fmacfw_patch_8800dc_ipc_u02.bin    fw_patch_table_8800dc_u02.bin
+fmacfw_patch_8800dc_u02.bin        fw_patch_table_8800dc_u02h.bin
+fmacfw_patch_tbl_8800dc_h_u02.bin  lmacfw_rf_8800dc.bin
+
+./ap6210:
+bcm20710a1.hcd           fw_bcm40181a2.bin      nvram_apxxxx.txt
+bd_addr.txt              fw_bcm40181a2_p2p.bin  nvram.txt
+fw_bcm40181a2_apsta.bin  nvram_ap6210.txt
+
+./ap6212:
+bcm43438a0.hcd           fw_bcm43438a0.bin        fw_bcm43438a1.bin
+bcm43438a1.hcd           fw_bcm43438a0_mfg.bin    fw_bcm43438a1_mfg.bin
+fw_bcm43438a0_apsta.bin  fw_bcm43438a1_apsta.bin  nvram.txt
+
+./ap6275p:
+BCM4362A2.hcd                config.txt                 nvram_AP6275P.txt
+clm_bcm43752a2_pcie_ag.blob  fw_bcm43752a2_pcie_ag.bin
+
+./ath10k:
+QCA9377
+
+./ath10k/QCA9377:
+hw1.0
+
+./ath10k/QCA9377/hw1.0:
+board-2.bin  board.bin  firmware-sdio-5.bin
+
+./ath11k:
+WCN6855
+
+./ath11k/WCN6855:
+hw2.1
+
+./brcm:
+bcm4329.hcd
+BCM4330B1.hcd
+bcm4330.hcd
+BCM43342.hcd
+BCM4334B0.hcd
+BCM43430A1.hcd
+bcm43438-sdio.hcd
+BCM4343A0.hcd
+BCM4345C0_003.001.025.0162.0000_Generic_UART_37_4MHz_wlbga_ref_iLNA_iTR_eLG.hcd
+BCM4345C0.radxa,zero2.hcd
+BCM4345C5.hcd
+BCM4356A2.hcd
+BCM4359C0.hcd
+BCM4362A2.hcd
+BCM4362A2-khadas-vim4.hcd
+brcmfmac4329-sdio.bin
+brcmfmac4329-sdio.txt
+brcmfmac4330-sdio.bin
+brcmfmac4330-sdio.rockchip,rk3318-box.txt
+brcmfmac4330-sdio.txt
+brcmfmac43342-sdio.bin
+brcmfmac43342-sdio.txt
+brcmfmac4334-sdio.bin
+brcmfmac4334-sdio.rockchip,rk3318-box.txt
+brcmfmac43362-sdio.bin
+brcmfmac43362-sdio.txt
+brcmfmac4339-sdio.1CK.txt
+brcmfmac4339-sdio.bin
+brcmfmac4339-sdio.txt
+brcmfmac4339-sdio.ZP.txt
+brcmfmac43430a0-sdio.bin
+brcmfmac43430a0-sdio.txt
+brcmfmac43430-sdio.bin
+brcmfmac43430-sdio.clm_blob
+brcmfmac43430-sdio.txt
+brcmfmac43455-sdio.bin
+brcmfmac43455-sdio.clm_blob
+brcmfmac43455-sdio.radxa,zero2.bin
+brcmfmac43455-sdio.radxa,zero2.txt
+brcmfmac43455-sdio.txt
+brcmfmac43456-sdio.bin
+brcmfmac43456-sdio.clm_blob
+brcmfmac43456-sdio.radxa,rockpi4b.bin
+brcmfmac43456-sdio.radxa,rockpi4b.txt
+brcmfmac43456-sdio.radxa,zero2.bin
+brcmfmac43456-sdio.radxa,zero2.txt
+brcmfmac43456-sdio.radxa,zero.bin
+brcmfmac43456-sdio.radxa,zero.txt
+brcmfmac43456-sdio.txt
+brcmfmac4356-sdio.bin
+brcmfmac4356-sdio.clm_blob
+brcmfmac4356-sdio-nanopi-m4v2.bin
+brcmfmac4356-sdio-nanopi-m4v2.txt
+brcmfmac4356-sdio.txt
+brcmfmac4359-sdio.bin
+brcmfmac4359-sdio.txt
+brcmfmac43752-sdio.bin
+brcmfmac43752-sdio.clm_blob
+brcmfmac43752-sdio.txt
+brcmfmac-ap6330-sdio.bin
+brcmfmac-ap6330-sdio.txt
+clm_bcm43752a2_ag.blob
+config_bcm43456c5_ag.txt
+config_bcm43752a2_ag.txt
+config.txt
+fw_bcm43456c5_ag_apsta.bin
+fw_bcm43456c5_ag.bin
+fw_bcm43752a2_ag_apsta.bin
+fw_bcm43752a2_ag.bin
+fw_bcm43752a2_ag_p2p.bin
+nvram_ap6256.txt
+nvram_ap6275s.txt
+
+./cirrus:
+cs35l41-dsp1-spk-prot-blh.bin  cs35l41-dsp1-spk-prot-tll.bin
+cs35l41-dsp1-spk-prot-bll.bin  cs35l41-dsp1-spk-prot-trh.bin
+cs35l41-dsp1-spk-prot-brh.bin  cs35l41-dsp1-spk-prot-trl.bin
+cs35l41-dsp1-spk-prot-brl.bin  cs35l41-dsp1-spk-prot-xiaomi-elish.wmfw
+cs35l41-dsp1-spk-prot-tlh.bin
+
+./edid:
+1024x600.bin       1366x768.bin            1920x1080_24hz.bin  720x480.bin
+1024x768.bin       1400x1050.bin           1920x1080_50hz.bin  720x576.bin
+1152x864_75hz.bin  1440x900.bin            1920x1080.bin       800x480.bin
+1280x1024.bin      1600x1200.bin           1920x1200_30hz.bin  800x600.bin
+1280x720.bin       1600x900.bin            1920x1200_60hz.bin  848x480.bin
+1280x768.bin       1680x1050.bin           1920x800.bin
+1280x800.bin       1792x1344.bin           480x800.bin
+1360x768.bin       1920x1080_23_976hz.bin  640x480.bin
+
+./imx:
+sdma  vpu
+
+./imx/sdma:
+sdma-imx6q.bin  sdma-imx7d.bin
+
+./imx/vpu:
+vpu_fw_imx6d.bin  vpu_fw_imx6q.bin
+
+./intel:
+ibt-0041-0041.ddc  ibt-20-0-3.ddc  ibt-20-1-3.ddc  ibt-20-1-4.ddc
+ibt-0041-0041.sfi  ibt-20-0-3.sfi  ibt-20-1-3.sfi  ibt-20-1-4.sfi
+
+./mediatek:
+BT_RAM_CODE_MT7961_1_2_hdr.bin  ROMv2_lm_patch_1_0_hdr.bin
+mt7915_eeprom.bin               ROMv2_lm_patch_1_1_hdr.bin
+mt7915_eeprom_dbdc.bin          WIFI_MT7961_patch_mcu_1_2_hdr.bin
+mt7915_rom_patch.bin            WIFI_RAM_CODE_7623
+mt7915_wa.bin                   WIFI_RAM_CODE_MT7961_1.bin
+mt7915_wm.bin                   WMT_SOC.cfg
+nvram
+
+./mediatek/nvram:
+WIFI
+
+./meson:
+gx  gxbb  gxl  gxm  m8
+
+./meson/gx:
+h263_mc  vh265_mc  vh265_mc_mmu  vmjpeg_mc  vmpeg12_mc  vmpeg4_mc_5
+
+./meson/gxbb:
+vh264_mc
+
+./meson/gxl:
+vh264_mc
+
+./meson/gxm:
+vh264_mc
+
+./meson/m8:
+vh264_mc
+
+./novatek:
+nt36523-boe.bin  nt36523-csot.bin
+
+./qca:
+nvm_00230302.bin  rampatch_00230302.bin
+
+./qcom:
+a680_gmu.bin  a680_sqe.fw  a690_gmu.bin  sc8180x  sc8280xp  sm8250
+
+./qcom/sc8180x:
+SAMSUNG
+
+./qcom/sc8180x/SAMSUNG:
+W767
+
+./qcom/sc8180x/SAMSUNG/W767:
+qcadsp8180.mbn  qccdsp8180.mbn  qcdxkmsuc8180.mbn  qcmpss8180_XEF.mbn
+
+./qcom/sc8280xp:
+LENOVO  MICROSOFT  SC8280XP-LENOVO-X13S-tplg.bin
+
+./qcom/sc8280xp/LENOVO:
+21BX
+
+./qcom/sc8280xp/LENOVO/21BX:
+qcvss8280.mbn
+
+./qcom/sc8280xp/MICROSOFT:
+DEVKIT23
+
+./qcom/sc8280xp/MICROSOFT/DEVKIT23:
+adspr.jsn   battmgr.jsn  qcadsp8280.mbn  qcdxkmsuc8280.mbn
+adspua.jsn  cdspr.jsn    qccdsp8280.mbn  qcvss8280.mbn
+
+./qcom/sm8250:
+xiaomi
+
+./qcom/sm8250/xiaomi:
+elish
+
+./qcom/sm8250/xiaomi/elish:
+a650_zap.mbn  adspr.jsn   cdsp.mbn   slpi.mbn   slpius.jsn
+adsp.mbn      adspua.jsn  cdspr.jsn  slpir.jsn  venus.mbn
+
+./rkwifi:
+bcmdhd                      fw_RK901.bin
+config.txt                  fw_RK903_ag_apsta.bin
+fw_awnb108_ap.bin           fw_RK903_ag.bin
+fw_awnb108.bin              fw_RK903_ag_p2p.bin
+fw_bcm40183b2_ag_apsta.bin  fw_RK903b2_apsta.bin
+fw_bcm40183b2_ag.bin        fw_RK903b2.bin
+fw_bcm40183b2_ag_p2p.bin    fw_RK903b2_p2p.bin
+fw_bcm40183b2_apsta.bin     fw_RK903.bin
+fw_bcm40183b2.bin           fw_RK903_p2p.bin
+fw_bcm40183b2_p2p.bin       nvram_4330_oob.txt
+fw_bcm43241b4_ag_apsta.bin  nvram_4330.txt
+fw_bcm43241b4_ag.bin        nvram_AP6181.txt
+fw_bcm43241b4_ag_p2p.bin    nvram_AP6210_24M.txt
+fw_bcm4330_apsta.bin        nvram_AP6210.txt
+fw_bcm4330.bin              nvram_ap6212.txt
+fw_bcm43341b0_ag_apsta.bin  nvram_ap6233f.txt
+fw_bcm43341b0_ag.bin        nvram_AP6234.txt
+fw_bcm43341b0_ag_p2p.bin    nvram_ap6255.txt
+fw_bcm4334b1_ag_apsta.bin   nvram_ap6256.txt
+fw_bcm4334b1_ag.bin         nvram_ap62x2.txt
+fw_bcm4334b1_ag_p2p.bin     nvram_AP6330.txt
+fw_bcm4339a0_ag_apsta.bin   nvram_AP6335.txt
+fw_bcm4339a0_ag.bin         nvram_ap6354.txt
+fw_bcm4339a0_ag_p2p.bin     nvram_ap6356s.txt
+fw_bcm43438a0_apsta.bin     nvram_ap6356.txt
+fw_bcm43438a0.bin           nvram_AP6441.txt
+fw_bcm43438a0_p2p.bin       nvram_ap6452.txt
+fw_bcm43455c0_ag_apsta.bin  nvram_AP6476.txt
+fw_bcm43455c0_ag.bin        nvram_AP6493.txt
+fw_bcm43455c0_ag_p2p.bin    nvram_awnb108.txt
+fw_bcm43456c5_ag_apsta.bin  nvram_B23.txt
+fw_bcm43456c5_ag.bin        nvram_GB86302I.txt
+fw_bcm43456c5_ag_p2p.bin    nvram_RK901.txt
+fw_bcm4354a1_ag_apsta.bin   nvram_RK903_26M.cal
+fw_bcm4354a1_ag.bin         nvram_RK903.cal
+fw_bcm4354a1_ag_p2p.bin     nvram_RK903.txt
+fw_bcm4356a2_ag_apsta.bin   nvram_WL211.txt
+fw_bcm4356a2_ag.bin         otp.bin.z77
+fw_bcm4356a2_ag_p2p.bin     RT2870APCard.dat
+fw_RK901a0_apsta.bin        RT2870AP.dat
+fw_RK901a0.bin              RT2870STACard.dat
+fw_RK901a2_apsta.bin        RT2870STA.dat
+fw_RK901a2.bin              wifi_efuse_8189e.map
+fw_RK901a2_p2p.bin          wifi_efuse_8723bs-vq0.map
+
+./rkwifi/bcmdhd:
+fw-bcm43569a2-clm.bin.trx   nvfam-bcm43569a2-phy.txt
+fw-bcm43569a2-wfds.bin.trx
+
+./rockchip:
+dptx.bin
+
+./RTL8192SU:
+rtl8192sfw.bin
+
+./rtl_bt:
+rtl8723b_config.bin          rtl8723cs_vf_fw.bin      rtl8822b_fw.bin
+rtl8723b_fw.bin              rtl8723cs_xx_config.bin  rtl8822cs_config.bin
+rtl8723bs_config.bin         rtl8723cs_xx_fw.bin      rtl8822cs_fw.bin
+rtl8723bs_config-pine64.bin  rtl8723ds_config.bin     rtlbt_config
+rtl8723bs_fw.bin             rtl8723ds_fw.bin         rtlbt_fw
+rtl8723cs_cg_config.bin      rtl8821c_config.bin      rtlbt_fw_new
+rtl8723cs_cg_fw.bin          rtl8821c_fw.bin
+rtl8723cs_vf_config.bin      rtl8822b_config.bin
+
+./rtlbt:
+rtl8703a_config  rtl8723b_config_2Ant_S0  rtl8723cs_vf_fw
+rtl8703a_fw      rtl8723b_fw              rtl8723cs_xx_config
+rtl8703b_config  rtl8723b_VQ0_config      rtl8723cs_xx_fw
+rtl8703b_fw      rtl8723b_VQ0_fw          rtl8822b_config
+rtl8723a_config  rtl8723cs_cg_config      rtl8822b_fw
+rtl8723a_fw      rtl8723cs_cg_fw          rtl8822cs_config
+rtl8723b_config  rtl8723cs_vf_config      rtl8822cs_fw
+
+./rtl_nic:
+rtl8125b-2.fw  rtl8153a-3.fw  rtl8153b-2.fw  rtl8168h-2.fw
+
+./rtlwifi:
+rtl8188efw.bin        rtl8192eefw.bin          rtl8723bs_ap_wowlan.bin
+rtl8188eufw.bin       rtl8192eu_ap_wowlan.bin  rtl8723bs_nic.bin
+rtl8192cfw.bin        rtl8192eu_nic.bin        rtl8723bs_wowlan.bin
+rtl8192cfwU_B.bin     rtl8192eu_wowlan.bin     rtl8723bu_ap_wowlan.bin
+rtl8192cfwU.bin       rtl8192sefw.bin          rtl8723bu_nic.bin
+rtl8192cufw_A.bin     rtl8712u.bin             rtl8723bu_wowlan.bin
+rtl8192cufw_B.bin     rtl8723aufw_A.bin        rtl8723fw_B.bin
+rtl8192cufw.bin       rtl8723aufw_B.bin        rtl8723fw.bin
+rtl8192cufw_TMSC.bin  rtl8723aufw_B_NoBT.bin   rtl8821aefw.bin
+rtl8192defw.bin       rtl8723befw.bin          rtl8821aefw_wowlan.bin
+
+./rtw88:
+README           rtw8821c_fw.bin  rtw8822c_fw.bin
+rtw8723d_fw.bin  rtw8822b_fw.bin  rtw8822c_wow_fw.bin
+
+./sdma:
+sdma-imx25-to1.bin  sdma-imx35-to1.bin  sdma-imx53-to1.bin
+sdma-imx31-to1.bin  sdma-imx35-to2.bin
+sdma-imx31-to2.bin  sdma-imx51-to3.bin
+
+./ti-connectivity:
+wl18xx-conf.bin  wl18xx-fw-4.bin
+
+./uwe5621ds:
+bt_configure_pskey.ini          wifi_23550002_2ant.ini
+bt_configure_rf_marlin3_2.ini   wifi_23550002_3ant.ini
+bt_configure_rf_marlin3_3.ini   wifi_23550003_2ant.ini
+bt_configure_rf_marlin3e_2.ini  wifi_23550003_3ant.ini
+bt_configure_rf_marlin3e_3.ini  wifi_56630000_2ant.ini
+bt_configure_rf_marlin.ini      wifi_56630000_3ant.ini
+wcnmodem.bin                    wifi_56630001_2ant.ini
+wifi_23550001_2ant.ini          wifi_56630001_3ant.ini
+wifi_23550001_3ant.ini
+
+./uwe5622:
+wcnmodem-38222.bin  wcnmodem.bin  wifi_2355b001_1ant.ini
+
+./video:
+h264_enc.bin  video_ucode.bin
+
+./vpu:
+v4l-coda960-imx6dl.bin  vpu_fw_imx27_TO2.bin  vpu_fw_imx6d.bin
+v4l-coda960-imx6q.bin   vpu_fw_imx51.bin      vpu_fw_imx6q.bin
+vpu_fw_imx27_TO1.bin    vpu_fw_imx53.bin
+
+./xr819:
+boot_xr819.bin  device-xradio.mk  fw_xr819.bin  sdd_xr819.bin

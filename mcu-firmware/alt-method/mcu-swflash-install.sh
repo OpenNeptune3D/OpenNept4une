@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Path of the script to be created
-SCRIPT_PATH="/usr/local/bin/set_gpio.sh"
+SCRIPT_PATH="/usr/local/bin/gpio_set.sh"
 
 # Create and write the GPIO command to the script
 echo -e "#!/bin/bash\n/usr/bin/gpioset gpiochip1 14=0; /usr/bin/gpioset gpiochip1 15=0; sleep 0.5; /usr/bin/gpioset gpiochip1 15=1" | sudo tee "$SCRIPT_PATH" >/dev/null

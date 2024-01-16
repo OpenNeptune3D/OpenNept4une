@@ -1,8 +1,12 @@
 #!/bin/bash
 
+# Run the first script
+chmod +x /home/mks/OpenNept4une/display/display-env-install.sh && sudo /home/mks/OpenNept4une/display/display-env-install.sh
+
 # Define the service file path, script path, and log file path
 SERVICE_FILE="/etc/systemd/system/display.service"
 SCRIPT_PATH="/home/mks/OpenNept4une/display/display.py"
+VENV_PATH="/home/mks/OpenNept4une/display/venv"
 LOG_FILE="/var/log/display.log"
 
 # Check if the script exists
@@ -20,7 +24,7 @@ After=network.target
 
 [Service]
 ExecStartPre=/bin/sleep 30
-ExecStart=/usr/bin/python3 $SCRIPT_PATH >> $LOG_FILE 2>&1
+ExecStart=/home/mks/OpenNept4une/display/venv/bin/python /home/mks/OpenNept4une/display/display.py >> /var/log/display.log 2>&1
 WorkingDirectory=$(dirname $SCRIPT_PATH)
 Restart=always
 User=$(whoami)
@@ -37,9 +41,5 @@ sudo systemctl daemon-reload
 echo "Enabling and starting the service..."
 sudo systemctl enable display.service
 sudo systemctl start display.service
-
-# Display the status of the service
-echo "Service status:"
-sudo systemctl status display.service
 
 echo "Service setup complete."
