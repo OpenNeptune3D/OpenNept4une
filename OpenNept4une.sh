@@ -102,7 +102,9 @@ clear_screen
     echo ""
     echo "4) Elegoo Image Cleanser Script (De-Elegoo)"
     echo ""
-    echo "5) Return Main Menu"
+    echo "5) Resize Active Armbian Partition (for eMMC > 8GB)"
+    echo ""
+    echo "6) Return Main Menu"
     echo "======================================"
 
 read -p "Enter your choice: " choice
@@ -120,6 +122,9 @@ read -p "Enter your choice: " choice
             de_elegoo_image_cleanser
             ;;
         5)
+            armbian_resize
+            ;;
+        6)
             print_menu
             ;;
     esac
@@ -196,6 +201,25 @@ de_elegoo_image_cleanser() {
             "$DE_ELEGOO_IMAGE_CLEANSER"
         else
             echo "Error: De-Elegoo script not found."
+        fi
+        echo "======================================"
+    fi
+}
+
+armbian_resize() {
+    clear_screen
+    echo -e "\033[0;33m$OPENNEPT4UNE_ART\033[0m" 
+    echo "======================================"
+    echo "The system will reboot then resize after running this script"
+    echo "allow it some time to complete (15min) before powering off or rebooting again"
+    read -p "Enter 'y' to run, any other key to skip: " run_armbian_resize
+
+    if [[ $run_armbian_resize == "y" ]]; then
+        echo "Running Resize Script..."
+        if sudo systemctl enable armbian-resize-filesystem; then
+            sudo reboot
+        else
+            echo "Failed to enable resize service. Check for errors."
         fi
         echo "======================================"
     fi
