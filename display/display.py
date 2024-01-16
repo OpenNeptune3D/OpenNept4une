@@ -553,13 +553,14 @@ class DisplayController:
                 decoded = data[:-1].decode(encoding="utf-8")
                 item = json.loads(decoded)
             except (ConnectionError, asyncio.IncompleteReadError):
+                await self._attempt_reconnect()
                 break
             except asyncio.CancelledError:
                 raise
             except Exception:
                 errors_remaining -= 1
                 if not errors_remaining or not self.connected:
-                    break
+                    await self._attempt_reconnect()
                 continue
             errors_remaining = 10
             if "id" in item:
@@ -586,6 +587,11 @@ class DisplayController:
 
             if max_x > 0 and max_y > 0 and max_z > 0:
                 self._write(f'p[35].b[9].txt="{max_x}x{max_y}x{max_z}"')
+
+    async def _attempt_reconnect(self):
+        logger.info("Attempting to reconnect to Moonraker...")
+        await asyncio.sleep(20)  # A delay before attempting to reconnect
+        self.start_listening()
 
     def _get_current_page(self):
         if len(self.history) > 0:
