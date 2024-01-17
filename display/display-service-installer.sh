@@ -27,7 +27,7 @@ ExecStartPre=/bin/sleep 30
 ExecStart=/home/mks/OpenNept4une/display/venv/bin/python /home/mks/OpenNept4une/display/display.py >> /var/log/display.log 2>&1
 WorkingDirectory=$(dirname $SCRIPT_PATH)
 Restart=always
-User=mks
+User=$(whoami)
 
 [Install]
 WantedBy=multi-user.target
