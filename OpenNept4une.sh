@@ -237,6 +237,7 @@ install_screen_service() {
     if [[ $install_screen == "y" ]]; then
         echo "Installing Touch-Screen Service..."
         if [ -f "$DISPLAY_SERVICE_INSTALLER" ]; then
+            sudo rm -rf /home/mks/OpenNept4une/display/venv
             chmod +x "$DISPLAY_SERVICE_INSTALLER"
             "$DISPLAY_SERVICE_INSTALLER"
         else
