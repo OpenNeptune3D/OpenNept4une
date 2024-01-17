@@ -16,7 +16,7 @@
 | pip nextion serial impl      | ❌     |
 | Serial Disconnect Handling   | ❌     |
 | Moonraker Disconnect Handling| ✔️      |
-| Klipper Disconnect Handling  | ❌     |
+| Klipper Disconnect Handling  | ✔️     |
 
 
 | Print Page               | Status |
