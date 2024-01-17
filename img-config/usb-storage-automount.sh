@@ -17,12 +17,23 @@ remove_symlink() {
     find "$SYMLINK_DIR" -type l -exec test ! -e {} \; -delete
 }
 
+# Function to check if USB is present
+check_usb() {
+    if ! mountpoint -q "$MOUNT_DIR"; then
+        # USB is not mounted, perform cleanup
+        /home/mks/OpenNept4une/img-config/usb-storage-automount.sh remove
+    fi
+}
+
 # Check if script is being run with a flag
 if [ "$1" = "insert" ]; then
     create_symlink
     exit 0
 elif [ "$1" = "remove" ]; then
     remove_symlink
+    exit 0
+elif [ "$1" = "check" ]; then
+    check_usb
     exit 0
 fi
 
@@ -33,3 +44,30 @@ echo 'ACTION=="remove", SUBSYSTEMS=="usb", SUBSYSTEM=="block", KERNEL=="sd*1", E
 
 sudo udevadm control --reload-rules && sudo udevadm trigger
 echo "Udev rules for USB automount and symlink handling are configured."
+
+# Set nano as the default editor for crontab
+export EDITOR=nano
+
+# The cron job command
+CRON_JOB="*/5 * * * * /home/mks/OpenNept4une/img-config/usb-storage-automount.sh check"
+
+# Function to add cron job
+add_cron_job() {
+    # Check if the cron job already exists
+    if crontab -l 2>/dev/null | grep -q "$CRON_JOB"; then
+        echo "Cron job already exists"
+    else
+        # Add the cron job
+        (crontab -l 2>/dev/null; echo "$CRON_JOB") | crontab -
+        echo "Cron job added successfully"
+    fi
+}
+
+# Create a new crontab if it doesn't exist, then add the cron job
+if crontab -l 2>/dev/null; then
+    add_cron_job
+else
+    echo "Creating a new crontab"
+    echo "$CRON_JOB" | crontab -
+    echo "Cron job added to new crontab"
+fi
