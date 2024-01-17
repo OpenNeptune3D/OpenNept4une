@@ -312,6 +312,12 @@ copy_file() {
 
 # Function to apply configuration
 apply_configuration() {
+    if [[ -f "$PRINTER_CFG_FILE" ]]; then
+        cp "$PRINTER_CFG_FILE" "$BACKUP_PRINTER_CFG_FILE"
+        echo "Backup of 'printer.cfg' created as 'backup-printer.cfg.bak'."
+        sleep 5
+    fi
+    
     if [[ -n "$PRINTER_CFG_SOURCE" ]]; then
         copy_file "$PRINTER_CFG_SOURCE" "$PRINTER_CFG_DEST/printer.cfg" false
     else
@@ -361,12 +367,6 @@ install_printer_cfg() {
     DATABASE_DEST="/home/mks/printer_data/database"
     PRINTER_CFG_FILE="$PRINTER_CFG_DEST/printer.cfg"
     BACKUP_PRINTER_CFG_FILE="$PRINTER_CFG_DEST/backup-printer.cfg.bak"
-
-    # Backup existing printer.cfg if it exists
-    if [[ -f "$PRINTER_CFG_FILE" ]]; then
-        cp "$PRINTER_CFG_FILE" "$BACKUP_PRINTER_CFG_FILE"
-        echo "Backup of 'printer.cfg' created as 'backup-printer.cfg.bak'."
-    fi
 
     mkdir -p "$PRINTER_CFG_DEST" "$DATABASE_DEST"
     
