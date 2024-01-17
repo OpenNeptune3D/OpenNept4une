@@ -318,9 +318,15 @@ apply_configuration() {
         echo "Error: Invalid printer configuration file."
         return 1
     fi
-
+    
     if [[ -n "$DTB_SOURCE" ]]; then
-        copy_file "$DTB_SOURCE" "$DTB_DEST" true
+        read -p "Do you wish to update the DTB file? First Run on Git Image MUST select Yes, others skip (y/n) " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            copy_file "$DTB_SOURCE" "$DTB_DEST" true
+        else
+            echo "Skipping DTB file update."
+        fi
     else
         echo "Error: Invalid DTB file selection."
         return 1
