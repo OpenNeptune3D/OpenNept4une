@@ -100,7 +100,7 @@ clear_screen
     echo ""
     echo "3) Base Compiled Image Config (Dont use on release images)"
     echo ""
-    echo "4) Elegoo Image Cleanser Script (De-Elegoo)"
+    echo "4) Method 2 - Elegoo Image Cleanser Script - Not Advised"
     echo ""
     echo "5) Resize Active Armbian Partition (for eMMC > 8GB)"
     echo ""
@@ -191,7 +191,8 @@ de_elegoo_image_cleanser() {
     clear_screen
     echo -e "\033[0;33m$OPENNEPT4UNE_ART\033[0m"
     echo "======================================"
-    echo "DO NOT run this on an OpenNept4une GitHub Image, for Elegoo images only! Continue at your own risk?"
+    echo "DO NOT run this on an OpenNept4une GitHub Image, for Elegoo images only!"
+    echo "Continue at your own risk! High chance of requiring a eMMC re-flash!"
     read -p "Enter 'y' to install, any other key to skip: " install_de_elegoo_image_cleanser
 
     if [[ $install_de_elegoo_image_cleanser == "y" ]]; then
