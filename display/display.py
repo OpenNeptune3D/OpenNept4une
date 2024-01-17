@@ -1,15 +1,12 @@
 import json
-import pathlib
 import sys
 import logging
-
+import pathlib
 import requests
-import serial_asyncio
 import serial
+import serial_asyncio
 import time
 import re
-import threading
-import socket
 import os, os.path
 import asyncio
 import traceback
@@ -164,10 +161,39 @@ class DisplayController:
             "fan": 1.0
         }
         self.printing_selected_speed_increment = "10"
-        
+
         self.ips = "--"
 
         self.current_filename = None
+
+        self.klipper_restart_event = asyncio.Event()
+
+    async def monitor_log(self):
+        log_file_path = "/home/mks/printer_data/logs/klippy.log"
+
+        try:
+            # Open the log file for reading in text mode
+            with open(log_file_path, 'r') as log_file:
+                # Move the file pointer to the end of the file
+                log_file.seek(0, os.SEEK_END)
+
+                while True:
+                    line = log_file.readline()
+                    if not line:
+                        await asyncio.sleep(0.1)  # Sleep briefly if no new data
+                        continue
+
+                    # Strip the line and check if it contains "Starting Klippy..."
+                    line = line.strip()
+                    if "Restarting printer" in line or "Starting Klippy..." in line:
+                        print("Klipper is restarting.")
+                        self.klipper_restart_event.set()
+                        # Add your desired action here for Klipper restart detection
+
+        except FileNotFoundError:
+            print(f"Klipper log file not found at {log_file_path}.")
+        except Exception as e:
+            print(f"Error while monitoring Klipper log: {e}")
 
     def get_printer_model_from_file(self):
         try:
@@ -490,6 +516,7 @@ class DisplayController:
             break
         self.writer = writer
         self._loop.create_task(self._process_stream(reader))
+        asyncio.create_task(self.monitor_log())
         self.connected = True
         logger.info("Connected to Moonraker")
         ret = await self._send_moonraker_request("server.connection.identify", {
@@ -515,7 +542,7 @@ class DisplayController:
         if kwargs:
             msg["params"] = kwargs
         return msg
-    
+
     def generate_key(self, readData):
         return ''.join(readData)
 
@@ -542,12 +569,14 @@ class DisplayController:
             logger.debug(f"=> {message}")
             self.handle_response(message)
 
-    
     async def _process_stream(
         self, reader: asyncio.StreamReader
     ) -> None:
         errors_remaining: int = 10
         while not reader.at_eof():
+            if self.klipper_restart_event.is_set():
+                await self._attempt_reconnect()
+                self.klipper_restart_event.clear()
             try:
                 data = await reader.readuntil(b'\x03')
                 decoded = data[:-1].decode(encoding="utf-8")
@@ -597,7 +626,7 @@ class DisplayController:
         if len(self.history) > 0:
             return self.history[-1]
         return None
-    
+
     async def load_thumbnail_for_page(self, filename, page_number):
         logger.info("Loading new GCode for " + filename)
         gcode = requests.get(f"http://127.0.0.1/server/files/gcodes/{requests.utils.quote(filename)}").text
