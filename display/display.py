@@ -1,3 +1,4 @@
+import configparser
 import json
 import sys
 import logging
@@ -16,6 +17,18 @@ from response_actions import response_actions, response_errors
 logger = logging.getLogger(__name__)
 
 log_file = "/home/mks/printer_data/logs/display_connector.log"
+config_file = "/home/mks/printer_data/config/display_connector.cfg"
+
+sample_config = """
+[LOGGING]
+    file_log_level = ERROR
+
+[main_screen]
+  # set to MODEL_NAME for built in model name. Remove to use Elegoo model images
+  display_name = MODEL_NAME
+  # color for the line below the model name. As RGB565 value
+  display_name_line_color = 1725
+"""
 
 def format_temp(value):
     if value is None:
@@ -125,12 +138,18 @@ BACKGROUND_GRAY = 10665
 SOCKET_LIMIT = 20 * 1024 * 1024
 class DisplayController:
 
-    def __init__(self):
+    def __init__(self, config):
+        self.config = config
+        self.display_name_override = None
+        self.display_name_line_color = None
+        self._handle_config()
         self.connected = False
+
         self.part_light_state = False
         self.frame_light_state = False
         self.fan_state = False
         self.filament_sensor_state = False
+
         self.is_blocking_serial = False
         self.move_distance = '1'
         self.z_offset_distance = '0.01'
@@ -169,6 +188,14 @@ class DisplayController:
         self.current_filename = None
 
         self.klipper_restart_event = asyncio.Event()
+
+    def _handle_config(self):
+        logger.info("Loading config")
+        if "main_screen" in self.config:
+            if "display_name" in self.config["main_screen"]:
+                self.display_name_override = self.config["main_screen"]["display_name"]
+            if "display_name_line_color" in self.config["main_screen"]:
+                self.display_name_line_color = int(self.config["main_screen"]["display_name_line_color"])
 
     async def monitor_log(self):
         log_file_path = "/home/mks/printer_data/logs/klippy.log"
@@ -221,16 +248,22 @@ class DisplayController:
         return model_map[self.printer_model]
 
     def initialize_display(self):
+        model_image_key = None
         if self.printer_model == MODEL_REGULAR:
-            self._write(f'p[1].q4.picc=213') # 213=N4
+            model_image_key = "213"
         elif self.printer_model == MODEL_PRO:
-            self._write(f'p[1].q4.picc=214') #214=N4Pro
+            model_image_key = "214"
             self._write(f'p[1].disp_q5.val=1') # N4Pro Outer Bed Symbol (Bottom Rig>
             self._write(f'vis out_bedtemp,1') # Only N4Pro
         elif self.printer_model == MODEL_PLUS:
-            self._write(f'p[1].q4.picc=213') # 213=N4
+            model_image_key = "213"
         elif self.printer_model == MODEL_MAX:
-            self._write(f'p[1].q4.picc=213') # 213=N4
+            model_image_key = "213"
+
+        if self.display_name_override is None:
+            self._write(f'p[1].q4.picc={model_image_key}')
+        else:
+            self._write(f'p[1].q4.picc=137')
 
         self._write(f'p[35].b[8].txt="{self.get_device_name()}"')
 
@@ -243,7 +276,15 @@ class DisplayController:
 
     def special_page_handling(self):
         current_page = self._get_current_page()
-        if current_page == "page 2":
+        if current_page == "page 1":
+            if self.display_name_override:
+                display_name = self.display_name_override
+                if display_name == "MODEL_NAME":
+                    display_name = self.get_device_name()
+                self._write('xstr 12,20,280,20,1,65535,' + str(BACKGROUND_GRAY) + ',0,1,1,"' + display_name + '"')
+            if self.display_name_line_color:
+                self._write('fill 13,47,24,4,' + str(self.display_name_line_color))
+        elif current_page == "page 2":
             self.show_files_page()
         elif current_page == "page 35":
             self._write('fill 0,400,320,60,' + str(BACKGROUND_GRAY))
@@ -801,6 +842,7 @@ class DisplayController:
 
 
 try:
+
     ch_log = logging.StreamHandler(sys.stdout)
     ch_log.setLevel(logging.DEBUG)
     formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
@@ -812,8 +854,22 @@ try:
     logger.addHandler(file_log)
     logger.setLevel(logging.DEBUG)
 
+    config = configparser.ConfigParser()
+    if not os.path.exists(config_file):
+        logger.info("Creating config file")
+        config.read_string(sample_config)
+        with open(config_file, 'w') as configfile:
+            config.write(configfile)
+    config.read(config_file)
+
+    if "LOGGING" in config:
+        if "file_log_level" in config["LOGGING"]:
+            file_log.setLevel(config["LOGGING"]["file_log_level"])
+            logger.setLevel(logging.DEBUG)
+
+
     loop = asyncio.get_event_loop()
-    controller = DisplayController()
+    controller = DisplayController(config)
     controller._loop = loop
     loop.call_later(1, controller.start_listening)
     loop.run_forever()
