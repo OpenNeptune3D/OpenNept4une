@@ -469,7 +469,14 @@ class DisplayController:
 
     def show_files_page(self):
         page_size = 5
-        self._write(f'p[2].b[11].txt="Files ({(self.files_page * page_size) + 1}-{(self.files_page * page_size) + page_size}/{len(self.dir_contents)})"')
+        title = self.current_dir.split("/")[-1]
+        if title == "":
+            title = "Files"
+        file_count = len(self.dir_contents)
+        if file_count == 0:
+                self._write(f'p[2].b[11].txt="{title} (Empty)"')
+        else:
+            self._write(f'p[2].b[11].txt="{title} ({(self.files_page * page_size) + 1}-{min((self.files_page * page_size) + page_size, file_count)}/{file_count})"')
         component_index = 0
         for index in range(self.files_page * page_size, min(len(self.dir_contents), (self.files_page + 1) * page_size)):
             file = self.dir_contents[index]
