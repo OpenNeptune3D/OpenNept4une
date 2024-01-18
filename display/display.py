@@ -477,8 +477,6 @@ class DisplayController:
             "filament_switch_sensor fila": ["enabled"]
         }})
         data = ret["result"]["status"]
-        if "temperature" in data["heater_generic heater_bed_outer"] and data["heater_generic heater_bed_outer"]["temperature"] is not None:
-            self.printer_model = MODEL_PRO
         logger.info("Printer Model: " + str(self.printer_model))
         self.initialize_display()
         self.handle_status_update(data)
