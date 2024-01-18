@@ -70,7 +70,7 @@ DATA_MAPPING = {
     },
     "print_stats": {
         "print_duration": [MappingLeaf(["p[19].b[6]"], formatter=format_time)],
-        "filename": [MappingLeaf(["p[19].t0"])],
+        "filename": [MappingLeaf(["p[19].t0"], formatter=lambda x: x.replace(".gcode", ""))],
     },
     "gcode_move": {
         "extrude_factor": [MappingLeaf(["p[19].flow_speed"], formatter=format_percent)],
