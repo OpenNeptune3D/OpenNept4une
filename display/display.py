@@ -141,6 +141,7 @@ class DisplayController:
         self.history = []
         padding = [0xFF, 0xFF, 0xFF]
         self.serial_padding = serial.to_bytes(padding)
+        self.current_state = "booting"
 
         self.printer_model = self.get_printer_model_from_file()
 
@@ -304,19 +305,26 @@ class DisplayController:
         elif action.startswith("page"):
             self._navigate_to_page(action)
         elif action == "emergency_stop":
+            logger.info("Executing emergency stop!")
             self._loop.create_task(self._send_moonraker_request("printer.emergency_stop"))
-        elif action == "pause_print":
+        elif action == "pause_print_button":
+            if self.current_state == "paused":
+                logger.info("Resuming print")
+                self._loop.create_task(self._send_moonraker_request("printer.print.resume"))
+            else:
+                self._go_back()
+                self._navigate_to_page("page 25")        
+        elif action == "pause_print_confirm": 
             self._go_back()
-            self._write(f'p[19].b[44]].pic=69')
+            logger.info("Pausing print")
+        elif action == "resume_print":
+            self._go_back()
             self._loop.create_task(self._send_moonraker_request("printer.print.pause"))
         elif action == "stop_print":
             self._go_back()
             self._navigate_to_page('page 130')
-            self._loop.create_task(self._send_moonraker_request("printer.print.stop"))
-        elif action == "resume_print":
-            self._go_back()
-            self._write(f'p[19].b[44]].pic=68')
-            self._loop.create_task(self._send_moonraker_request("printer.print.resume"))
+            logger.info("Stopping print")
+            self._loop.create_task(self._send_moonraker_request("printer.print.cancel"))
         elif action == "files_picker":
             self._navigate_to_page(f'page 2')
             self._loop.create_task(self._load_files())
@@ -670,9 +678,14 @@ class DisplayController:
                         self._loop.create_task(self.load_thumbnail_for_page(self.current_filename, "19"))
             if "state" in new_data["print_stats"]:
                 state = new_data["print_stats"]["state"]
+                self.current_state = state
                 logger.info(f"Status Update: {state}")
                 current_page = self._get_current_page()
                 if state == "printing" or state == "paused":
+                    if state == "printing":
+                        self._write(f'p[19].b[44]].pic=68')
+                    elif state == "paused":
+                        self._write(f'p[19].b[44]].pic=69')
                     if current_page == None or current_page not in PRINTING_PAGES:
                         self._navigate_to_page(f'page 19')
                 elif state == "complete":
