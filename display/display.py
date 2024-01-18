@@ -492,7 +492,7 @@ class DisplayController:
 
     def _go_back(self):
         if len(self.history) > 1:
-            if self._get_current_page() == "page 2":
+            if self._get_current_page() == "page 2" and self.current_dir != "":
                 self.current_dir = "/".join(self.current_dir.split("/")[:-1])
                 self.files_page = 0
                 self._loop.create_task(self._load_files())
