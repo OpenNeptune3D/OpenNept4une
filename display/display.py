@@ -218,6 +218,7 @@ class DisplayController:
             MODEL_PLUS: "Neptune 4 Plus",
             MODEL_MAX: "Neptune 4 Max",
         }
+        return model_map[self.printer_model]
 
     def initialize_display(self):
         if self.printer_model == MODEL_REGULAR:
