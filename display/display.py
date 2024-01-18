@@ -145,7 +145,8 @@ class DisplayController:
 
         self.printer_model = self.get_printer_model_from_file()
 
-        self.printable_files = []
+        self.dir_contents = []
+        self.current_dir = ""
         self.files_page = 0
 
         self.printing_selected_heater = "extruder"
@@ -363,16 +364,21 @@ class DisplayController:
         elif action.startswith("files_page_"):
             parts = action.split('_')
             direction = parts[2]
-            self.files_page = int(max(0, min((len(self.printable_files)/5), self.files_page + (1 if direction == 'next' else -1))))
+            self.files_page = int(max(0, min((len(self.dir_contents)/5), self.files_page + (1 if direction == 'next' else -1))))
             self.show_files_page()
         elif action.startswith("open_file_"):
-            self._navigate_to_page('page 130')
             parts = action.split('_')
             index = int(parts[2])
-            self.current_filename = self.printable_files[(self.files_page * 5) + index]["path"]
-            self._navigate_to_page(f'page 18')
-            self._write(f'p[18].b[2].txt="{self.current_filename}"')
-            self._loop.create_task(self.load_thumbnail_for_page(self.current_filename, "18"))
+            selected = self.dir_contents[(self.files_page * 5) + index]
+            if selected["type"] == "dir":
+                self.current_dir = selected["path"]
+                self.files_page = 0
+                self._loop.create_task(self._load_files())
+            else:
+                self.current_filename = selected["path"]
+                self._navigate_to_page(f'page 18')
+                self._write(f'p[18].b[2].txt="{self.current_filename.replace(".gcode", "").split("/")[-1]}"')
+                self._loop.create_task(self.load_thumbnail_for_page(self.current_filename, "18"))
         elif action == "print_opened_file":
             self._go_back()
             self._navigate_to_page('page 130')
@@ -381,7 +387,9 @@ class DisplayController:
             logger.info("Clearing SD Card")
             self.send_gcode("SDCARD_RESET_FILE")
 
-    def _write(self, data):
+    def _write(self, data, forced = False):
+        if self.is_blocking_serial and not forced:
+            return
         message = str.encode(data)
         self.serial_writer.write(message)
         self.serial_writer.write(self.serial_padding)
@@ -431,23 +439,57 @@ class DisplayController:
         gcode = f"M106 S{'255' if state else '0'}"
         self.send_gcode(gcode)
 
+    def _build_path(self, *components):
+        path = ""
+        for component in components:
+            if component is None or component == "" or component == "/":
+                continue
+            path += f"/{component}"
+        return path[1:]
+
     async def _load_files(self):
-        self.printable_files = (await self._send_moonraker_request("server.files.list"))["result"]
+        data = (await self._send_moonraker_request("server.files.get_directory", {"path": "/".join(["gcodes", self.current_dir])}))
+        dir_info = data["result"]
+        self.dir_contents = []
+        for item in dir_info["dirs"]:
+            if not item["dirname"].startswith("."):
+                self.dir_contents.append({
+                    "type": "dir",
+                    "path": self._build_path(self.current_dir, item["dirname"]),
+                    "name": item["dirname"]
+                })
+        for item in dir_info["files"]:
+            if item["filename"].endswith(".gcode"):
+                self.dir_contents.append({
+                    "type": "file",
+                    "path": self._build_path(self.current_dir, item["filename"]),
+                    "name": item["filename"]
+                })
         self.show_files_page()
 
     def show_files_page(self):
         page_size = 5
-        self._write(f'p[2].b[11].txt="Files ({(self.files_page * page_size) + 1}-{(self.files_page * page_size) + page_size}/{len(self.printable_files)})"')
+        self._write(f'p[2].b[11].txt="Files ({(self.files_page * page_size) + 1}-{(self.files_page * page_size) + page_size}/{len(self.dir_contents)})"')
         component_index = 0
-        for index in range(self.files_page * page_size, min(len(self.printable_files), (self.files_page + 1) * page_size)):
-            file = self.printable_files[index]
-            self._write(f'p[2].b[{component_index + 18}].txt="{file["path"]}"')
+        for index in range(self.files_page * page_size, min(len(self.dir_contents), (self.files_page + 1) * page_size)):
+            file = self.dir_contents[index]
+            self._write(f'p[2].b[{component_index + 18}].txt="{file["name"].replace(".gcode", "")}"')
+            if file["type"] == "dir":
+                self._write(f'p[2].b[{component_index + 13}].pic=194')
+            else:
+                self._write(f'p[2].b[{component_index + 13}].pic=193')
             component_index += 1
         for index in range(component_index, page_size):
+            self._write(f'p[2].b[{index + 13}].pic=195')
             self._write(f'p[2].b[{index + 18}].txt=""')
 
     def _go_back(self):
         if len(self.history) > 1:
+            if self._get_current_page() == "page 2":
+                self.current_dir = "/".join(self.current_dir.split("/")[:-1])
+                self.files_page = 0
+                self._loop.create_task(self._load_files())
+                return
             self.history.pop()
             back_page = self.history[-1]
             self._write(back_page)
@@ -657,16 +699,14 @@ class DisplayController:
 
                 parts.append(image[start:len(image)])
                 self.is_blocking_serial = True
-                self._write("p[" + str(page_number) + "].vis cp0,1")
-                self._write("p[" + str(page_number) + "].cp0.close()")
+                self._write("p[" + str(page_number) + "].vis cp0,1", True)
+                self._write("p[" + str(page_number) + "].cp0.close()", True)
                 for part in parts:
-                    self._write("p[" + str(page_number) + "].cp0.write(\"" + str(part) + "\")")
+                    self._write("p[" + str(page_number) + "].cp0.write(\"" + str(part) + "\")", True)
                 self.is_blocking_serial = False
                 return
 
     def handle_status_update(self, new_data, data_mapping=DATA_MAPPING):
-        if self.is_blocking_serial:
-            return
         if "print_stats" in new_data:
             if "filename" in new_data["print_stats"]:
                 filename = new_data["print_stats"]["filename"]
