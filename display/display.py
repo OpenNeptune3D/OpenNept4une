@@ -249,9 +249,9 @@ class DisplayController:
             self._write(f'p[1].disp_q5.val=1') # N4Pro Outer Bed Symbol (Bottom Rig>
             self._write(f'vis out_bedtemp,1') # Only N4Pro
         elif self.printer_model == MODEL_PLUS:
-            model_image_key = "213"
+            model_image_key = "313"
         elif self.printer_model == MODEL_MAX:
-            model_image_key = "213"
+            model_image_key = "313"
 
         if self.display_name_override is None:
             self._write(f'p[1].q4.picc={model_image_key}')
