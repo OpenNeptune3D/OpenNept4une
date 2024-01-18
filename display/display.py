@@ -222,7 +222,7 @@ class DisplayController:
             with open('/boot/.OpenNept4une.txt', 'r') as file:
                 for line in file:
                     if line.startswith(tuple([MODEL_REGULAR, MODEL_PRO, MODEL_PLUS, MODEL_MAX])):
-                        model_part = line.split('-')[0]
+                        model_part = line.split('-')[0].strip()
                         logger.info(f"Extracted Model: {model_part}")
                         return model_part
         except FileNotFoundError:
