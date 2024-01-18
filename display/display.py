@@ -187,14 +187,14 @@ class DisplayController:
                     # Strip the line and check if it contains "Starting Klippy..."
                     line = line.strip()
                     if "Restarting printer" in line or "Starting Klippy..." in line:
-                        print("Klipper is restarting.")
+                        logger.info("Klipper is restarting.")
                         self.klipper_restart_event.set()
                         # Add your desired action here for Klipper restart detection
 
         except FileNotFoundError:
-            print(f"Klipper log file not found at {log_file_path}.")
+            logger.error(f"Klipper log file not found at {log_file_path}.")
         except Exception as e:
-            print(f"Error while monitoring Klipper log: {e}")
+            logger.error(f"Error while monitoring Klipper log: {e}")
 
     def get_printer_model_from_file(self):
         try:
@@ -202,12 +202,12 @@ class DisplayController:
                 for line in file:
                     if line.startswith(tuple([MODEL_REGULAR, MODEL_PRO, MODEL_PLUS, MODEL_MAX])):
                         model_part = line.split('-')[0]
-                        print(f"Extracted Model: {model_part}")
+                        logger.info(f"Extracted Model: {model_part}")
                         return model_part
         except FileNotFoundError:
-            print("File not found")
+            logger.error("File not found")
         except Exception as e:
-            print(f"Error reading file: {e}")
+            logger.error(f"Error reading file: {e}")
         return None
 
     def get_device_name(self):
