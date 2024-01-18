@@ -19,17 +19,6 @@ logger = logging.getLogger(__name__)
 log_file = "/home/mks/printer_data/logs/display_connector.log"
 config_file = "/home/mks/printer_data/config/display_connector.cfg"
 
-sample_config = """
-[LOGGING]
-    file_log_level = ERROR
-
-[main_screen]
-  # set to MODEL_NAME for built in model name. Remove to use Elegoo model images
-  display_name = MODEL_NAME
-  # color for the line below the model name. As RGB565 value
-  display_name_line_color = 1725
-"""
-
 def format_temp(value):
     if value is None:
         return "N/A"
@@ -195,7 +184,7 @@ class DisplayController:
             if "display_name" in self.config["main_screen"]:
                 self.display_name_override = self.config["main_screen"]["display_name"]
             if "display_name_line_color" in self.config["main_screen"]:
-                self.display_name_line_color = int(self.config["main_screen"]["display_name_line_color"])
+                self.display_name_line_color = self.config["main_screen"]["display_name_line_color"]
 
     async def monitor_log(self):
         log_file_path = "/home/mks/printer_data/logs/klippy.log"
@@ -854,10 +843,16 @@ try:
     logger.addHandler(file_log)
     logger.setLevel(logging.DEBUG)
 
-    config = configparser.ConfigParser()
+    config = configparser.ConfigParser(allow_no_value=True)
     if not os.path.exists(config_file):
         logger.info("Creating config file")
-        config.read_string(sample_config)
+        config.add_section('LOGGING')
+        config.set('LOGGING', 'file_log_level', 'ERROR')
+        config.add_section('main_screen')
+        config.set('main_screen', '; set to MODEL_NAME for built in model name. Remove to use Elegoo model images')
+        config.set('main_screen', 'display_name', 'MODEL_NAME')
+        config.set('main_screen', '; color for the line below the model name. As RGB565 value')
+        config.set('main_screen', 'display_name_line_color', '1725')
         with open(config_file, 'w') as configfile:
             config.write(configfile)
     config.read(config_file)
