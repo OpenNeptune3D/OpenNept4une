@@ -6,115 +6,47 @@ import pathlib
 import requests
 import serial
 import serial_asyncio
-import time
 import re
 import os, os.path
+import io
 import asyncio
 import traceback
+from PIL import Image
+
 
 from response_actions import response_actions, response_errors
+from lib_col_pic import parse_thumbnail
+from elegoo_neptune4 import Neptune4Mapper
+from mapping import *
 
 logger = logging.getLogger(__name__)
 
 log_file = "/home/mks/printer_data/logs/display_connector.log"
 config_file = "/home/mks/printer_data/config/display_connector.cfg"
 
-def format_temp(value):
-    if value is None:
-        return "N/A"
-    return f"{value:3.1f}°C"
-
-def format_time(seconds):
-    if seconds is None:
-            return "N/A"
-    if seconds < 3600:
-        return time.strftime("%Mm %Ss", time.gmtime(seconds))
-    return time.strftime("%Hh %Mm", time.gmtime(seconds))
-
-def format_percent(value):
-    if value is None:
-        return "N/A"
-    return f"{value * 100:2.0f}%"
-
-class MappingLeaf:
-    def __init__(self, fields, field_type="txt", formatter=None):
-        self.fields = fields
-        self.field_type = field_type
-        self.formatter = formatter
-
-    def format(self, value):
-        if self.formatter is not None:
-            return self.formatter(value)
-        if isinstance(value, float):
-            return f"{value:3.2f}"
-        return str(value)
-
-DATA_MAPPING = {
-    "extruder": {
-        "temperature": [MappingLeaf(["p[1].nozzletemp", "p[6].nozzletemp", "p[19].nozzletemp", "p[27].nozzletemp", "p[28].nozzletemp"], formatter=format_temp)],
-        "target": [MappingLeaf(["p[27].nozzletemp_t", "p[28].nozzletemp_t"], formatter=format_temp)]
-    },
-    "heater_bed": {
-        "temperature": [MappingLeaf(["p[1].bedtemp", "p[6].bedtemp", "p[19].bedtemp", "p[27].bedtemp", "p[28].bedtemp"], formatter=format_temp)],
-        "target": [MappingLeaf(["p[27].bedtemp_t", "p[28].bedtemp_t"], formatter=format_temp)]
-    },
-    "heater_generic heater_bed_outer": {
-        "temperature": [MappingLeaf(["p[1].out_bedtemp", "p[6].out_bedtemp", "p[27].out_bedtemp"], formatter=format_temp)],
-        "target": [MappingLeaf(["p[27].out_bedtemp_t", "p[28].out_bedtemp_t"], formatter=format_temp)]
-    },
-    "motion_report": {
-        "live_position": {
-            0: [MappingLeaf(["p[1].x_pos"]), MappingLeaf(["p[19].x_pos"], formatter=lambda x: f"X[{x:3.2f}]")],
-            1: [MappingLeaf(["p[1].y_pos"]), MappingLeaf(["p[19].y_pos"], formatter=lambda y: f"Y[{y:3.2f}]")],
-            2: [MappingLeaf(["p[1].z_pos", "p[19].zvalue"])],
-        },
-        "live_velocity": [MappingLeaf(["p[19].pressure_val"], formatter=lambda x: f"{x:3.2f}mm/s")],
-    },
-    "print_stats": {
-        "print_duration": [MappingLeaf(["p[19].b[6]"], formatter=format_time)],
-        "filename": [MappingLeaf(["p[19].t0"], formatter=lambda x: x.replace(".gcode", ""))],
-    },
-    "gcode_move": {
-        "extrude_factor": [MappingLeaf(["p[19].flow_speed"], formatter=format_percent)],
-        "speed_factor": [MappingLeaf(["p[19].printspeed"], formatter=format_percent)],
-        "homing_origin": {
-            2: [MappingLeaf(["p[127].b[15]"], formatter=lambda x: f"{x:.3f}")],
-        }
-    },
-    "fan": {
-        "speed": [MappingLeaf(["p[19].fanspeed"], formatter=format_percent), MappingLeaf(["p[11].b[12]"], field_type="pic", formatter=lambda x: "77" if int(x) == 1 else "76")]
-    },
-    "display_status": {
-        "progress": [MappingLeaf(["p[19].printvalue"], formatter=lambda x: f"{x * 100:2.1f}"), MappingLeaf(["p[19].printprocess"], field_type="val", formatter=lambda x: f"{x * 100:2.0f}")]
-    },
-    "output_pin Part_Light": {"value": [MappingLeaf(["p[84].led1"], field_type="pic", formatter=lambda x: "77" if int(x) == 1 else "76")]},
-    "output_pin Frame_Light": {"value": [MappingLeaf(["p[84].led2"], field_type="pic", formatter= lambda x: "77" if int(x) == 1 else "76")]},
-    "filament_switch_sensor fila": {"enabled": [MappingLeaf(["p[11].b[11]", "p[127].b[16]"], field_type="pic", formatter= lambda x: "77" if int(x) == 1 else "76")]}
-}
-
 PRINTING_PAGES = [
-    "page 19",
-    "page 27",
-    "page 127",
-    "page 135",
-    "page 106",
-    "page 25",
-    "page 26",
-    "page 84",
+    PAGE_PRINTING,
+    PAGE_PRINTING_SETTINGS,
+    PAGE_PRINTING_PAUSE,
+    PAGE_PRINTING_STOP,
+    PAGE_PRINTING_EMERGENCY_STOP,
+    PAGE_PRINTING_COMPLETE,
+    PAGE_PRINTING_FILAMENT,
+    PAGE_PRINTING_SPEED,
+    PAGE_PRINTING_ADJUST,
 ]
 
 TABBED_PAGES = [
-    "page 6",
-    "page 8",
-    "page 9",
-    "page 27",
-    "page 28",
-    "page 29",
-    "page 30",
+    PAGE_PREPARE_EXTRUDER,
+    PAGE_PREPARE_MOVE,
+    PAGE_PREPARE_TEMP,
+    PAGE_PRINTING_ADJUST,
+    PAGE_PRINTING_FILAMENT,
+    PAGE_PRINTING_SPEED
 ]
 
 TRANSITION_PAGES = [
-    "page 130",
+    PAGE_OVERLAY_LOADING
 ]
 
 MODEL_REGULAR = 'N4'
@@ -152,6 +84,7 @@ class DisplayController:
         self.current_state = "booting"
 
         self.printer_model = self.get_printer_model_from_file()
+        self.mapper = Neptune4Mapper()
 
         self.dir_contents = []
         self.current_dir = ""
@@ -218,7 +151,7 @@ class DisplayController:
             with open('/boot/.OpenNept4une.txt', 'r') as file:
                 for line in file:
                     if line.startswith(tuple([MODEL_REGULAR, MODEL_PRO, MODEL_PLUS, MODEL_MAX])):
-                        model_part = line.split('-')[0]
+                        model_part = line.split('-')[0].strip()
                         logger.info(f"Extracted Model: {model_part}")
                         return model_part
         except FileNotFoundError:
@@ -242,19 +175,19 @@ class DisplayController:
             model_image_key = "213"
         elif self.printer_model == MODEL_PRO:
             model_image_key = "214"
-            self._write(f'p[1].disp_q5.val=1') # N4Pro Outer Bed Symbol (Bottom Rig>
+            self._write(f'p[{self._page_id(PAGE_MAIN)}].disp_q5.val=1') # N4Pro Outer Bed Symbol (Bottom Rig>
             self._write(f'vis out_bedtemp,1') # Only N4Pro
         elif self.printer_model == MODEL_PLUS:
-            model_image_key = "213"
+            model_image_key = "313"
         elif self.printer_model == MODEL_MAX:
-            model_image_key = "213"
+            model_image_key = "313"
 
         if self.display_name_override is None:
-            self._write(f'p[1].q4.picc={model_image_key}')
+            self._write(f'p[{self._page_id(PAGE_MAIN)}].q4.picc={model_image_key}')
         else:
-            self._write(f'p[1].q4.picc=137')
+            self._write(f'p[{self._page_id(PAGE_MAIN)}].q4.picc=137')
 
-        self._write(f'p[35].b[8].txt="{self.get_device_name()}"')
+        self._write(f'p[{self._page_id(PAGE_SETTINGS_ABOUT)}].b[8].txt="{self.get_device_name()}"')
 
     def send_gcode(self, gcode):
         logger.debug("Sending GCODE: " + gcode)
@@ -265,7 +198,7 @@ class DisplayController:
 
     def special_page_handling(self):
         current_page = self._get_current_page()
-        if current_page == "page 1":
+        if current_page == PAGE_MAIN:
             if self.display_name_override:
                 display_name = self.display_name_override
                 if display_name == "MODEL_NAME":
@@ -273,19 +206,19 @@ class DisplayController:
                 self._write('xstr 12,20,280,20,1,65535,' + str(BACKGROUND_GRAY) + ',0,1,1,"' + display_name + '"')
             if self.display_name_line_color:
                 self._write('fill 13,47,24,4,' + str(self.display_name_line_color))
-        elif current_page == "page 2":
+        elif current_page == PAGE_FILES:
             self.show_files_page()
-        elif current_page == "page 35":
+        elif current_page == PAGE_SETTINGS_ABOUT:
             self._write('fill 0,400,320,60,' + str(BACKGROUND_GRAY))
             self._write('xstr 0,400,320,30,1,65535,' + str(BACKGROUND_GRAY) + ',1,1,1,"OpenNept4une"')
             self._write('xstr 0,430,320,30,2,GRAY,' + str(BACKGROUND_GRAY) + ',1,1,1,"github.com/halfmanbear/OpenNept4une"')
-        elif current_page == "page 27":
+        elif current_page == PAGE_PREPARE_TEMP:
             self.update_printing_heater_settings_ui()
             self.update_printing_temperature_increment_ui()
-        elif current_page == "page 127":
+        elif current_page == PAGE_PRINTING_ADJUST:
             self.update_printing_zoffset_increment_ui()
-            self._write("p[127].b[20].txt=\"" + self.ips + "\"")
-        elif current_page == "page 135":
+            self._write("p[" + PAGE_PRINTING_ADJUST + "].b[20].txt=\"" + self.ips + "\"")
+        elif current_page == PAGE_PRINTING_SPEED:
             self.update_printing_speed_settings_ui()
             self.update_printing_speed_increment_ui()
 
@@ -295,8 +228,8 @@ class DisplayController:
                 self.history[-1] = page
             elif page not in TRANSITION_PAGES:
                 self.history.append(page)
-            self._write(page)
-            logger.info(f"Navigating {page}")
+            self._write(f"page {self.mapper.map_page(page)}")
+            logger.info(f"Navigating page {page}")
 
             self.special_page_handling()
 
@@ -335,7 +268,7 @@ class DisplayController:
         elif action == "go_back":
             self._go_back()
         elif action.startswith("page"):
-            self._navigate_to_page(action)
+            self._navigate_to_page(action.split(' ')[1])
         elif action == "emergency_stop":
             logger.info("Executing emergency stop!")
             self._loop.create_task(self._send_moonraker_request("printer.emergency_stop"))
@@ -345,7 +278,7 @@ class DisplayController:
                 self._loop.create_task(self._send_moonraker_request("printer.print.resume"))
             else:
                 self._go_back()
-                self._navigate_to_page("page 25")        
+                self._navigate_to_page(PAGE_PRINTING_PAUSE)        
         elif action == "pause_print_confirm": 
             self._go_back()
             logger.info("Pausing print")
@@ -354,11 +287,11 @@ class DisplayController:
             self._loop.create_task(self._send_moonraker_request("printer.print.pause"))
         elif action == "stop_print":
             self._go_back()
-            self._navigate_to_page('page 130')
+            self._navigate_to_page(PAGE_OVERLAY_LOADING)
             logger.info("Stopping print")
             self._loop.create_task(self._send_moonraker_request("printer.print.cancel"))
         elif action == "files_picker":
-            self._navigate_to_page(f'page 2')
+            self._navigate_to_page(PAGE_FILES)
             self._loop.create_task(self._load_files())
         elif action.startswith("temp_heater_"):
             parts = action.split('_')
@@ -407,12 +340,12 @@ class DisplayController:
                 self._loop.create_task(self._load_files())
             else:
                 self.current_filename = selected["path"]
-                self._navigate_to_page(f'page 18')
-                self._write(f'p[18].b[2].txt="{self.current_filename.replace(".gcode", "").split("/")[-1]}"')
+                self._navigate_to_page(PAGE_CONFIRM_PRINT)
+                self._write(f'p[{self._page_id(PAGE_CONFIRM_PRINT)}].b[2].txt="{self.current_filename.replace(".gcode", "").split("/")[-1]}"')
                 self._loop.create_task(self.load_thumbnail_for_page(self.current_filename, "18"))
         elif action == "print_opened_file":
             self._go_back()
-            self._navigate_to_page('page 130')
+            self._navigate_to_page(PAGE_OVERLAY_LOADING)
             self._loop.create_task(self._send_moonraker_request("printer.print.start", {"filename": self.current_filename}))
         elif action == "confirm_complete":
             logger.info("Clearing SD Card")
@@ -434,29 +367,29 @@ class DisplayController:
         self.send_gcode(gcode)
 
     def update_printing_heater_settings_ui(self):
-        self._write(f'p[27].b0.picc=' + str(90 if self.printing_selected_heater == "extruder" else 89))
-        self._write(f'p[27].b1.picc=' + str(90 if self.printing_selected_heater == "heater_bed" else 89))
-        self._write(f'p[27].b2.picc=' + str(90 if self.printing_selected_heater == "heater_bed_outer" else 89))
-        self._write(f'p[27].targettemp.val=' + str(self.printing_target_temps[self.printing_selected_heater]))
+        self._write(f'p[{self._page_id(PAGE_PRINTING_SETTINGS)}].b0.picc=' + str(90 if self.printing_selected_heater == "extruder" else 89))
+        self._write(f'p[{self._page_id(PAGE_PRINTING_SETTINGS)}].b1.picc=' + str(90 if self.printing_selected_heater == "heater_bed" else 89))
+        self._write(f'p[{self._page_id(PAGE_PRINTING_SETTINGS)}].b2.picc=' + str(90 if self.printing_selected_heater == "heater_bed_outer" else 89))
+        self._write(f'p[{self._page_id(PAGE_PRINTING_SETTINGS)}].targettemp.val=' + str(self.printing_target_temps[self.printing_selected_heater]))
 
     def update_printing_temperature_increment_ui(self):
-        self._write(f'p[27].p1.pic={56 + ["1", "5", "10"].index(self.printing_selected_temp_increment)}')
+        self._write(f'p[{self._page_id(PAGE_PRINTING_SETTINGS)}].p1.pic={56 + ["1", "5", "10"].index(self.printing_selected_temp_increment)}')
 
     def update_printing_speed_settings_ui(self):
-        self._write(f'p[135].b0.picc=' + str(59 if self.printing_selected_speed_type == "print" else 58))
-        self._write(f'p[135].b1.picc=' + str(59 if self.printing_selected_speed_type == "flow" else 58))
-        self._write(f'p[135].b2.picc=' + str(59 if self.printing_selected_speed_type == "fan" else 58))
-        self._write(f'p[135].targetspeed.val={self.printing_target_speeds[self.printing_selected_speed_type]*100:.0f}')
+        self._write(f'p[{self._page_id(PAGE_PRINTING_SPEED)}].b0.picc=' + str(59 if self.printing_selected_speed_type == "print" else 58))
+        self._write(f'p[{self._page_id(PAGE_PRINTING_SPEED)}].b1.picc=' + str(59 if self.printing_selected_speed_type == "flow" else 58))
+        self._write(f'p[{self._page_id(PAGE_PRINTING_SPEED)}].b2.picc=' + str(59 if self.printing_selected_speed_type == "fan" else 58))
+        self._write(f'p[{self._page_id(PAGE_PRINTING_SPEED)}].targetspeed.val={self.printing_target_speeds[self.printing_selected_speed_type]*100:.0f}')
 
     def update_printing_speed_increment_ui(self):
-        self._write(f'p[135].b[14].picc=' + str(59 if self.printing_selected_speed_increment == "1" else 58))
-        self._write(f'p[135].b[15].picc=' + str(59 if self.printing_selected_speed_increment == "5" else 58))
-        self._write(f'p[135].b[16].picc=' + str(59 if self.printing_selected_speed_increment == "10" else 58))
+        self._write(f'p[{self._page_id(PAGE_PRINTING_SPEED)}].b[14].picc=' + str(59 if self.printing_selected_speed_increment == "1" else 58))
+        self._write(f'p[{self._page_id(PAGE_PRINTING_SPEED)}].b[15].picc=' + str(59 if self.printing_selected_speed_increment == "5" else 58))
+        self._write(f'p[{self._page_id(PAGE_PRINTING_SPEED)}].b[16].picc=' + str(59 if self.printing_selected_speed_increment == "10" else 58))
 
     def update_printing_zoffset_increment_ui(self):
-        self._write(f'p[127].b[23].picc=' + str(36 if self.z_offset_distance == "0.01" else 65))
-        self._write(f'p[127].b[24].picc=' + str(36 if self.z_offset_distance == "0.1" else 65))
-        self._write(f'p[127].b[25].picc=' + str(36 if self.z_offset_distance == "1" else 65))
+        self._write(f'p[{self._page_id(PAGE_PRINTING_ADJUST)}].b[23].picc=' + str(36 if self.z_offset_distance == "0.01" else 65))
+        self._write(f'p[{self._page_id(PAGE_PRINTING_ADJUST)}].b[24].picc=' + str(36 if self.z_offset_distance == "0.1" else 65))
+        self._write(f'p[{self._page_id(PAGE_PRINTING_ADJUST)}].b[25].picc=' + str(36 if self.z_offset_distance == "1" else 65))
 
     def send_speed_update(self, speed_type, new_speed):
         if speed_type == "print":
@@ -498,6 +431,9 @@ class DisplayController:
                 })
         self.show_files_page()
 
+    def _page_id(self, page):
+        return self.mapper.map_page(page)
+
     def show_files_page(self):
         page_size = 5
         title = self.current_dir.split("/")[-1]
@@ -505,38 +441,38 @@ class DisplayController:
             title = "Files"
         file_count = len(self.dir_contents)
         if file_count == 0:
-                self._write(f'p[2].b[11].txt="{title} (Empty)"')
+                self._write(f'p[{self._page_id(PAGE_FILES)}].b[11].txt="{title} (Empty)"')
         else:
-            self._write(f'p[2].b[11].txt="{title} ({(self.files_page * page_size) + 1}-{min((self.files_page * page_size) + page_size, file_count)}/{file_count})"')
+            self._write(f'p[{self._page_id(PAGE_FILES)}].b[11].txt="{title} ({(self.files_page * page_size) + 1}-{min((self.files_page * page_size) + page_size, file_count)}/{file_count})"')
         component_index = 0
         for index in range(self.files_page * page_size, min(len(self.dir_contents), (self.files_page + 1) * page_size)):
             file = self.dir_contents[index]
-            self._write(f'p[2].b[{component_index + 18}].txt="{file["name"].replace(".gcode", "")}"')
+            self._write(f'p[{self._page_id(PAGE_FILES)}].b[{component_index + 18}].txt="{file["name"].replace(".gcode", "")}"')
             if file["type"] == "dir":
-                self._write(f'p[2].b[{component_index + 13}].pic=194')
+                self._write(f'p[{self._page_id(PAGE_FILES)}].b[{component_index + 13}].pic=194')
             else:
-                self._write(f'p[2].b[{component_index + 13}].pic=193')
+                self._write(f'p[{self._page_id(PAGE_FILES)}].b[{component_index + 13}].pic=193')
             component_index += 1
         for index in range(component_index, page_size):
-            self._write(f'p[2].b[{index + 13}].pic=195')
-            self._write(f'p[2].b[{index + 18}].txt=""')
+            self._write(f'p[{self._page_id(PAGE_FILES)}].b[{index + 13}].pic=195')
+            self._write(f'p[{self._page_id(PAGE_FILES)}].b[{index + 18}].txt=""')
 
     def _go_back(self):
         if len(self.history) > 1:
-            if self._get_current_page() == "page 2" and self.current_dir != "":
+            if self._get_current_page() == PAGE_FILES and self.current_dir != "":
                 self.current_dir = "/".join(self.current_dir.split("/")[:-1])
                 self.files_page = 0
                 self._loop.create_task(self._load_files())
                 return
             self.history.pop()
             back_page = self.history[-1]
-            self._write(back_page)
+            self._write(f"page {self.mapper.map_page(back_page)}")
             self.special_page_handling()
         else:
             logger.info("Already at the main page.")
 
     def start_listening(self):
-        loop.create_task(self.listen())
+        self._loop.create_task(self.listen())
 
     async def listen(self):
         self.serial_reader, self.serial_writer = await serial_asyncio.open_serial_connection(url='/dev/ttyS1', baudrate=115200)
@@ -615,10 +551,10 @@ class DisplayController:
 
         system = (await self._send_moonraker_request("machine.system_info"))["result"]["system_info"]
         self.ips = ", ".join(self._find_ips(system["network"]))
-        self._write("p[35].b[16].txt=\"" + self.ips + "\"")
-        self._write("p[127].b[20].txt=\"" + self.ips + "\"")
+        self._write("p[" + self._page_id(PAGE_SETTINGS_ABOUT) +"].b[16].txt=\"" + self.ips + "\"")
+        self._write("p[" + self._page_id(PAGE_PRINTING_ADJUST) + "].b[20].txt=\"" + self.ips + "\"")
         software_version = (await self._send_moonraker_request("printer.info"))["result"]["software_version"]
-        self._write("p[35].b[10].txt=\"" + software_version.split("-")[0] + "\"")
+        self._write("p[" + self._page_id(PAGE_SETTINGS_ABOUT) + "].b[10].txt=\"" + software_version.split("-")[0] + "\"")
 
     def _make_rpc_msg(self, method: str, **kwargs):
         msg = {"jsonrpc": "2.0", "method": method}
@@ -701,7 +637,7 @@ class DisplayController:
                     max_z = int(new_data["config"]["stepper_z"]["position_max"])
 
             if max_x > 0 and max_y > 0 and max_z > 0:
-                self._write(f'p[35].b[9].txt="{max_x}x{max_y}x{max_z}"')
+                self._write(f'p[{self._page_id(PAGE_SETTINGS_ABOUT)}].b[9].txt="{max_x}x{max_y}x{max_z}"')
 
     async def _attempt_reconnect(self):
         logger.info("Attempting to reconnect to Moonraker...")
@@ -714,37 +650,46 @@ class DisplayController:
         return None
 
     async def load_thumbnail_for_page(self, filename, page_number):
-        logger.info("Loading new GCode for " + filename)
-        gcode = requests.get(f"http://127.0.0.1/server/files/gcodes/{requests.utils.quote(filename)}").text
-        lines = gcode.splitlines()
-        logger.debug("GCode Lines: " + str(len(lines)))
-        if len(lines) < 100:
-            logger.error("GCode too short to parse")
-            logger.debug(gcode)
+        logger.info("Loading thumbnail for " + filename)
+        metadata = await self._send_moonraker_request("server.files.metadata", {"filename": filename})
+        best_thumbnail = None
+        for thumbnail in metadata["result"]["thumbnails"]:
+            if thumbnail["width"] == 160:
+                best_thumbnail = thumbnail
+                break
+            if best_thumbnail is None or thumbnail["width"] > best_thumbnail["width"]:
+                best_thumbnail = thumbnail
+        if best_thumbnail is None:
+            self._write("p[" + str(page_number) + "].vis cp0,0", True)
             return
-        for line in lines:
-            if line.startswith(";gimage:"):
-                logger.info("Found thumbnail in GCode")
-                image = line[8:]
+        
+        img = requests.get("http://localhost/server/files/gcodes/" + best_thumbnail["relative_path"])
+        thumbnail = Image.open(io.BytesIO(img.content))
+        background = "29354a"
+        if "thumbnails" in self.config:
+            if "background_color" in self.config["thumbnails"]:
+                background = self.config["thumbnails"]["background_color"]
+        image = parse_thumbnail(thumbnail, 160, 160, background)
 
-                parts = []
-                start = 0
-                end = 1024
-                while (start + 1024 < len(image)):
-                    parts.append(image[start:end])
-                    start = start + 1024
-                    end = end + 1024
+        parts = []
+        start = 0
+        end = 1024
+        while (start + 1024 < len(image)):
+            parts.append(image[start:end])
+            start = start + 1024
+            end = end + 1024
 
-                parts.append(image[start:len(image)])
-                self.is_blocking_serial = True
-                self._write("p[" + str(page_number) + "].vis cp0,1", True)
-                self._write("p[" + str(page_number) + "].cp0.close()", True)
-                for part in parts:
-                    self._write("p[" + str(page_number) + "].cp0.write(\"" + str(part) + "\")", True)
-                self.is_blocking_serial = False
-                return
+        parts.append(image[start:len(image)])
+        self.is_blocking_serial = True
+        self._write("p[" + str(page_number) + "].vis cp0,1", True)
+        self._write("p[" + str(page_number) + "].cp0.close()", True)
+        for part in parts:
+            self._write("p[" + str(page_number) + "].cp0.write(\"" + str(part) + "\")", True)
+        self.is_blocking_serial = False
 
-    def handle_status_update(self, new_data, data_mapping=DATA_MAPPING):
+    def handle_status_update(self, new_data, data_mapping=None):
+        if data_mapping is None:
+            data_mapping = self.mapper.data_mapping
         if "print_stats" in new_data:
             if "filename" in new_data["print_stats"]:
                 filename = new_data["print_stats"]["filename"]
@@ -759,22 +704,22 @@ class DisplayController:
                 current_page = self._get_current_page()
                 if state == "printing" or state == "paused":
                     if state == "printing":
-                        self._write(f'p[19].b[44]].pic=68')
+                        self._write(f'p[{self._page_id(PAGE_PRINTING)}].b[44]].pic=68')
                     elif state == "paused":
-                        self._write(f'p[19].b[44]].pic=69')
+                        self._write(f'p[{self._page_id(PAGE_PRINTING)}].b[44]].pic=69')
                     if current_page == None or current_page not in PRINTING_PAGES:
-                        self._navigate_to_page(f'page 19')
+                        self._navigate_to_page(PAGE_PRINTING)
                 elif state == "complete":
-                    if current_page == None or current_page != "page 24":
-                        self._navigate_to_page(f'page 24')
+                    if current_page == None or current_page != PAGE_PRINTING_COMPLETE:
+                        self._navigate_to_page(PAGE_PRINTING_COMPLETE)
                 else:
-                    if current_page == None or current_page in PRINTING_PAGES or current_page == "page 24":
-                        self._navigate_to_page(f'page 1')
+                    if current_page == None or current_page in PRINTING_PAGES or current_page == PAGE_PRINTING_COMPLETE:
+                        self._navigate_to_page(PAGE_MAIN)
 
             if "display_status" in new_data and "progress" in new_data["display_status"] and "print_duration" in new_data["print_stats"]:
                 if new_data["display_status"]["progress"] > 0:
                     total_time = new_data["print_stats"]["print_duration"] / new_data["display_status"]["progress"]
-                    self._write(f'p[19].b[37].txt="{format_time(total_time - new_data["print_stats"]["print_duration"])}"')
+                    self._write(f'p[{self._page_id(PAGE_PRINTING)}].b[37].txt="{format_time(total_time - new_data["print_stats"]["print_duration"])}"')
 
         if "output_pin Part_Light" in new_data:
             self.part_light_state = int(new_data["output_pin Part_Light"]["value"]) == 1
@@ -849,10 +794,13 @@ try:
         config.add_section('LOGGING')
         config.set('LOGGING', 'file_log_level', 'ERROR')
         config.add_section('main_screen')
-        config.set('main_screen', '; set to MODEL_NAME for built in model name. Remove to use Elegoo model images')
+        config.set('main_screen', '; set to MODEL_NAME for built in model name. Remove to use Elegoo model images.')
         config.set('main_screen', 'display_name', 'MODEL_NAME')
-        config.set('main_screen', '; color for the line below the model name. As RGB565 value')
+        config.set('main_screen', '; color for the line below the model name. As RGB565 value.')
         config.set('main_screen', 'display_name_line_color', '1725')
+        config.add_section('thumbnails')
+        config.set('main_screen', '; Background color for thumbnails. As RGB Hex value. Remove for default background color.')
+        config.set('thumbnails', 'background_color', '29354a')
         with open(config_file, 'w') as configfile:
             config.write(configfile)
     config.read(config_file)

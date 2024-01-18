@@ -1,7 +1,9 @@
+from mapping import *
+
 response_actions = {
     '651200ffffff': "print_opened_file", # Confirm Print File
     '651201ffffff': 'go_back', # cancel print file
-    '651300ffffff': "page 27", # Printing Page > Settings
+    '651300ffffff': "page " + PAGE_PRINTING_SETTINGS, # Printing Page > Settings
     '651900ffffff': "pause_print_confirm", # Printing Page > Confirm Pause
     '651a00ffffff': "stop_print", # Printing Page > Confirm Stop
     '656a00ffffff': "emergency_stop", # Printing Page > Confirm Emergency Stop
@@ -12,9 +14,9 @@ response_actions = {
     '65??00ffffff': "go_back",  # Return to Previous Page
     # MAIN PAGE OPTIONS (page 1)
     '650101ffffff': "files_picker",  # Page 1 > Print Files Page 1
-    '650102ffffff': "page 8",  # Page 1 > Prepare Page (Move)
-    '650103ffffff': "page 11", # Page 1 > Settings Page
-    '650104ffffff': "page 14", # Page 1 > Level Page
+    '650102ffffff': "page " + PAGE_PREPARE_MOVE,  # Page 1 > Prepare Page (Move)
+    '650103ffffff': "page " + PAGE_SETTINGS, # Page 1 > Settings Page
+    '650104ffffff': "page " + PAGE_LEVELING, # Page 1 > Level Page
     # PRINT PAGE OPTIONS
     '650202ffffff': "files_page_next",  # Next Page Print Files ->
     '650201ffffff': "files_page_prev",  # Previous Print Files Page <-
@@ -38,29 +40,29 @@ response_actions = {
     '650801ffffff': 'set_distance_0.1', # 0.1mm Move Page
     '650802ffffff': "set_distance_1", # 1mm Move Page
     '650803ffffff': "set_distance_10", # 10mm Move Page
-    '65080fffffff': "page 6",  # Prepare Page (Move) > Prepare Page (Temp)
-    '650607ffffff': "page 8",  # Prepare Page (Temp) > Prepare Page (Move)
-    '650608ffffff': "page 9",  # Prepare Page (Temp) > Prepare Page (Extruder)
+    '65080fffffff': "page " + PAGE_PREPARE_TEMP,  # Prepare Page (Move) > Prepare Page (Temp)
+    '650607ffffff': "page " + PAGE_PREPARE_MOVE,  # Prepare Page (Temp) > Prepare Page (Move)
+    '650608ffffff': "page " + PAGE_PREPARE_EXTRUDER,  # Prepare Page (Temp) > Prepare Page (Extruder)
     # SETTINGS PAGE OPTIONS
     # LANGUAGE SELECT
-    '650b01ffffff': "page 12", # Settings Page > Language
+    '650b01ffffff': "page " + PAGE_SETTINGS_LANGUAGE, # Settings Page > Language
     # TEMPERATURE SETTINGS (Material)
-    '650b02ffffff': "page 32", # Settings Page > Temperature Settings
-    '652001ffffff': "page 33", # Temperature Settings > PLA
-    '652002ffffff': "page 33", # Temperature Settings > ABS
-    '652003ffffff': "page 33", # Temperature Settings > PETG
-    '652004ffffff': "page 33", # Temperature Settings > TPU
-    '652005ffffff': "page 33", # Temperature Settings > LEVEL
+    '650b02ffffff': "page " + PAGE_SETTINGS_TEMPERATURE, # Settings Page > Temperature Settings
+    '652001ffffff': "page " + PAGE_SETTINGS_TEMPERATURE_PLA, # Temperature Settings > PLA
+    '652002ffffff': "page " + PAGE_SETTINGS_TEMPERATURE_ABS, # Temperature Settings > ABS
+    '652003ffffff': "page " + PAGE_SETTINGS_TEMPERATURE_PETG, # Temperature Settings > PETG
+    '652004ffffff': "page " + PAGE_SETTINGS_TEMPERATURE_TPU, # Temperature Settings > TPU
+    '652005ffffff': "page " + PAGE_SETTINGS_TEMPERATURE_LEVEL, # Temperature Settings > LEVEL
     '652104ffffff': 'temp_extruder_down', # Temperature Settings > MATERIAL > Extruder Temp Down
     '652105ffffff': 'temp_extruder_up', # Temperature Settings > MATERIAL > Extruder Temp Up
     '652106ffffff': 'temp_bed_down', # Temperature Settings > MATERIAL > Bed Temp Down
     '652107ffffff': 'temp_bed_up', # Temperature Settings > MATERIAL > Bed Temp Up
     # ABOUT MACHINE
-    '650b08ffffff': "page 35", # Settings Page > About Machine
+    '650b08ffffff': "page " + PAGE_SETTINGS_ABOUT, # Settings Page > About Machine
     # ADVANCED SETTINGS
-    '650b09ffffff': "page 42", # Settings Page > Advanced Settings
+    '650b09ffffff': "page " + PAGE_SETTINGS_ADVANCED, # Settings Page > Advanced Settings
     # LIGHT CONTROL
-    '650b03ffffff': "page 84", # Settings Page > Light Control
+    '650b03ffffff': "page " + PAGE_LIGHTS, # Settings Page > Light Control
     '655401ffffff': "toggle_part_light", # Light Control > Part Light toggle
     '655402ffffff': "toggle_frame_light", # Light Control > Frame Light toggle
     # FAN CONTROL
@@ -74,12 +76,12 @@ response_actions = {
     '650b07ffffff': "factorysettingspage", # Settings Page > Factory Settings
 
     # PRINTING SCREEN
-    '651304ffffff': "page 106", # Printing Page > Halt
+    '651304ffffff': "page " + PAGE_PRINTING_EMERGENCY_STOP, # Printing Page > Halt
     '651301ffffff': "pause_print_button", # Printing Page > Pause
-    '651302ffffff': "page 26", # Printing Page > Stop
-    '651303ffffff': "page 84", # Printing Page > LED Control
+    '651302ffffff': "page " + PAGE_PRINTING_STOP, # Printing Page > Stop
+    '651303ffffff': "page " + PAGE_LIGHTS, # Printing Page > LED Control
 
-    '657f07ffffff': "page 84", # Printing Page > Adjust > LED Control
+    '657f07ffffff': "page " + PAGE_LIGHTS, # Printing Page > Adjust > LED Control
     '657f08ffffff': "toggle_filament_sensor", # Printing Page > Adjust > Filament Sensor Toggle
     # '657f06ffffff': "toggle_speed_adaptive", # Printing Page > Adjust > Adaptive Speed Toggle
     '657f04ffffff': "zoffset_+", # Printing Page > Adjust > Z Offset Up
@@ -110,10 +112,10 @@ response_actions = {
 
     '651801ffffff': 'print_opened_file', # Completed Print Page > Print Again
 
-    '65??09ffffff': "page 27", # Printing Page > Filament
-    '65??0affffff': "page 135", # Printing Page > Speed
-    '651b0cffffff': "page 135", # Printing Page > Speed
-    '65??0dffffff': "page 127", # Printing Page > Adjust
+    '65??09ffffff': "page " + PAGE_PRINTING_FILAMENT, # Printing Page > Filament
+    '65??0affffff': "page " + PAGE_PRINTING_SPEED, # Printing Page > Speed
+    '651b0cffffff': "page " + PAGE_PRINTING_SPEED, # Printing Page > Speed
+    '65??0dffffff': "page " + PAGE_PRINTING_ADJUST, # Printing Page > Adjust
 }
 
 response_errors = {
