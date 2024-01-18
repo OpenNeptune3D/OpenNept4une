@@ -44,7 +44,7 @@
    - Leave the printer on and SSH in (as mks) and type:
      ```
      cd /home/mks/kiauh
-     ./kiauh
+     ./kiauh.sh
      4 Advanced
      2 Build Only
      ```
