@@ -1,15 +1,20 @@
 response_actions = {
     '651200ffffff': "print_opened_file", # Confirm Print File
+    '651201ffffff': 'go_back', # cancel print file
     '651300ffffff': "page 27", # Printing Page > Settings
-    '651302ffffff': "pause_print", # Printing Page > Confirm Pause
+    '651900ffffff': "pause_print_confirm", # Printing Page > Confirm Pause
     '651a00ffffff': "stop_print", # Printing Page > Confirm Stop
+    '656a00ffffff': "emergency_stop", # Printing Page > Confirm Emergency Stop
+    '656a01ffffff': "go_back", # cancel emergency stop
+    '651901ffffff': "go_back", # cancel pause
+    '651a01ffffff': "go_back", # cancel stop
     '651800ffffff': "confirm_complete",
     '65??00ffffff': "go_back",  # Return to Previous Page
     # MAIN PAGE OPTIONS (page 1)
     '650101ffffff': "files_picker",  # Page 1 > Print Files Page 1
     '650102ffffff': "page 8",  # Page 1 > Prepare Page (Move)
     '650103ffffff': "page 11", # Page 1 > Settings Page
-    #'650104ffffff': "page 14", # Page 1 > Level Page
+    '650104ffffff': "page 14", # Page 1 > Level Page
     # PRINT PAGE OPTIONS
     '650202ffffff': "files_page_next",  # Next Page Print Files ->
     '650201ffffff': "files_page_prev",  # Previous Print Files Page <-
@@ -70,26 +75,45 @@ response_actions = {
 
     # PRINTING SCREEN
     '651304ffffff': "page 106", # Printing Page > Halt
-    '651301ffffff': "page 25", # Printing Page > Pause
+    '651301ffffff': "pause_print_button", # Printing Page > Pause
     '651302ffffff': "page 26", # Printing Page > Stop
     '651303ffffff': "page 84", # Printing Page > LED Control
-
-
-    '65??09ffffff': "page 27", # Printing Page > Filament
-    '65??0affffff': "page 135", # Printing Page > Speed
-    '651b0cffffff': "page 135", # Printing Page > Speed
-    '65??0dffffff': "page 127", # Printing Page > Adjust
 
     '657f07ffffff': "page 84", # Printing Page > Adjust > LED Control
     '657f08ffffff': "toggle_filament_sensor", # Printing Page > Adjust > Filament Sensor Toggle
     # '657f06ffffff': "toggle_speed_adaptive", # Printing Page > Adjust > Adaptive Speed Toggle
     '657f04ffffff': "zoffset_+", # Printing Page > Adjust > Z Offset Up
     '657f05ffffff': "zoffset_-", # Printing Page > Adjust > Z Offset Down
-    '657f01ffffff': 'zoffsetchange_0.1', # Printing Page > Adjust > Z Offset Change 0.1mm
-    '657f02ffffff': 'zoffsetchange_1', # Printing Page > Adjust > Z Offset Change 1mm
-    '657f03ffffff': 'zoffsetchange_10', # Printing Page > Adjust > Z Offset Change 10mm
+    '657f01ffffff': 'zoffsetchange_0.01', # Printing Page > Adjust > Z Offset Change 0.1mm
+    '657f02ffffff': 'zoffsetchange_0.1', # Printing Page > Adjust > Z Offset Change 1mm
+    '657f03ffffff': 'zoffsetchange_1', # Printing Page > Adjust > Z Offset Change 10mm
+
+    '651b01ffffff': "temp_heater_extruder",
+    '651b02ffffff': "temp_heater_heater_bed",
+    '651b09ffffff': "temp_heater_heater_bed_outer",
+    '651b03ffffff': "temp_increment_1",
+    '651b04ffffff': "temp_increment_5",
+    '651b05ffffff': "temp_increment_10",
+    '651b06ffffff': "temp_adjust_-",
+    '651b07ffffff': "temp_adjust_+",
+    '651b08ffffff': "temp_reset",
+
+    '658701ffffff': "speed_type_print",
+    '658702ffffff': "speed_type_flow",
+    '658703ffffff': "speed_type_fan",
+    '658704ffffff': "speed_increment_1",
+    '658705ffffff': "speed_increment_5",
+    '658706ffffff': "speed_increment_10",
+    '658707ffffff': "speed_adjust_-",
+    '658708ffffff': "speed_adjust_+",
+    '658709ffffff': "speed_reset",
 
     '651801ffffff': 'print_opened_file', # Completed Print Page > Print Again
+
+    '65??09ffffff': "page 27", # Printing Page > Filament
+    '65??0affffff': "page 135", # Printing Page > Speed
+    '651b0cffffff': "page 135", # Printing Page > Speed
+    '65??0dffffff': "page 127", # Printing Page > Adjust
 }
 
 response_errors = {
