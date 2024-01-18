@@ -9,10 +9,14 @@ import serial_asyncio
 import time
 import re
 import os, os.path
+import io
 import asyncio
 import traceback
+from PIL import Image
+
 
 from response_actions import response_actions, response_errors
+from lib_col_pic import parse_thumbnail
 
 logger = logging.getLogger(__name__)
 
@@ -714,35 +718,42 @@ class DisplayController:
         return None
 
     async def load_thumbnail_for_page(self, filename, page_number):
-        logger.info("Loading new GCode for " + filename)
-        gcode = requests.get(f"http://127.0.0.1/server/files/gcodes/{requests.utils.quote(filename)}").text
-        lines = gcode.splitlines()
-        logger.debug("GCode Lines: " + str(len(lines)))
-        if len(lines) < 100:
-            logger.error("GCode too short to parse")
-            logger.debug(gcode)
+        logger.info("Loading thumbnail for " + filename)
+        metadata = await self._send_moonraker_request("server.files.metadata", {"filename": filename})
+        best_thumbnail = None
+        for thumbnail in metadata["result"]["thumbnails"]:
+            if thumbnail["width"] == 160:
+                best_thumbnail = thumbnail
+                break
+            if best_thumbnail is None or thumbnail["width"] > best_thumbnail["width"]:
+                best_thumbnail = thumbnail
+        if best_thumbnail is None:
+            self._write("p[" + str(page_number) + "].vis cp0,0", True)
             return
-        for line in lines:
-            if line.startswith(";gimage:"):
-                logger.info("Found thumbnail in GCode")
-                image = line[8:]
+        
+        img = requests.get("http://localhost/server/files/gcodes/" + best_thumbnail["relative_path"])
+        thumbnail = Image.open(io.BytesIO(img.content))
+        background = "29354a"
+        if "thumbnails" in self.config:
+            if "background_color" in self.config["thumbnails"]:
+                background = self.config["thumbnails"]["background_color"]
+        image = parse_thumbnail(thumbnail, 160, 160, background)
 
-                parts = []
-                start = 0
-                end = 1024
-                while (start + 1024 < len(image)):
-                    parts.append(image[start:end])
-                    start = start + 1024
-                    end = end + 1024
+        parts = []
+        start = 0
+        end = 1024
+        while (start + 1024 < len(image)):
+            parts.append(image[start:end])
+            start = start + 1024
+            end = end + 1024
 
-                parts.append(image[start:len(image)])
-                self.is_blocking_serial = True
-                self._write("p[" + str(page_number) + "].vis cp0,1", True)
-                self._write("p[" + str(page_number) + "].cp0.close()", True)
-                for part in parts:
-                    self._write("p[" + str(page_number) + "].cp0.write(\"" + str(part) + "\")", True)
-                self.is_blocking_serial = False
-                return
+        parts.append(image[start:len(image)])
+        self.is_blocking_serial = True
+        self._write("p[" + str(page_number) + "].vis cp0,1", True)
+        self._write("p[" + str(page_number) + "].cp0.close()", True)
+        for part in parts:
+            self._write("p[" + str(page_number) + "].cp0.write(\"" + str(part) + "\")", True)
+        self.is_blocking_serial = False
 
     def handle_status_update(self, new_data, data_mapping=DATA_MAPPING):
         if "print_stats" in new_data:
@@ -849,10 +860,13 @@ try:
         config.add_section('LOGGING')
         config.set('LOGGING', 'file_log_level', 'ERROR')
         config.add_section('main_screen')
-        config.set('main_screen', '; set to MODEL_NAME for built in model name. Remove to use Elegoo model images')
+        config.set('main_screen', '; set to MODEL_NAME for built in model name. Remove to use Elegoo model images.')
         config.set('main_screen', 'display_name', 'MODEL_NAME')
-        config.set('main_screen', '; color for the line below the model name. As RGB565 value')
+        config.set('main_screen', '; color for the line below the model name. As RGB565 value.')
         config.set('main_screen', 'display_name_line_color', '1725')
+        config.add_section('thumbnails')
+        config.set('main_screen', '; Background color for thumbnails. As RGB Hex value. Remove for default background color.')
+        config.set('thumbnails', 'background_color', '29354a')
         with open(config_file, 'w') as configfile:
             config.write(configfile)
     config.read(config_file)
