@@ -3,7 +3,7 @@ from mapping import *
 response_actions = {
     '651200ffffff': "print_opened_file", # Confirm Print File
     '651201ffffff': 'go_back', # cancel print file
-    '651300ffffff': "page " + PAGE_PRINTING_SETTINGS, # Printing Page > Settings
+    '651300ffffff': "page " + PAGE_PRINTING_FILAMENT, # Printing Page > Settings
     '651900ffffff': "pause_print_confirm", # Printing Page > Confirm Pause
     '651a00ffffff': "stop_print", # Printing Page > Confirm Stop
     '656a00ffffff': "emergency_stop", # Printing Page > Confirm Emergency Stop
@@ -91,14 +91,22 @@ response_actions = {
     '657f03ffffff': 'zoffsetchange_1', # Printing Page > Adjust > Z Offset Change 10mm
 
     '651b01ffffff': "temp_heater_extruder",
+    '651c01ffffff': "temp_heater_extruder",
     '651b02ffffff': "temp_heater_heater_bed",
+    '651c02ffffff': "temp_heater_heater_bed",
     '651b09ffffff': "temp_heater_heater_bed_outer",
     '651b03ffffff': "temp_increment_1",
+    '651c03ffffff': "temp_increment_1",
     '651b04ffffff': "temp_increment_5",
+    '651c04ffffff': "temp_increment_5",
     '651b05ffffff': "temp_increment_10",
+    '651c05ffffff': "temp_increment_10",
     '651b06ffffff': "temp_adjust_-",
+    '651c06ffffff': "temp_adjust_-",
     '651b07ffffff': "temp_adjust_+",
+    '651c07ffffff': "temp_adjust_+",
     '651b08ffffff': "temp_reset",
+    '651c08ffffff': "temp_reset",
 
     '658701ffffff': "speed_type_print",
     '658702ffffff': "speed_type_flow",
@@ -115,6 +123,7 @@ response_actions = {
     '65??09ffffff': "page " + PAGE_PRINTING_FILAMENT, # Printing Page > Filament
     '65??0affffff': "page " + PAGE_PRINTING_SPEED, # Printing Page > Speed
     '651b0cffffff': "page " + PAGE_PRINTING_SPEED, # Printing Page > Speed
+    '651c0cffffff': "page " + PAGE_PRINTING_SPEED, # Printing Page > Speed
     '65??0dffffff': "page " + PAGE_PRINTING_ADJUST, # Printing Page > Adjust
 }
 

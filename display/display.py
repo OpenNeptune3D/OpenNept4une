@@ -16,7 +16,7 @@ from PIL import Image
 
 from response_actions import response_actions, response_errors
 from lib_col_pic import parse_thumbnail
-from elegoo_neptune4 import Neptune4Mapper
+from elegoo_neptune4 import Neptune4Mapper, Neptune4ProMapper, Neptune4PlusMapper, Neptune4MaxMapper
 from mapping import *
 
 logger = logging.getLogger(__name__)
@@ -26,7 +26,7 @@ config_file = "/home/mks/printer_data/config/display_connector.cfg"
 
 PRINTING_PAGES = [
     PAGE_PRINTING,
-    PAGE_PRINTING_SETTINGS,
+    PAGE_PRINTING_FILAMENT,
     PAGE_PRINTING_PAUSE,
     PAGE_PRINTING_STOP,
     PAGE_PRINTING_EMERGENCY_STOP,
@@ -84,7 +84,14 @@ class DisplayController:
         self.current_state = "booting"
 
         self.printer_model = self.get_printer_model_from_file()
-        self.mapper = Neptune4Mapper()
+        if self.printer_model == MODEL_REGULAR:
+            self.mapper = Neptune4Mapper()
+        elif self.printer_model == MODEL_PRO:
+            self.mapper = Neptune4ProMapper()
+        elif self.printer_model == MODEL_PLUS:
+            self.mapper = Neptune4PlusMapper()
+        elif self.printer_model == MODEL_MAX:
+            self.mapper = Neptune4MaxMapper()
 
         self.dir_contents = []
         self.current_dir = ""
@@ -367,13 +374,19 @@ class DisplayController:
         self.send_gcode(gcode)
 
     def update_printing_heater_settings_ui(self):
-        self._write(f'p[{self._page_id(PAGE_PRINTING_SETTINGS)}].b0.picc=' + str(90 if self.printing_selected_heater == "extruder" else 89))
-        self._write(f'p[{self._page_id(PAGE_PRINTING_SETTINGS)}].b1.picc=' + str(90 if self.printing_selected_heater == "heater_bed" else 89))
-        self._write(f'p[{self._page_id(PAGE_PRINTING_SETTINGS)}].b2.picc=' + str(90 if self.printing_selected_heater == "heater_bed_outer" else 89))
-        self._write(f'p[{self._page_id(PAGE_PRINTING_SETTINGS)}].targettemp.val=' + str(self.printing_target_temps[self.printing_selected_heater]))
+        if self.printer_model == MODEL_PRO:
+            self._write(f'p[{self._page_id(PAGE_PRINTING_FILAMENT)}].b0.picc=' + str(90 if self.printing_selected_heater == "extruder" else 89))
+            self._write(f'p[{self._page_id(PAGE_PRINTING_FILAMENT)}].b1.picc=' + str(90 if self.printing_selected_heater == "heater_bed" else 89))
+            self._write(f'p[{self._page_id(PAGE_PRINTING_FILAMENT)}].b2.picc=' + str(90 if self.printing_selected_heater == "heater_bed_outer" else 89))
+            self._write(f'p[{self._page_id(PAGE_PRINTING_FILAMENT)}].targettemp.val=' + str(self.printing_target_temps[self.printing_selected_heater]))
+
+        else:
+            self._write(f'p[{self._page_id(PAGE_PRINTING_FILAMENT)}].b[13].pic={54 + ["extruder", "heater_bed"].index(self.printing_selected_heater)}')
+            self._write(f'p[{self._page_id(PAGE_PRINTING_FILAMENT)}].b[35].txt="' + str(self.printing_target_temps[self.printing_selected_heater]) + '"')
+
 
     def update_printing_temperature_increment_ui(self):
-        self._write(f'p[{self._page_id(PAGE_PRINTING_SETTINGS)}].p1.pic={56 + ["1", "5", "10"].index(self.printing_selected_temp_increment)}')
+        self._write(f'p[{self._page_id(PAGE_PRINTING_FILAMENT)}].p1.pic={56 + ["1", "5", "10"].index(self.printing_selected_temp_increment)}')
 
     def update_printing_speed_settings_ui(self):
         self._write(f'p[{self._page_id(PAGE_PRINTING_SPEED)}].b0.picc=' + str(59 if self.printing_selected_speed_type == "print" else 58))
