@@ -175,7 +175,7 @@ class DisplayController:
             model_image_key = "213"
         elif self.printer_model == MODEL_PRO:
             model_image_key = "214"
-            self._write(f'p[{self._page_id(PAGE_MAIN)}].].disp_q5.val=1') # N4Pro Outer Bed Symbol (Bottom Rig>
+            self._write(f'p[{self._page_id(PAGE_MAIN)}].disp_q5.val=1') # N4Pro Outer Bed Symbol (Bottom Rig>
             self._write(f'vis out_bedtemp,1') # Only N4Pro
         elif self.printer_model == MODEL_PLUS:
             model_image_key = "313"
@@ -637,7 +637,7 @@ class DisplayController:
                     max_z = int(new_data["config"]["stepper_z"]["position_max"])
 
             if max_x > 0 and max_y > 0 and max_z > 0:
-                self._write(f'p[{self._page_id(PAGE_SETTINGS_ABOUT)}].].b[9].txt="{max_x}x{max_y}x{max_z}"')
+                self._write(f'p[{self._page_id(PAGE_SETTINGS_ABOUT)}].b[9].txt="{max_x}x{max_y}x{max_z}"')
 
     async def _attempt_reconnect(self):
         logger.info("Attempting to reconnect to Moonraker...")
@@ -704,9 +704,9 @@ class DisplayController:
                 current_page = self._get_current_page()
                 if state == "printing" or state == "paused":
                     if state == "printing":
-                        self._write(f'p[{self._page_id(PAGE_PRINTING)}].].b[44]].pic=68')
+                        self._write(f'p[{self._page_id(PAGE_PRINTING)}].b[44]].pic=68')
                     elif state == "paused":
-                        self._write(f'p[{self._page_id(PAGE_PRINTING)}].].b[44]].pic=69')
+                        self._write(f'p[{self._page_id(PAGE_PRINTING)}].b[44]].pic=69')
                     if current_page == None or current_page not in PRINTING_PAGES:
                         self._navigate_to_page(PAGE_PRINTING)
                 elif state == "complete":
@@ -719,7 +719,7 @@ class DisplayController:
             if "display_status" in new_data and "progress" in new_data["display_status"] and "print_duration" in new_data["print_stats"]:
                 if new_data["display_status"]["progress"] > 0:
                     total_time = new_data["print_stats"]["print_duration"] / new_data["display_status"]["progress"]
-                    self._write(f'p[{self._page_id(PAGE_PRINTING)}].].b[37].txt="{format_time(total_time - new_data["print_stats"]["print_duration"])}"')
+                    self._write(f'p[{self._page_id(PAGE_PRINTING)}].b[37].txt="{format_time(total_time - new_data["print_stats"]["print_duration"])}"')
 
         if "output_pin Part_Light" in new_data:
             self.part_light_state = int(new_data["output_pin Part_Light"]["value"]) == 1

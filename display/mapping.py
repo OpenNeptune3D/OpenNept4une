@@ -65,6 +65,22 @@ class MappingLeaf:
             return f"{value:3.2f}"
         return str(value)
 
+    
+def build_accessor(page, field):
+    accessor = ""
+    try:
+        page_number = int(page)
+        accessor += f"p[{page_number}]"
+    except ValueError:
+        accessor += page
+    accessor += "."
+    try:
+        field_number = int(field)
+        accessor += f"b[{field_number}]"
+    except ValueError:
+        accessor += field
+    return accessor
+
 class Mapper:
     data_mapping = {}
     page_mapping = {}
