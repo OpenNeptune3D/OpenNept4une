@@ -121,6 +121,34 @@ fi
 
 sudo nmtui
 
+clear
+
+echo "When Kiauh opens, go to the uninstall page FIRST and remove each one for final clean-up"
+echo "even if they don't look installed..."
+sleep 5
+echo ""
+echo "Then Install the following, in this ORDER."
+echo "Klipper, Moonraker, Fluidd, Mainsail (on port 81), Mobileraker then Crowsnest"
+echo ""
+echo "You should then run chmod +x ~/OpenNept4une/OpenNept4une.sh && ~/OpenNept4une/OpenNept4une.sh"
+echo ""
+echo "The main requirement here is to install the latest printer.cfg"
+echo ""
+echo "Copy the text above for reference as it will disappear in 20s"
+
+countdown=20
+
+while [ $countdown -gt 0 ]; do
+    if (( $countdown % 5 == 0 )); then
+        echo "Waiting for $countdown seconds..."
+    fi
+
+    sleep 1
+    ((countdown--))
+done
+
+echo "Countdown finished."
+
 sync 
 
 # Run kiauh.sh as the mks user
