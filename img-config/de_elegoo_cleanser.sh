@@ -104,6 +104,7 @@ sudo apt update
 sudo apt remove nginx -y
 sudo apt install network-manager -y 
 sudo apt install ustreamer -y 
+sudo apt install python3-venv -y 
 sudo apt dist-upgrade -y
 sudo apt clean -y
 sudo apt autoclean -y
