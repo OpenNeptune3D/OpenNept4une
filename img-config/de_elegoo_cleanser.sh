@@ -132,7 +132,7 @@ echo "Klipper, Moonraker, Fluidd, Mainsail (on port 81), Mobileraker then Crowsn
 echo ""
 echo "You should then run chmod +x ~/OpenNept4une/OpenNept4une.sh && ~/OpenNept4une/OpenNept4une.sh"
 echo ""
-echo "The main requirement here is to install the latest printer.cfg"
+echo "The main requirement here is to Install latest OpenNept4une Printer.cfg AND Update (Virtual) MCU rpi Firmware"
 echo ""
 echo "Copy the text above for reference as it will disappear in 20s"
 
