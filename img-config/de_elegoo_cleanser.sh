@@ -124,18 +124,19 @@ clear
 
 echo "When Kiauh opens, go to the uninstall page FIRST and remove each one for final clean-up"
 echo "even if they don't look installed..."
-sleep 5
+sleep 20
 echo ""
 echo "Then Install the following, in this ORDER."
 echo "Klipper, Moonraker, Fluidd, Mainsail (on port 81), Mobileraker then Crowsnest"
+sleep 20
 echo ""
 echo "You should then run chmod +x ~/OpenNept4une/OpenNept4une.sh && ~/OpenNept4une/OpenNept4une.sh"
 echo ""
-echo "The main requirement here is to Install latest OpenNept4une Printer.cfg AND Update (Virtual) MCU rpi Firmware"
+echo "The main requirement here is to Install the latest OpenNept4une Printer.cfg AND Update (Virtual) MCU rpi Firmware"
 echo ""
-echo "Copy the text above for reference as it will disappear in 20s"
+echo "Copy the text above for reference as it will disappear in 60s"
 
-countdown=20
+countdown=60
 
 while [ $countdown -gt 0 ]; do
     if (( $countdown % 5 == 0 )); then
