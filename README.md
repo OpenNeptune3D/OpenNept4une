@@ -51,7 +51,7 @@
 2. Flash eMMC with latest OpenNept4une release image
 3. Run the install script to upgrade / make further settings
 4. Update third party modules in Kiauh / Fluidd or Mailsail
-5. (Optional) Flash MCU as [described here](mcu-firmware)
+5. Flash MCU as [described here](mcu-firmware)
 
 **Preparation:**
 
