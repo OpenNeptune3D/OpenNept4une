@@ -351,7 +351,7 @@ apply_configuration() {
     fi
     
     # User prompt for installing KAMP/moonraker and fluidd GUI configuration
-    echo"
+    echo ""
     echo "Do you wish to install the latest KAMP/moonraker/fluiddGUI configurations? (y/n)"
     echo ""
     read -p "If this is a first-time install, it is recommended. If just updating printer.cfg & you have custom KAMP configurations, it is best to skip: " user_choice
