@@ -329,8 +329,15 @@ apply_configuration() {
     if [[ -n "$DTB_SOURCE" ]]; then
         read -p "Do you wish to update the DTB file? First Run on Git Image MUST select Yes, others skip (y/n) " -n 1 -r
         echo
+
         if [[ $REPLY =~ ^[Yy]$ ]]; then
-            copy_file "$DTB_SOURCE" "$DTB_DEST" true
+            # New check for the string "mks" in /boot/.OpenNept4une.txt
+            if grep -q "mks" /boot/.OpenNept4une.txt; then
+                copy_file "$DTB_SOURCE" "/boot/dtb-5.16.20-rockchip64/rockchip/rk3328-roc-cc.dtb" true
+                copy_file "$DTB_SOURCE" "$DTB_DEST" true
+            else
+                copy_file "$DTB_SOURCE" "$DTB_DEST" true
+            fi
         else
             echo "Skipping DTB file update."
         fi
