@@ -48,10 +48,10 @@
 **Overview:**
 
 1. Determine stepper motor current & PCB version
-2. Flash eMMC with latest OpenNept4une release image
-3. Run the install script to upgrade / make further settings
-4. Update third party modules in Kiauh / Fluidd or Mailsail
-5. Flash MCU as [described here](mcu-firmware)
+2. Flash eMMC with the latest OpenNept4une release image
+3. Update third-party modules in Kiauh / Fluidd or Mailsail
+4. Run the install script to Install the latest OpenNept4une Printer.cfg & Update (Virtual) MCU rpi Firmware. 
+6. Flash MCU as [described here](mcu-firmware)
 
 **Preparation:**
 
@@ -120,6 +120,20 @@ chmod +x ~/OpenNept4une/OpenNept4une.sh && ~/OpenNept4une/OpenNept4une.sh
 - Run **Install latest OpenNept4une Printer.cfg**
 
 When prompted answer (yes) to updating other configurations (KAMP / moonraker etc).
+
+- Run **Kiauh for the latest Updates**
+```bash
+~/kiauh/kiauh.sh
+```
+In the Kiauh menu select Option (2), then type key (a) and then press ENTER.
+Once complete quit out of Kiauh.
+
+- Run **Update (Virtual) MCU rpi Firmware (Option 4 in the .sh below)**
+```bash
+~/OpenNept4une/OpenNept4une.sh
+```
+
+- Finally **Flash MCU as [described here](mcu-firmware)**
 
 # General Configuration Instructions
 
