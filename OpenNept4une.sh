@@ -335,8 +335,8 @@ apply_configuration() {
         if [[ $REPLY =~ ^[Yy]$ ]]; then
             # New check for the string "mks" in /boot/.OpenNept4une.txt
             if grep -q "mks" /boot/.OpenNept4une.txt; then
-                copy_file "$DTB_SOURCE" "/boot/dtb-5.16.20-rockchip64/rockchip/rk3328-roc-cc.dtb" true
-                copy_file "$DTB_SOURCE" "$DTB_DEST" true
+                echo "Skipping"
+                sleep 5 
             else
                 copy_file "$DTB_SOURCE" "$DTB_DEST" true
             fi
