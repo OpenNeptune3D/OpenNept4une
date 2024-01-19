@@ -16,7 +16,7 @@
    - Release RESET then BOOT.
 
 3. **SSH and Commands:**
-   - Leave the printer on and SSH in and type:
+   - Leave the printer on, and SSH in (as mks) and type:
      ```
      sudo service klipper stop
      sudo apt update
@@ -40,16 +40,20 @@
 (Only do this if you have removed Elegoo services and are running standard/updated releases of Klipper.)
 
 1. **Enter Bootloader Mode:**
-   - Follow the initial steps to enter bootloader mode.
+   - Power on the machine.
+   - Press the BOOT button down (or bridge the pads).
+   - While this is pressed, also press the RESET button next to it.
+   - Release RESET then BOOT.
 
 2. **SSH and Commands:**
-   - Leave the printer on and SSH in (as mks) and type:
+   - Leave the printer on, and SSH in (as mks) and type:
      ```
      cd /home/mks/klipper/
      make clean
      make menuconfig
      ```
-   - Enter these configurations - STMicroelectronics STM32 - STM32F401 - 32KiB Bootloader - and USART PA10/PA9 - settings.
+   - Enter the following configurations using arrow keys and SPACEBAR to select.
+   - STMicroelectronics STM32 - STM32F401 - 32KiB Bootloader - and USART PA10/PA9 - settings.
    - Once you have selected the correct options hit the Q key and then Y to close and save.
    - Now run:
 
@@ -68,7 +72,7 @@
 5. **Reboot:**
    - Type `sudo reboot` (then power cycle after a few minutes).
 
-6. **If this doesnt work (usually if you flashed stock MCU firmware before):**
+6. **If this doesn't work (usually if you flashed MCU firmware before):**
    - Repeat the BOOT and RESET process.
    - Download the provided firmware-bak.bin (in this git repo)
    - Then, flash it with:
@@ -85,11 +89,11 @@
    - Similar to the above steps.
    
 2. **SSH and Commands:**
-   - Leave the printer on and SSH in and type:
+   - Leave the printer on, and SSH in (as mks) and type:
      ```
      sudo service klipper stop
      stm32flash -w firmware-bak.bin -v /dev/ttyS0
      ```
-   - If this fails, retry the BOOT & RESET button method above.
+   - If this fails, retry the BOOT & RESET button method above and re-run the stm32flash command.
    - Type `sudo reboot` (then power cycle after a few minutes).
 
