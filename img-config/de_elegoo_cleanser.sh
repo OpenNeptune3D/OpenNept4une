@@ -22,8 +22,8 @@ sudo rm /boot/wpa_supplicant/wpa_supplicant-wlan0.conf
 sudo rm /etc/wpa_supplicant/wpa_supplicant-wlan0.conf
 
 /klipper/scripts/klipper-uninstall.sh
-sudo /home/mks/moonraker/scripts/uninstall-moonraker.sh
-sudo /home/mks/crowsnest/tools/uninstall.sh
+/home/mks/moonraker/scripts/uninstall-moonraker.sh
+/home/mks/crowsnest/tools/uninstall.sh
 
 find /home/mks/ -mindepth 1 ! -name 'OpenNept4une' -exec rm -rf {} +
 sudo rm -rf /root/*
