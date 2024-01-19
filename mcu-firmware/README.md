@@ -15,11 +15,12 @@
    - Release RESET then BOOT.
 
 3. **SSH and Commands:**
-   - Leave the printer on and SSH in (as root) and type:
+   - Leave the printer on and SSH in and type:
      ```
-     service klipper stop
-     apt update
-     apt install stm32flash
+     sudo service klipper stop
+     sudo apt update
+     sudo apt install stm32flash
+     cd ~/
      stm32flash -r firmware-bak.bin /dev/ttyS0
      ```
    - If this errors out, repeat the BOOT/RESET button-press routine above until it works.
@@ -27,11 +28,11 @@
 4. **Copy Firmware:**
    - From another terminal on the computer, copy this off your printer using:
      ```
-     scp root@IPADDRESS:/root/firmware-bak.bin .
+     scp mks@IPADDRESS:/home/mks/firmware-bak.bin .
      ```
 
 5. **Reboot:**
-   - Type `reboot` (then power cycle after a few minutes).
+   - Type `sudo reboot` (then power cycle after a few minutes).
 
 ## How to Flash Updated Klipper MCU Firmware
 
@@ -63,8 +64,8 @@
      stm32flash -w /home/mks/klipper/out/klipper.bin -v -S 0x08008000 -g 0x08000000 /dev/ttyS0
      ```
 
-5. **Start Klipper Service:**
-   - Type `sudo service klipper start`.
+5. **Reboot:**
+   - Type `sudo reboot` (then power cycle after a few minutes).
 
 6. **If this doesnt work (usually if you flashed stock MCU firmware before):**
    - Repeat the BOOT and RESET process.
@@ -74,7 +75,7 @@
      sudo service klipper stop
      stm32flash -w ./firmware-bak.bin -v /dev/ttyS0
      ```
-   - After this reboot going forward you may use the first (compile with kaiuh) method.
+   - After this reboot going forward you may use the first (compile with make menuconfig) method.
    ## How to Recover OG MCU Firmware
 
 (Pre-dumped N4Pro (might be the same as N4) firmware-bak.bin)
@@ -83,9 +84,9 @@
    - Similar to the above steps.
    
 2. **SSH and Commands:**
-   - Leave the printer on and SSH in (as root) and type:
+   - Leave the printer on and SSH in and type:
      ```
-     service klipper stop
+     sudo service klipper stop
      stm32flash -w firmware-bak.bin -v /dev/ttyS0
      ```
    - If this fails, retry the BOOT & RESET button method above.
