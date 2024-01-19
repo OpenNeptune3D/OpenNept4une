@@ -110,6 +110,25 @@ sudo apt autoremove -y
 sudo rm -rf /var/log/*
 sudo rm -rf /usr/share/man/*
 
+git clone --branch legacy/v3 https://github.com/mainsail-crew/crowsnest.git
+
+# Define the file path
+FILE="/home/mks/printer_data/config/moonraker.conf "
+
+# Check if the file exists
+if [[ ! -f "$FILE" ]]; then
+    echo "File not found: $FILE"
+    exit 1
+fi
+
+# Use sed to modify the file in-place
+sed -i '/^\[update_manager crowsnest\]/,/^$/ {
+    /origin: https:\/\/github\.com\/mainsail-crew\/crowsnest\.git/ a primary_branch: legacy/v3
+}' "$FILE"
+
+echo "Crowsnest File updated successfully."
+
+
 CRON_ENTRY="*/10 * * * * /bin/sync"
 if ! (crontab -l 2>/dev/null | grep "/bin/sync"); then
     (crontab -l 2>/dev/null; echo "$CRON_ENTRY") | crontab -
@@ -127,7 +146,7 @@ echo "even if they don't look installed..."
 sleep 20
 echo ""
 echo "Then Install the following, in this ORDER."
-echo "Klipper, Moonraker, Fluidd, Mainsail (on port 81), Mobileraker then Crowsnest"
+echo "Klipper, Moonraker, Fluidd, Mainsail (on port 81) then Mobileraker"
 sleep 20
 echo ""
 echo "You should then run chmod +x ~/OpenNept4une/OpenNept4une.sh && ~/OpenNept4une/OpenNept4une.sh"
