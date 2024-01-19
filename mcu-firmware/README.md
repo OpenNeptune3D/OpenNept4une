@@ -43,12 +43,17 @@
 2. **SSH and Commands:**
    - Leave the printer on and SSH in (as mks) and type:
      ```
-     cd /home/mks/kiauh
-     ./kiauh.sh
-     4 Advanced
-     2 Build Only
+     cd /home/mks/klipper/
+     make clean
+     make menuconfig
      ```
    - Enter these configurations - STMicroelectronics STM32 - STM32F401 - 32KiB Bootloader - and USART PA10/PA9 - settings.
+   - Once you have selected the correct options hit the Q key and then Y to close and save.
+   - Now run:
+
+     ```
+     make
+     ```
 
 4. **Flash Klipper Firmware:**
    - Repeat the BOOT and RESET process.
