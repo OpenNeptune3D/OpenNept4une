@@ -21,7 +21,7 @@ sudo service nginx stop
 sudo rm /boot/wpa_supplicant/wpa_supplicant-wlan0.conf
 sudo rm /etc/wpa_supplicant/wpa_supplicant-wlan0.conf
 
-/klipper/scripts/klipper-uninstall.sh
+/home/mks/klipper/scripts/klipper-uninstall.sh
 /home/mks/moonraker/scripts/uninstall-moonraker.sh
 /home/mks/crowsnest/tools/uninstall.sh
 
