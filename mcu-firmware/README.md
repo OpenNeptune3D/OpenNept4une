@@ -7,6 +7,7 @@
 1. **Solder a Momentary Button:**
    - Solder a momentary (push to make) button on the BOOT pads on the MKS/Elegoo control board next to the RESET button.
    - Alternatively, bridge these with sharp metal tweezers.
+ ![boot reset location](pictures/BOOTRESET.jpg)
 
 2. **Power On and Boot Process:**
    - Power on the machine.
