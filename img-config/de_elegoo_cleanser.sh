@@ -31,9 +31,6 @@ sudo rm /etc/wpa_supplicant/wpa_supplicant-wlan0.conf
 
 sudo cp /home/mks/OpenNept4une/img-config/led-v1.1+fix/99-gpio.rules /etc/udev/rules.d/
 
-/boot/dtb-5.16.20-rockchip64/rockchip/overlay/
-/boot/dtb-5.16.20-rockchip64/rockchip/
-
 /home/mks/klipper/scripts/klipper-uninstall.sh
 /home/mks/moonraker/scripts/uninstall-moonraker.sh
 /home/mks/crowsnest/tools/uninstall.sh
