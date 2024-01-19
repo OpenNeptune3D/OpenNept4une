@@ -26,7 +26,7 @@
      ```
    - If this errors out, repeat the BOOT/RESET button-press routine above until it works.
 
-4. **Copy Firmware:**
+4. **Copy Firmware Backup off the Machine (Optional):**
    - From another terminal on the computer, copy this off your printer using:
      ```
      scp mks@IPADDRESS:/home/mks/firmware-bak.bin .
