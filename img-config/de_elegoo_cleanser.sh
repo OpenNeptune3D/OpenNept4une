@@ -25,7 +25,7 @@ sudo rm /etc/wpa_supplicant/wpa_supplicant-wlan0.conf
 /home/mks/moonraker/scripts/uninstall-moonraker.sh
 /home/mks/crowsnest/tools/uninstall.sh
 
-sudo find /home/mks/ -mindepth 1 ! -name 'OpenNept4une' -exec rm -rf {} +
+sudo find /home/mks/ -mindepth 1 ! -path '/home/mks/OpenNept4une*' -exec rm -rf {} +
 sudo rm -rf /root/*
 
 # Create the config directory structure if not exists
