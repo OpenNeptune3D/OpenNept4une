@@ -251,7 +251,8 @@ update_mcu_rpi_fw() {
     clear_screen
     echo -e "\033[0;33m$OPENNEPT4UNE_ART\033[0m"
     echo "======================================"
-    echo "Do you want to update the Virtual MCU rpi (responsible for ADXL SPI & LED control only)"
+    echo "Do you want to update the Virtual MCU rpi?"
+    echo ""
     read -p "Enter 'y' to install, any other key to skip: " install_mcu_rpi
 
     if [[ $install_mcu_rpi == "y" ]]; then
