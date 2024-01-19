@@ -110,30 +110,34 @@ Pass: makerbase\
 
 - See the [Releases](https://github.com/halfmanbear/OpenNept4une/releases/) section for the latest pre-configured OpenNept4une eMMC Image. Flash with balenaEtcher or dd.
 - Recommended to Back-Up original eMMC beforehand.
-- Run the following startup scripts with Ethernet connected (as user mks) to load the correct machine and printer.cfg
+- Run the following startup scripts with Ethernet connected (as user mks)
+  
+**Run Kiauh for the latest Updates**
+```bash
+~/kiauh/kiauh.sh
+```
+- In the Kiauh menu, select Option (2), type key (a), and press ENTER.
+- Once complete quit out of Kiauh.
+
+**Install latest OpenNept4une Printer.cfg & Update (Virtual) MCU rpi Firmware**
+
 ```bash
 cd ~/OpenNept4une/ && git fetch --all && git reset --hard origin/main && git clean -fd
 ```
 ```bash
 chmod +x ~/OpenNept4une/OpenNept4une.sh && ~/OpenNept4une/OpenNept4une.sh
 ``` 
-- Run **Install latest OpenNept4une Printer.cfg**
 
-When prompted answer (yes) to updating other configurations (KAMP / moonraker etc).
+- Perform Option (1): Install the latest OpenNept4une Printer.cfg, When prompted answer (yes) to updating other configurations (KAMP / moonraker etc).
+- Once you have rebooted re-run:
 
-- Run **Kiauh for the latest Updates**
-```bash
-~/kiauh/kiauh.sh
-```
-In the Kiauh menu select Option (2), then type key (a) and then press ENTER.
-Once complete quit out of Kiauh.
-
-- Run **Update (Virtual) MCU rpi Firmware (Option 4 in the .sh below)**
 ```bash
 ~/OpenNept4une/OpenNept4une.sh
 ```
+- Then Perform Option (4): Update (Virtual) MCU rpi Firmware, In the menu, set 'Microcontroller Architecture' to 'Linux process,'.
+- Once the correct option has been selected with SPACEBAR, quit with Q, then confirm with Y.
 
-- Finally **Flash MCU as [described here](mcu-firmware)**
+**Finally Flash MCU as [described here](mcu-firmware)**
 
 # General Configuration Instructions
 
