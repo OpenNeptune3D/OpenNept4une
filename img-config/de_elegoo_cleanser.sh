@@ -113,7 +113,7 @@ sudo rm -rf /usr/share/man/*
 git clone --branch legacy/v3 https://github.com/mainsail-crew/crowsnest.git
 
 # Define the file path
-FILE="/home/mks/printer_data/config/moonraker.conf "
+FILE="/home/mks/printer_data/config/moonraker.conf"
 
 # Check if the file exists
 if [[ ! -f "$FILE" ]]; then
@@ -126,7 +126,7 @@ sed -i '/^\[update_manager crowsnest\]/,/^$/ {
     /origin: https:\/\/github\.com\/mainsail-crew\/crowsnest\.git/ a primary_branch: legacy/v3
 }' "$FILE"
 
-echo "Crowsnest File updated successfully."
+echo "File updated successfully."
 
 
 CRON_ENTRY="*/10 * * * * /bin/sync"
