@@ -16,7 +16,7 @@ sudo systemctl enable klipper-mcu.service
 
 # Pause and provide instructions to the user
 echo ""
-echo "Next, you will configure Klipper. In the menu, set 'Microcontroller Architecture' to 'Linux process,' then save and exit."
+echo "Next, you will configure Klipper. In the menu, set 'Microcontroller Architecture' to 'Linux process,'."
 echo ""
 echo "Once the Correct option has been selected with SPACEBAR, you will need to quit with Q, then confirm with Y."
 echo ""
