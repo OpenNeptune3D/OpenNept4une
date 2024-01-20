@@ -47,15 +47,15 @@
 
 **Overview:**
 
-1. Determine stepper motor current & PCB version
+1. Determine stepper motor current & PCB version (N4 & Pro Only)
 2. Flash eMMC with the latest OpenNept4une release image
 3. Update third-party modules in Kiauh / Fluidd or Mailsail
 4. Run the install script to Install the latest OpenNept4une Printer.cfg & Update (Virtual) MCU rpi Firmware. 
 6. Flash MCU as [described here](mcu-firmware)
 
-**Preparation:**
+**Preparation (N4 & N4 Pro Only):**
 
-The setup script will prompt you for two inputs: the stepper motor current, as well as the PCB version. ELEGOO has released the printers with two different types of steppers using different current and multiple board revisions. **Warning:** Choosing the wrong current might damage the stepper motors permanently, so it is better to double check, before picking a value.
+The setup script will prompt you for two inputs: the stepper motor current, as well as the PCB version (N4 and N4 Pro only). ELEGOO has released the printers with two different types of steppers using different current and multiple board revisions. **Warning:** Choosing the wrong current might damage the stepper motors permanently, so it is better to double check, before picking a value.
 
 *Determining Stepper Motor Current:*
 There are multiple ways to determine which current the steppers are running at, you may chose either of them to determine which current your servos use:
