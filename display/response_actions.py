@@ -17,8 +17,15 @@ response_actions = {
         11: "open_file_4",
     },
     6: {
+        1: "printer.send_gcode('SET_HEATER_TEMPERATURE HEATER=extruder')",
+        2: "printer.send_gcode('SET_HEATER_TEMPERATURE HEATER=heater_bed')",
+        3: 'set_preset_temp_PLA',
+        4: 'set_preset_temp_ABS',
+        5: 'set_preset_temp_PETG',
+        6: 'set_preset_temp_TPU',
         7: "page " + PAGE_PREPARE_MOVE,
         8: "page " + PAGE_PREPARE_EXTRUDER,
+        9: "printer.send_gcode('SET_HEATER_TEMPERATURE HEATER=heater_bed_outer')",
     },
     8: {
         1: 'set_distance_0.1',
@@ -39,6 +46,8 @@ response_actions = {
         16: 'page ' + PAGE_PREPARE_EXTRUDER,
     },
     9: {
+        1: 'extrude_+',
+        2: 'extrude_-',
         3: "page " + PAGE_PREPARE_MOVE,
         4: "page " + PAGE_PREPARE_TEMP,
     },
@@ -102,21 +111,34 @@ response_actions = {
         13: "page " + PAGE_PRINTING_ADJUST
     },
     32: {
-        1: "page " + PAGE_SETTINGS_TEMPERATURE_PLA,
-        2: "page " + PAGE_SETTINGS_TEMPERATURE_ABS,
-        3: "page " + PAGE_SETTINGS_TEMPERATURE_PETG,
-        4: "page " + PAGE_SETTINGS_TEMPERATURE_TPU,
-        5: "page " + PAGE_SETTINGS_TEMPERATURE_LEVEL,
+        1: "start_temp_preset_pla",
+        2: "start_temp_preset_abs",
+        3: "start_temp_preset_petg",
+        4: "start_temp_preset_tpu",
     },
     33: {
-        4: "temp_extruder_down",
-        5: "temp_extruder_up",
-        6: "temp_bed_down",
-        7: "temp_bed_up",
+        0: 'save_temp_preset',
+        1: 'preset_temp_step_1',
+        2: 'preset_temp_step_5',
+        3: 'preset_temp_step_10',
+        4: "preset_temp_extruder_down",
+        5: "preset_temp_extruder_up",
+        6: "preset_temp_bed_down",
+        7: "preset_temp_bed_up",
     },
     84: {
         1: "toggle_part_light",
         2: "toggle_frame_light",
+    },
+    95: {
+        1: "printer.send_gcode('SET_HEATER_TEMPERATURE HEATER=extruder')",
+        2: "printer.send_gcode('SET_HEATER_TEMPERATURE HEATER=heater_bed')",
+        3: 'preset_temp_PLA',
+        4: 'preset_temp_ABS',
+        5: 'preset_temp_PETG',
+        6: 'preset_temp_TPU',
+        7: "page " + PAGE_PREPARE_MOVE,
+        8: "page " + PAGE_PREPARE_EXTRUDER,
     },
     106: {
         0: "emergency_stop",
@@ -144,15 +166,18 @@ response_actions = {
     },
 }
 
-response_errors = {
-    '00': 'Invalid Instruction',
-    '02': 'Invalid Component ID',
-    '03': 'Invalid Page ID',
-    '04': 'Invalid Picture ID',
-    '05': 'Invalid Font ID',
-    '11': 'Invalid Baud Rate',
-    '1a': "Invalid Variable name or attribute",
-    '1b': "Invalid Variable operation",
-    '1c': "Assignment failed to assign",
-    '1e': "Invalid Quantity of Parameters",
+input_actions = {
+    6: {
+        0: "set_temp_extruder_$",
+        1: "set_temp_heater_bed_$",
+        2: "set_temp_heater_bed_outer_$",
+    },
+    9: {
+        2: "set_extrude_amount_$",
+        3: "set_extrude_speed_$",
+    },
+    95: {
+        0: "set_temp_extruder_$",
+        1: "set_temp_heater_bed_$",
+    },
 }

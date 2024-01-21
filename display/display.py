@@ -10,11 +10,10 @@ import io
 import asyncio
 import traceback
 from PIL import Image
-from nextion import EventType
-from tjc import TJCClient
+from tjc import TJCClient, EventType
 from urllib.request import pathname2url
 
-from response_actions import response_actions, response_errors
+from response_actions import response_actions, input_actions
 from lib_col_pic import parse_thumbnail
 from elegoo_neptune4 import Neptune4Mapper, Neptune4ProMapper, Neptune4PlusMapper, Neptune4MaxMapper
 from mapping import *
@@ -23,6 +22,13 @@ logger = logging.getLogger(__name__)
 
 log_file = "/home/mks/printer_data/logs/display_connector.log"
 config_file = "/home/mks/printer_data/config/display_connector.cfg"
+
+TEMP_DEFAULTS = {
+    "pla": [210, 60],
+    "abs": [240, 110],
+    "petg": [240, 80],
+    "tpu": [240, 60]
+}
 
 PRINTING_PAGES = [
     PAGE_PRINTING,
@@ -76,13 +82,14 @@ class DisplayController:
 
         self.is_blocking_serial = False
         self.move_distance = '1'
+        self.xy_move_speed = 130
+        self.z_move_speed = 10
         self.z_offset_distance = '0.01'
         self.out_fd = sys.stdout.fileno()
         os.set_blocking(self.out_fd, False)
         self.pending_req = {}
         self.pending_reqs = {}
         self.history = []
-        padding = [0xFF, 0xFF, 0xFF]
         self.current_state = "booting"
 
         self.printer_model = self.get_printer_model_from_file()
@@ -114,6 +121,14 @@ class DisplayController:
         }
         self.printing_selected_speed_increment = "10"
 
+        self.extrude_amount = 50
+        self.extrude_speed = 5
+
+        self.temperature_preset_material = "pla"
+        self.temperature_preset_step = 10
+        self.temperature_preset_extruder = 0
+        self.temperature_preset_bed = 0
+
         self.ips = "--"
 
         self.current_filename = None
@@ -127,6 +142,20 @@ class DisplayController:
                 self.display_name_override = self.config["main_screen"]["display_name"]
             if "display_name_line_color" in self.config["main_screen"]:
                 self.display_name_line_color = self.config["main_screen"]["display_name_line_color"]
+
+        if "prepare" in self.config:
+            if "move_distance" in self.config["prepare"]:
+                distance = self.config["prepare"]["move_distance"]
+                if distance in ["0.1", "1", "10"]:
+                    self.move_distance = distance
+            if "xy_move_speed" in self.config["prepare"]:
+                self.xy_move_speed = self.config["prepare"]["xy_move_speed"]
+            if "z_move_speed" in self.config["prepare"]:
+                self.z_move_speed = self.config["prepare"]["z_move_speed"]
+            if "extrude_amount" in self.config["prepare"]:
+                self.extrude_amount = int(self.config["prepare"]["extrude_amount"])
+            if "extrude_speed" in self.config["prepare"]:
+                self.extrude_speed = int(self.config["prepare"]["extrude_speed"])
 
     async def monitor_log(self):
         log_file_path = "/home/mks/printer_data/logs/klippy.log"
@@ -185,7 +214,6 @@ class DisplayController:
         elif self.printer_model == MODEL_PRO:
             model_image_key = "214"
             self._write(f'p[{self._page_id(PAGE_MAIN)}].disp_q5.val=1') # N4Pro Outer Bed Symbol (Bottom Rig>
-            self._write(f'p[1].vis out_bedtemp,1') # Only N4Pro
         elif self.printer_model == MODEL_PLUS:
             model_image_key = "313"
         elif self.printer_model == MODEL_MAX:
@@ -198,14 +226,21 @@ class DisplayController:
 
         self._write(f'p[{self._page_id(PAGE_SETTINGS_ABOUT)}].b[8].txt="{self.get_device_name()}"')
 
+    async def send_gcodes_async(self, gcodes):
+        for gcode in gcodes:
+            logger.debug("Sending GCODE: " + gcode)
+            await self._send_moonraker_request("printer.gcode.script", {"script": gcode})
+            await asyncio.sleep(0.1)
+
     def send_gcode(self, gcode):
         logger.debug("Sending GCODE: " + gcode)
         self._loop.create_task(self._send_moonraker_request("printer.gcode.script", {"script": gcode}))
 
     def move_axis(self, axis, distance):
-        self.send_gcode(f'G91\nG1 {axis}{distance}\nG90')
+        speed = self.xy_move_speed if axis in ["X", "Y"] else self.z_move_speed
+        self.send_gcode(f'G91\nG1 {axis}{distance} F{int(speed) * 60}\nG90')
 
-    def special_page_handling(self):
+    async def special_page_handling(self):
         current_page = self._get_current_page()
         if current_page == PAGE_MAIN:
             if self.display_name_override:
@@ -215,13 +250,22 @@ class DisplayController:
                 self._write('xstr 12,20,280,20,1,65535,' + str(BACKGROUND_GRAY) + ',0,1,1,"' + display_name + '"')
             if self.display_name_line_color:
                 self._write('fill 13,47,24,4,' + str(self.display_name_line_color))
+
+            if self.printer_model == MODEL_PRO:
+                self._write(f'vis out_bedtemp,1')
         elif current_page == PAGE_FILES:
             self.show_files_page()
+        elif current_page == PAGE_PREPARE_MOVE:
+            self.update_prepare_move_ui()
+        elif current_page == PAGE_PREPARE_EXTRUDER:
+            self.update_prepare_extrude_ui()
+        elif current_page == PAGE_SETTINGS_TEMPERATURE_SET:
+            self.update_preset_temp_ui()
         elif current_page == PAGE_SETTINGS_ABOUT:
             self._write('fill 0,400,320,60,' + str(BACKGROUND_GRAY))
             self._write('xstr 0,400,320,30,1,65535,' + str(BACKGROUND_GRAY) + ',1,1,1,"OpenNept4une"')
             self._write('xstr 0,430,320,30,2,GRAY,' + str(BACKGROUND_GRAY) + ',1,1,1,"github.com/halfmanbear/OpenNept4une"')
-        elif current_page == PAGE_PREPARE_TEMP:
+        elif current_page == PAGE_PRINTING_FILAMENT:
             self.update_printing_heater_settings_ui()
             self.update_printing_temperature_increment_ui()
         elif current_page == PAGE_PRINTING_ADJUST:
@@ -239,8 +283,7 @@ class DisplayController:
                 self.history.append(page)
             self._write(f"page {self.mapper.map_page(page)}")
             logger.info(f"Navigating page {page}")
-
-            self.special_page_handling()
+            self._loop.create_task(self.special_page_handling())
 
     def execute_action(self, action):
         if action.startswith("move_"):
@@ -251,6 +294,7 @@ class DisplayController:
         elif action.startswith("set_distance_"):
             parts = action.split('_')
             self.move_distance = parts[2]
+            self.update_prepare_move_ui()
         if action.startswith("zoffset_"):
             parts = action.split('_')
             direction = parts[1]
@@ -359,6 +403,63 @@ class DisplayController:
         elif action == "confirm_complete":
             logger.info("Clearing SD Card")
             self.send_gcode("SDCARD_RESET_FILE")
+        elif action.startswith("set_temp"):
+            parts = action.split('_')
+            target = parts[-1]
+            heater = "_".join(parts[2:-1])
+            self.send_gcode(f"SET_HEATER_TEMPERATURE HEATER=" + heater + " TARGET=" + target)
+        elif action.startswith("set_preset_temp"):
+            parts = action.split('_')
+            material = parts[3].lower()
+
+            if "temperatures." + material in self.config:
+                extruder = self.config["temperatures." + material]["extruder"]
+                heater_bed = self.config["temperatures." + material]["heater_bed"]
+            else:
+                extruder = TEMP_DEFAULTS[material][0]
+                heater_bed = TEMP_DEFAULTS[material][1]
+            gcodes = [
+                f"SET_HEATER_TEMPERATURE HEATER=extruder TARGET={extruder}",
+                f"SET_HEATER_TEMPERATURE HEATER=heater_bed TARGET={heater_bed}"
+            ]
+            if self.printer_model == MODEL_PRO:
+                gcodes.append(f"SET_HEATER_TEMPERATURE HEATER=heater_bed_outer TARGET={heater_bed}")
+            self._loop.create_task(self.send_gcodes_async(gcodes))
+        elif action.startswith("set_extrude_amount"):
+            self.extrude_amount = int(action.split('_')[3])
+            self.update_prepare_extrude_ui()
+        elif action.startswith("set_extrude_speed"):
+            self.extrude_speed = int(action.split('_')[3])
+            self.update_prepare_extrude_ui()
+        elif action.startswith("extrude_"):
+            parts = action.split('_')
+            direction = parts[1]
+            self.send_gcode(f"M83\nG1 E{direction}{self.extrude_amount} F{self.extrude_speed * 60}")
+        elif action.startswith("start_temp_preset_"):
+            material = action.split('_')[3]
+            self.temperature_preset_material = material
+            if "temperatures." + material in self.config:
+                self.temperature_preset_extruder = int(self.config["temperatures." + material]["extruder"])
+                self.temperature_preset_bed = int(self.config["temperatures." + material]["heater_bed"])
+            else:
+                self.temperature_preset_extruder = TEMP_DEFAULTS[material][0]
+                self.temperature_preset_bed = TEMP_DEFAULTS[material][1]
+            self._navigate_to_page(PAGE_SETTINGS_TEMPERATURE_SET)
+        elif action.startswith("preset_temp_step_"):
+            size = int(action.split('_')[3])
+            self.temperature_preset_step = size
+        elif action.startswith("preset_temp_"):
+            parts = action.split('_')
+            heater = parts[2]
+            change = self.temperature_preset_step if parts[3] == "up" else -self.temperature_preset_step
+            if heater == "extruder":
+                self.temperature_preset_extruder += change
+            else:
+                self.temperature_preset_bed += change
+            self.update_preset_temp_ui()
+        elif action == "save_temp_preset":
+            logger.info("Saving temp preset")
+            self.save_temp_preset()
 
     def _write(self, data, forced = False):
         if self.is_blocking_serial and not forced:
@@ -372,6 +473,15 @@ class DisplayController:
     def _toggle_filament_sensor(self, state):
         gcode = f"SET_FILAMENT_SENSOR SENSOR=fila ENABLE={'1' if state else '0'}"
         self.send_gcode(gcode)
+
+    def save_temp_preset(self):
+        if "temperatures." + self.temperature_preset_material not in self.config:
+            self.config["temperatures." + self.temperature_preset_material] = {}
+        self.config.set("temperatures." + self.temperature_preset_material, "extruder", str(self.temperature_preset_extruder))
+        self.config.set("temperatures." + self.temperature_preset_material, "heater_bed", str(self.temperature_preset_bed))
+        with open(config_file, 'w') as configfile:
+            self.config.write(configfile)
+        self._go_back()
 
     def update_printing_heater_settings_ui(self):
         if self.printer_model == MODEL_PRO:
@@ -403,6 +513,18 @@ class DisplayController:
         self._write(f'p[{self._page_id(PAGE_PRINTING_ADJUST)}].b[23].picc=' + str(36 if self.z_offset_distance == "0.01" else 65))
         self._write(f'p[{self._page_id(PAGE_PRINTING_ADJUST)}].b[24].picc=' + str(36 if self.z_offset_distance == "0.1" else 65))
         self._write(f'p[{self._page_id(PAGE_PRINTING_ADJUST)}].b[25].picc=' + str(36 if self.z_offset_distance == "1" else 65))
+
+    def update_preset_temp_ui(self):
+        self._write(f'p[{self._page_id(PAGE_SETTINGS_TEMPERATURE_SET)}].b[7].pic={56 + [1, 5, 10].index(self.temperature_preset_step)}')
+        self._write(f'p[{self._page_id(PAGE_SETTINGS_TEMPERATURE_SET)}].b[18].txt="{self.temperature_preset_extruder}"')
+        self._write(f'p[{self._page_id(PAGE_SETTINGS_TEMPERATURE_SET)}].b[19].txt="{self.temperature_preset_bed}"')
+
+    def update_prepare_move_ui(self):
+        self._write(f'p[{self._page_id(PAGE_PREPARE_MOVE)}].p0.pic={10 + ["0.1", "1", "10"].index(self.move_distance)}')
+
+    def update_prepare_extrude_ui(self):
+        self._write(f'p[{self._page_id(PAGE_PREPARE_EXTRUDER)}].b[8].txt="{self.extrude_amount}"')
+        self._write(f'p[{self._page_id(PAGE_PREPARE_EXTRUDER)}].b[9].txt="{self.extrude_speed}"')
 
     def send_speed_update(self, speed_type, new_speed):
         if speed_type == "print":
@@ -481,7 +603,7 @@ class DisplayController:
             back_page = self.history[-1]
             self._write(f"page {self.mapper.map_page(back_page)}")
             logger.info(f"Navigating back to {back_page}")
-            self.special_page_handling()
+            self._loop.create_task(self.special_page_handling())
         else:
             logger.info("Already at the main page.")
 
@@ -588,11 +710,19 @@ class DisplayController:
             return
         logger.info(f"Unhandled Response: {page} {component}")
 
+    def handle_input(self, page, component, value):
+        if page in input_actions:
+            if component in input_actions[page]:
+                self.execute_action(input_actions[page][component].replace("$", str(value)))
+                return
+
     async def display_event_handler(self, type, data):
         if type == EventType.TOUCH:
             self.handle_response(data.page_id, data.component_id)
-            return
-        logger.info(f"Unhandled Event: {type} {data}")
+        elif type == EventType.NUMERIC_INPUT:
+            self.handle_input(data.page_id, data.component_id, data.value)
+        else:
+            logger.info(f"Unhandled Event: {type} {data}")
 
     async def _process_stream(
         self, reader: asyncio.StreamReader
@@ -663,7 +793,7 @@ class DisplayController:
             if best_thumbnail is None or thumbnail["width"] > best_thumbnail["width"]:
                 best_thumbnail = thumbnail
         if best_thumbnail is None:
-            self._write("p[" + str(page_number) + "].vis cp0,0", True)
+            self._write("vis cp0,0", True)
             return
         
         path = "/".join(filename.split("/")[:-1])
@@ -689,7 +819,7 @@ class DisplayController:
 
         parts.append(image[start:len(image)])
         self.is_blocking_serial = True
-        self._write("p[" + str(page_number) + "].vis cp0,1", True)
+        self._write("vis cp0,1", True)
         self._write("p[" + str(page_number) + "].cp0.close()", True)
         for part in parts:
             self._write("p[" + str(page_number) + "].cp0.write(\"" + str(part) + "\")", True)
@@ -801,14 +931,37 @@ try:
         logger.info("Creating config file")
         config.add_section('LOGGING')
         config.set('LOGGING', 'file_log_level', 'ERROR')
+
         config.add_section('main_screen')
         config.set('main_screen', '; set to MODEL_NAME for built in model name. Remove to use Elegoo model images.')
         config.set('main_screen', 'display_name', 'MODEL_NAME')
         config.set('main_screen', '; color for the line below the model name. As RGB565 value.')
         config.set('main_screen', 'display_name_line_color', '1725')
+
         config.add_section('thumbnails')
         config.set('main_screen', '; Background color for thumbnails. As RGB Hex value. Remove for default background color.')
         config.set('thumbnails', 'background_color', '29354a')
+
+        config.add_section('temperatures.pla')
+        config.set('temperatures.pla', 'extruder', TEMP_DEFAULTS["pla"][0])
+        config.set('temperatures.pla', 'heater_bed', TEMP_DEFAULTS["pla"][1])
+        config.add_section('temperatures.petg')
+        config.set('temperatures.petg', 'extruder', TEMP_DEFAULTS["petg"][0])
+        config.set('temperatures.petg', 'heater_bed', TEMP_DEFAULTS["petg"][1])
+        config.add_section('temperatures.abs')
+        config.set('temperatures.abs', 'extruder', TEMP_DEFAULTS["abs"][0])
+        config.set('temperatures.abs', 'heater_bed', TEMP_DEFAULTS["abs"][1])
+        config.add_section('temperatures.tpu')
+        config.set('temperatures.tpu', 'extruder', TEMP_DEFAULTS["tpu"][0])
+        config.set('temperatures.tpu', 'heater_bed', TEMP_DEFAULTS["tpu"][1])
+
+        config.add_section('prepare')
+        config.set('prepare', 'move_distance', '1')
+        config.set('prepare', 'xy_move_speed', 130)
+        config.set('prepare', 'z_move_speed', 10)
+        config.set('prepare', 'extrude_amount', 10)
+        config.set('prepare', 'extrude_speed', 5)
+
         with open(config_file, 'w') as configfile:
             config.write(configfile)
     config.read(config_file)

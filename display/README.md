@@ -3,7 +3,7 @@
 | Home Page                     | ✔️      |
 | Print Page                    | ✔️      |
 | Print Status Page             | ✔️      |
-| Prepare Page                  | ~      |
+| Prepare Page                  | ✔️      |
 | Settings Page                 | ✔️      |
 | Level Page                    | ❌     |
 
@@ -26,8 +26,8 @@
 
 | Prepare Page                      | Status |
 |---------------------------------------|--------|
-| Fix Move Distance select animation    | ❌     |
-| Enable Temperature preset/control     | ❌     |
+| Fix Move Distance select animation    | ✔️     |
+| Enable Temperature preset/control     | ✔️     |
 
 
 | Level Page              | Status |
@@ -37,7 +37,7 @@
 
 | Settings Page                      | Status |
 |----------------------------------------|--------|
-| Enable Temperature Presets             | ❌      |
+| Enable Temperature Presets             | ✔️      |
 | About: Display Model and Bed Information| ✔️      |
 
 
