@@ -20,6 +20,8 @@ class EventType(IntEnum):
     STARTUP = 0x88  # System successful start up
     SD_CARD_UPGRADE = 0x89  # Start SD card upgrade
 
+JUNK_DATA = b'Z\xa5\x06\x83\x10>\x01\x00'
+
 class TJCProtocol(NextionProtocol):
     PACKET_LENGTH_MAP = {
         0x00: 6,  # Nextion Startup
@@ -100,6 +102,9 @@ class TJCProtocol(NextionProtocol):
     def _extract_varied_length_packet(self):
         message, eol, leftover = self.buffer.partition(self.EOL)
         if eol == b"":
+            if message.startswith(JUNK_DATA):
+                self.buffer = leftover
+                return None, False
             return None, False
 
         self.buffer = leftover
@@ -112,7 +117,6 @@ class TJCClient(Nextion):
     
     def event_message_handler(self, message):
         typ = message[0]
-        print("Message:", binascii.hexlify(message))
         if typ == EventType.TOUCH:  # Touch event
             self._schedule_event_message_handler(
                 EventType(typ),
@@ -131,5 +135,4 @@ class TJCClient(Nextion):
                 TJCNumericInputPayload._make(struct.unpack("BBH", message[1:])),
             )
             return
-        print("Unhandled event type: ", typ, message)
         super.event_message_handler(message)
