@@ -17,8 +17,15 @@ response_actions = {
         11: "open_file_4",
     },
     6: {
+        1: "printer.send_gcode('SET_HEATER_TEMPERATURE HEATER=extruder')",
+        2: "printer.send_gcode('SET_HEATER_TEMPERATURE HEATER=heater_bed')",
+        3: 'preset_temp_PLA',
+        4: 'preset_temp_ABS',
+        5: 'preset_temp_PETG',
+        6: 'preset_temp_TPU',
         7: "page " + PAGE_PREPARE_MOVE,
         8: "page " + PAGE_PREPARE_EXTRUDER,
+        9: "printer.send_gcode('SET_HEATER_TEMPERATURE HEATER=heater_bed_outer')",
     },
     8: {
         1: 'set_distance_0.1',
@@ -118,6 +125,16 @@ response_actions = {
         1: "toggle_part_light",
         2: "toggle_frame_light",
     },
+    95: {
+        1: "printer.send_gcode('SET_HEATER_TEMPERATURE HEATER=extruder')",
+        2: "printer.send_gcode('SET_HEATER_TEMPERATURE HEATER=heater_bed')",
+        3: 'preset_temp_PLA',
+        4: 'preset_temp_ABS',
+        5: 'preset_temp_PETG',
+        6: 'preset_temp_TPU',
+        7: "page " + PAGE_PREPARE_MOVE,
+        8: "page " + PAGE_PREPARE_EXTRUDER,
+    },
     106: {
         0: "emergency_stop",
         1: 'go_back'
@@ -144,15 +161,14 @@ response_actions = {
     },
 }
 
-response_errors = {
-    '00': 'Invalid Instruction',
-    '02': 'Invalid Component ID',
-    '03': 'Invalid Page ID',
-    '04': 'Invalid Picture ID',
-    '05': 'Invalid Font ID',
-    '11': 'Invalid Baud Rate',
-    '1a': "Invalid Variable name or attribute",
-    '1b': "Invalid Variable operation",
-    '1c': "Assignment failed to assign",
-    '1e': "Invalid Quantity of Parameters",
+input_actions = {
+    6: {
+        0: "set_temp_extruder_$",
+        1: "set_temp_heater_bed_$",
+        2: "set_temp_heater_bed_outer_$",
+    },
+    95: {
+        0: "set_temp_extruder_$",
+        1: "set_temp_heater_bed_$",
+    }
 }

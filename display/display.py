@@ -10,11 +10,10 @@ import io
 import asyncio
 import traceback
 from PIL import Image
-from nextion import EventType
-from tjc import TJCClient
+from tjc import TJCClient, EventType
 from urllib.request import pathname2url
 
-from response_actions import response_actions, response_errors
+from response_actions import response_actions, input_actions
 from lib_col_pic import parse_thumbnail
 from elegoo_neptune4 import Neptune4Mapper, Neptune4ProMapper, Neptune4PlusMapper, Neptune4MaxMapper
 from mapping import *
@@ -23,6 +22,13 @@ logger = logging.getLogger(__name__)
 
 log_file = "/home/mks/printer_data/logs/display_connector.log"
 config_file = "/home/mks/printer_data/config/display_connector.cfg"
+
+TEMP_DEFAULTS = {
+    "pla": [210, 60],
+    "abs": [240, 110],
+    "petg": [240, 80],
+    "tpu": [240, 60]
+}
 
 PRINTING_PAGES = [
     PAGE_PRINTING,
@@ -82,7 +88,6 @@ class DisplayController:
         self.pending_req = {}
         self.pending_reqs = {}
         self.history = []
-        padding = [0xFF, 0xFF, 0xFF]
         self.current_state = "booting"
 
         self.printer_model = self.get_printer_model_from_file()
@@ -198,6 +203,12 @@ class DisplayController:
 
         self._write(f'p[{self._page_id(PAGE_SETTINGS_ABOUT)}].b[8].txt="{self.get_device_name()}"')
 
+    async def send_gcodes_async(self, gcodes):
+        for gcode in gcodes:
+            logger.debug("Sending GCODE: " + gcode)
+            await self._send_moonraker_request("printer.gcode.script", {"script": gcode})
+            asyncio.sleep(0.1)
+
     def send_gcode(self, gcode):
         logger.debug("Sending GCODE: " + gcode)
         self._loop.create_task(self._send_moonraker_request("printer.gcode.script", {"script": gcode}))
@@ -221,7 +232,7 @@ class DisplayController:
             self._write('fill 0,400,320,60,' + str(BACKGROUND_GRAY))
             self._write('xstr 0,400,320,30,1,65535,' + str(BACKGROUND_GRAY) + ',1,1,1,"OpenNept4une"')
             self._write('xstr 0,430,320,30,2,GRAY,' + str(BACKGROUND_GRAY) + ',1,1,1,"github.com/halfmanbear/OpenNept4une"')
-        elif current_page == PAGE_PREPARE_TEMP:
+        elif current_page == PAGE_PRINTING_FILAMENT:
             self.update_printing_heater_settings_ui()
             self.update_printing_temperature_increment_ui()
         elif current_page == PAGE_PRINTING_ADJUST:
@@ -359,6 +370,28 @@ class DisplayController:
         elif action == "confirm_complete":
             logger.info("Clearing SD Card")
             self.send_gcode("SDCARD_RESET_FILE")
+        elif action.startswith("set_temp"):
+            parts = action.split('_')
+            target = parts[-1]
+            heater = "_".join(parts[2:-1])
+            self.send_gcode(f"SET_HEATER_TEMPERATURE HEATER=" + heater + " TARGET=" + target)
+        elif action.startswith("preset_temp"):
+            parts = action.split('_')
+            material = parts[2].lower()
+
+            if "temperatures." + material in self.config:
+                extruder = self.config["temperatures." + material]["extruder"]
+                heater_bed = self.config["temperatures." + material]["heater_bed"]
+            else:
+                extruder = TEMP_DEFAULTS[material][0]
+                heater_bed = TEMP_DEFAULTS[material][1]
+            gcodes = [
+                f"SET_HEATER_TEMPERATURE HEATER=extruder TARGET={extruder}",
+                f"SET_HEATER_TEMPERATURE HEATER=heater_bed TARGET={heater_bed}"
+            ]
+            if self.printer_model == MODEL_PRO:
+                gcodes.append(f"SET_HEATER_TEMPERATURE HEATER=heater_bed_outer TARGET={heater_bed}")
+            self._loop.create_task(self.send_gcodes_async(gcodes))
 
     def _write(self, data, forced = False):
         if self.is_blocking_serial and not forced:
@@ -588,11 +621,19 @@ class DisplayController:
             return
         logger.info(f"Unhandled Response: {page} {component}")
 
+    def handle_input(self, page, component, value):
+        if page in input_actions:
+            if component in input_actions[page]:
+                self.execute_action(input_actions[page][component].replace("$", str(value)))
+                return
+
     async def display_event_handler(self, type, data):
         if type == EventType.TOUCH:
             self.handle_response(data.page_id, data.component_id)
-            return
-        logger.info(f"Unhandled Event: {type} {data}")
+        elif type == EventType.NUMERIC_INPUT:
+            self.handle_input(data.page_id, data.component_id, data.value)
+        else:
+            logger.info(f"Unhandled Event: {type} {data}")
 
     async def _process_stream(
         self, reader: asyncio.StreamReader
@@ -809,6 +850,18 @@ try:
         config.add_section('thumbnails')
         config.set('main_screen', '; Background color for thumbnails. As RGB Hex value. Remove for default background color.')
         config.set('thumbnails', 'background_color', '29354a')
+        config.add_section('temperatures.pla')
+        config.set('temperatures.pla', 'extruder', TEMP_DEFAULTS["pla"][0])
+        config.set('temperatures.pla', 'heater_bed', TEMP_DEFAULTS["pla"][1])
+        config.add_section('temperatures.petg')
+        config.set('temperatures.petg', 'extruder', TEMP_DEFAULTS["petg"][0])
+        config.set('temperatures.petg', 'heater_bed', TEMP_DEFAULTS["petg"][1])
+        config.add_section('temperatures.abs')
+        config.set('temperatures.abs', 'extruder', TEMP_DEFAULTS["abs"][0])
+        config.set('temperatures.abs', 'heater_bed', TEMP_DEFAULTS["abs"][1])
+        config.add_section('temperatures.tpu')
+        config.set('temperatures.tpu', 'extruder', TEMP_DEFAULTS["tpu"][0])
+        config.set('temperatures.tpu', 'heater_bed', TEMP_DEFAULTS["tpu"][1])
         with open(config_file, 'w') as configfile:
             config.write(configfile)
     config.read(config_file)

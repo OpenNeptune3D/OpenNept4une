@@ -41,13 +41,16 @@ class Neptune4Mapper(Mapper):
                 "temperature": [MappingLeaf([build_accessor(self.map_page(PAGE_MAIN), "nozzletemp"),
                                              build_accessor(self.map_page(PAGE_PREPARE_TEMP), "nozzletemp"),
                                              build_accessor(self.map_page(PAGE_PRINTING), "nozzletemp"),
-                                             build_accessor(self.map_page(PAGE_PRINTING_FILAMENT), "nozzletemp")], formatter=format_temp)]
+                                             build_accessor(self.map_page(PAGE_PRINTING_FILAMENT), "nozzletemp")], formatter=format_temp)],
+                "target": [MappingLeaf([build_accessor(self.map_page(PAGE_PREPARE_TEMP), 17)], formatter=lambda x: f"{x:.0f}")],
+
             },
             "heater_bed": {
                 "temperature": [MappingLeaf([build_accessor(self.map_page(PAGE_MAIN), "bedtemp"),
                                              build_accessor(self.map_page(PAGE_PREPARE_TEMP), "bedtemp"),
                                              build_accessor(self.map_page(PAGE_PRINTING), "bedtemp"),
-                                             build_accessor(self.map_page(PAGE_PRINTING_FILAMENT), "bedtemp")], formatter=format_temp)]
+                                             build_accessor(self.map_page(PAGE_PRINTING_FILAMENT), "bedtemp")], formatter=format_temp)],
+                "target": [MappingLeaf([build_accessor(self.map_page(PAGE_PREPARE_TEMP), 18)], formatter=lambda x: f"{x:.0f}")],
             },
             "motion_report": {
                 "live_position": {
@@ -89,15 +92,18 @@ class Neptune4ProMapper(Neptune4Mapper):
         self.page_mapping[PAGE_PRINTING_FILAMENT] = "27"
         super().__init__()
         self.data_mapping["extruder"]["target"] = [MappingLeaf([build_accessor(self.map_page(PAGE_PREPARE_TEMP), "nozzletemp_t"),
-                                        build_accessor(self.map_page(PAGE_PRINTING_FILAMENT), "nozzletemp_t")], formatter=format_temp)]
+                                        build_accessor(self.map_page(PAGE_PRINTING_FILAMENT), "nozzletemp_t")], formatter=format_temp),
+                                        MappingLeaf([build_accessor(self.map_page(PAGE_PREPARE_TEMP), 17)], formatter=lambda x: f"{x:.0f}")]
         self.data_mapping["heater_bed"]["target"] = [MappingLeaf([build_accessor(self.map_page(PAGE_PREPARE_TEMP), "bedtemp_t"),
-                                        build_accessor(self.map_page(PAGE_PRINTING_FILAMENT), "bedtemp_t")], formatter=format_temp)]
+                                        build_accessor(self.map_page(PAGE_PRINTING_FILAMENT), "bedtemp_t")], formatter=format_temp),
+                                        MappingLeaf([build_accessor(self.map_page(PAGE_PREPARE_TEMP), 18)], formatter=lambda x: f"{x:.0f}")]
         self.data_mapping["heater_generic heater_bed_outer"] = {
                 "temperature": [MappingLeaf([build_accessor(self.map_page(PAGE_MAIN), "out_bedtemp"),
                                              build_accessor(self.map_page(PAGE_PREPARE_TEMP), "out_bedtemp"),
                                              build_accessor(self.map_page(PAGE_PRINTING_FILAMENT), "out_bedtemp")], formatter=format_temp)],
                 "target": [MappingLeaf([build_accessor(self.map_page(PAGE_PREPARE_TEMP), "out_bedtemp_t"),
-                                        build_accessor(self.map_page(PAGE_PRINTING_FILAMENT), "out_bedtemp_t")], formatter=format_temp)]
+                                        build_accessor(self.map_page(PAGE_PRINTING_FILAMENT), "out_bedtemp_t")], formatter=format_temp),
+                                        MappingLeaf([build_accessor(self.map_page(PAGE_PREPARE_TEMP), 28)], formatter=lambda x: f"{x:.0f}")]
             }
 
 class Neptune4PlusMapper(Neptune4Mapper):
