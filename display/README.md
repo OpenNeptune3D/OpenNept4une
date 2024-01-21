@@ -13,7 +13,7 @@
 | General                  | Status |
 |------------------------------|--------|
 | Printer Model Detection      | ✔️      |
-| pip nextion serial impl      | ❌     |
+| pip nextion serial impl      | ✔️     |
 | Serial Disconnect Handling   | ❌     |
 | Moonraker Disconnect Handling| ✔️      |
 | Klipper Disconnect Handling  | ✔️     |
@@ -21,7 +21,7 @@
 
 | Print Page               | Status |
 |------------------------------|--------|
-| Improve Thumbnail integration| ❌     |
+| Improve Thumbnail integration| ✔️     |
 
 
 | Prepare Page                      | Status |
@@ -38,7 +38,7 @@
 | Settings Page                      | Status |
 |----------------------------------------|--------|
 | Enable Temperature Presets             | ❌      |
-| About: Display Model and Bed Information| ❌      |
+| About: Display Model and Bed Information| ✔️      |
 
 
 https://nextion.tech/instruction-set/

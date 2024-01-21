@@ -234,7 +234,7 @@ PRINT_END
 
 **Displaying Thumbnails on the Original Display**
 
-Currently only Orcaslicer is capable of generating the required thumbnail data. In the Advanced section of the printer settings select `ColPic` for `Format of G-code thumbnails`. The sizes for `G-code thumbnails` need to have `160x160` as the first size. Additional sizes can optionally be added after that.
+All Slicers that generate thumbnails that moonraker is capable of understanding should work. The display uses 160x160 pixels to display the thumbnail, so your generated thumbnails should be at least that size.
 
 ### Prusaslicer
 
