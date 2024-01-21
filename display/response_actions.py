@@ -1,141 +1,158 @@
 from mapping import *
 
 response_actions = {
-    '651200ffffff': "print_opened_file", # Confirm Print File
-    '651201ffffff': 'go_back', # cancel print file
-    '651300ffffff': "page " + PAGE_PRINTING_FILAMENT, # Printing Page > Settings
-    '651900ffffff': "pause_print_confirm", # Printing Page > Confirm Pause
-    '651a00ffffff': "stop_print", # Printing Page > Confirm Stop
-    '656a00ffffff': "emergency_stop", # Printing Page > Confirm Emergency Stop
-    '656a01ffffff': "go_back", # cancel emergency stop
-    '651901ffffff': "go_back", # cancel pause
-    '651a01ffffff': "go_back", # cancel stop
-    '651800ffffff': "confirm_complete",
-    '65??00ffffff': "go_back",  # Return to Previous Page
-    # MAIN PAGE OPTIONS (page 1)
-    '650101ffffff': "files_picker",  # Page 1 > Print Files Page 1
-    '650102ffffff': "page " + PAGE_PREPARE_MOVE,  # Page 1 > Prepare Page (Move)
-    '650103ffffff': "page " + PAGE_SETTINGS, # Page 1 > Settings Page
-    '650104ffffff': "page " + PAGE_LEVELING, # Page 1 > Level Page
-    # PRINT PAGE OPTIONS
-    '650202ffffff': "files_page_next",  # Next Page Print Files ->
-    '650201ffffff': "files_page_prev",  # Previous Print Files Page <-
-    '650207ffffff': "open_file_0",  # Print Files Page > Print File 0
-    '650208ffffff': "open_file_1",  # Print Files Page > Print File 1
-    '650209ffffff': "open_file_2",  # Print Files Page > Print File 2
-    '65020affffff': "open_file_3",  # Print Files Page > Print File 3
-    '65020bffffff': "open_file_4",  # Print Files Page > Print File 4
-    # PREPARE PAGE OPTIONS
-    '65080cffffff': "printer.send_gcode('G28')", # Home Printer > Moonraker command
-    '65080dffffff': "printer.send_gcode('G28 Z')", # Home Z Axis > Moonraker command
-    '650805ffffff': "printer.send_gcode('G28 Y')", # Home Y Axis > Moonraker command
-    '650804ffffff': "printer.send_gcode('G28 X')", # Home X Axis > Moonraker command
-    '65080effffff': "printer.send_gcode('M84')", # Disable Motors > Moonraker command
-    '650808ffffff': "move_x_+", # X+ 1mm
-    '650809ffffff': "move_x_-", # X- 1mm
-    '65080affffff': "move_y_+", # Y+ 1mm
-    '650807ffffff': "move_y_-", # Y- 1mm
-    '650806ffffff': "move_z_+", # Z+ 1mm
-    '65080bffffff': "move_z_-", # Z- 1mm
-    '650801ffffff': 'set_distance_0.1', # 0.1mm Move Page
-    '650802ffffff': "set_distance_1", # 1mm Move Page
-    '650803ffffff': "set_distance_10", # 10mm Move Page
-    '65080fffffff': "page " + PAGE_PREPARE_TEMP,  # Prepare Page (Move) > Prepare Page (Temp)
-    '650607ffffff': "page " + PAGE_PREPARE_MOVE,  # Prepare Page (Temp) > Prepare Page (Move)
-    '650608ffffff': "page " + PAGE_PREPARE_EXTRUDER,  # Prepare Page (Temp) > Prepare Page (Extruder)
-    # SETTINGS PAGE OPTIONS
-    # LANGUAGE SELECT
-    '650b01ffffff': "page " + PAGE_SETTINGS_LANGUAGE, # Settings Page > Language
-    # TEMPERATURE SETTINGS (Material)
-    '650b02ffffff': "page " + PAGE_SETTINGS_TEMPERATURE, # Settings Page > Temperature Settings
-    '652001ffffff': "page " + PAGE_SETTINGS_TEMPERATURE_PLA, # Temperature Settings > PLA
-    '652002ffffff': "page " + PAGE_SETTINGS_TEMPERATURE_ABS, # Temperature Settings > ABS
-    '652003ffffff': "page " + PAGE_SETTINGS_TEMPERATURE_PETG, # Temperature Settings > PETG
-    '652004ffffff': "page " + PAGE_SETTINGS_TEMPERATURE_TPU, # Temperature Settings > TPU
-    '652005ffffff': "page " + PAGE_SETTINGS_TEMPERATURE_LEVEL, # Temperature Settings > LEVEL
-    '652104ffffff': 'temp_extruder_down', # Temperature Settings > MATERIAL > Extruder Temp Down
-    '652105ffffff': 'temp_extruder_up', # Temperature Settings > MATERIAL > Extruder Temp Up
-    '652106ffffff': 'temp_bed_down', # Temperature Settings > MATERIAL > Bed Temp Down
-    '652107ffffff': 'temp_bed_up', # Temperature Settings > MATERIAL > Bed Temp Up
-    # ABOUT MACHINE
-    '650b08ffffff': "page " + PAGE_SETTINGS_ABOUT, # Settings Page > About Machine
-    # ADVANCED SETTINGS
-    '650b09ffffff': "page " + PAGE_SETTINGS_ADVANCED, # Settings Page > Advanced Settings
-    # LIGHT CONTROL
-    '650b03ffffff': "page " + PAGE_LIGHTS, # Settings Page > Light Control
-    '655401ffffff': "toggle_part_light", # Light Control > Part Light toggle
-    '655402ffffff': "toggle_frame_light", # Light Control > Frame Light toggle
-    # FAN CONTROL
-    '5aa50683103e010007650b04ffffff': "toggle_fan", # Settings Page > Fan Control Toggle printer.send_gcode('M106 S255')
-    'ffffff5aa506': "toggle_fan_OFF", # Settings Page > Fan Control Toggle printer.send_gcode('M106 S0')
-    # MOTORS OFF
-    '650b05ffffff': "printer.send_gcode('M84')", # Settings Page > Motor-off
-    # FILAMENT DETECTOR 
-    '650b06ffffff': "toggle_filament_sensor", # Settings Page > Filament Detector Toggle
-    # FACTORY SETTINGS
-    '650b07ffffff': "factorysettingspage", # Settings Page > Factory Settings
+    1: {
+        1: "files_picker",
+        2: "page " + PAGE_PREPARE_MOVE,
+        3: "page " + PAGE_SETTINGS,
+        4: "page " + PAGE_LEVELING,
+    },
+    2: {
+        2: "files_page_next",
+        1: "files_page_prev",
+        7: "open_file_0",
+        8: "open_file_1",
+        9: "open_file_2",
+        10: "open_file_3",
+        11: "open_file_4",
+    },
+    6: {
+        7: "page " + PAGE_PREPARE_MOVE,
+        8: "page " + PAGE_PREPARE_EXTRUDER,
+    },
+    8: {
+        1: 'set_distance_0.1',
+        2: 'set_distance_1',
+        3: 'set_distance_10',
+        4: "printer.send_gcode('G28 X')",
+        5: "printer.send_gcode('G28 Y')",
+        6: 'move_z_+',
+        7: 'move_y_-',
+        8: 'move_x_+',
+        9: 'move_x_-',
+        10: 'move_y_+',
+        11: 'move_z_-',
+        12: "printer.send_gcode('G28')",
+        13: "printer.send_gcode('G28 Z')",
+        14: "printer.send_gcode('M84')",
+        15: 'page ' + PAGE_PREPARE_TEMP,
+        16: 'page ' + PAGE_PREPARE_EXTRUDER,
+    },
+    9: {
+        3: "page " + PAGE_PREPARE_MOVE,
+        4: "page " + PAGE_PREPARE_TEMP,
+    },
+    11: {
+        1: "page " + PAGE_SETTINGS_LANGUAGE,
+        2: "page " + PAGE_SETTINGS_TEMPERATURE,
+        3: "page " + PAGE_LIGHTS,
+        4: 'toggle_fan',
+        5: "printer.send_gcode('M84')",
+        6: 'toggle_filament_sensor',
+        8: "page " + PAGE_SETTINGS_ABOUT,
+        9: "page " + PAGE_SETTINGS_ADVANCED,
+    },
+    18: {
+        0: 'print_opened_file',
+        1: 'go_back'
+    },
+    19: {
+        0: "page " + PAGE_PRINTING_FILAMENT,
+        1: 'pause_print_button',
+        2: "page " + PAGE_PRINTING_STOP,
+        3: "page " + PAGE_LIGHTS,
+        4: "page " + PAGE_PRINTING_EMERGENCY_STOP,
 
-    # PRINTING SCREEN
-    '651304ffffff': "page " + PAGE_PRINTING_EMERGENCY_STOP, # Printing Page > Halt
-    '651301ffffff': "pause_print_button", # Printing Page > Pause
-    '651302ffffff': "page " + PAGE_PRINTING_STOP, # Printing Page > Stop
-    '651303ffffff': "page " + PAGE_LIGHTS, # Printing Page > LED Control
-
-    '657f07ffffff': "page " + PAGE_LIGHTS, # Printing Page > Adjust > LED Control
-    '657f08ffffff': "toggle_filament_sensor", # Printing Page > Adjust > Filament Sensor Toggle
-    # '657f06ffffff': "toggle_speed_adaptive", # Printing Page > Adjust > Adaptive Speed Toggle
-    '657f04ffffff': "zoffset_+", # Printing Page > Adjust > Z Offset Up
-    '657f05ffffff': "zoffset_-", # Printing Page > Adjust > Z Offset Down
-    '657f01ffffff': 'zoffsetchange_0.01', # Printing Page > Adjust > Z Offset Change 0.1mm
-    '657f02ffffff': 'zoffsetchange_0.1', # Printing Page > Adjust > Z Offset Change 1mm
-    '657f03ffffff': 'zoffsetchange_1', # Printing Page > Adjust > Z Offset Change 10mm
-
-    '651b01ffffff': "temp_heater_extruder",
-    '651c01ffffff': "temp_heater_extruder",
-    '651b02ffffff': "temp_heater_heater_bed",
-    '651c02ffffff': "temp_heater_heater_bed",
-    '651b09ffffff': "temp_heater_heater_bed_outer",
-    '651b03ffffff': "temp_increment_1",
-    '651c03ffffff': "temp_increment_1",
-    '651b04ffffff': "temp_increment_5",
-    '651c04ffffff': "temp_increment_5",
-    '651b05ffffff': "temp_increment_10",
-    '651c05ffffff': "temp_increment_10",
-    '651b06ffffff': "temp_adjust_-",
-    '651c06ffffff': "temp_adjust_-",
-    '651b07ffffff': "temp_adjust_+",
-    '651c07ffffff': "temp_adjust_+",
-    '651b08ffffff': "temp_reset",
-    '651c08ffffff': "temp_reset",
-
-    '658701ffffff': "speed_type_print",
-    '658702ffffff': "speed_type_flow",
-    '658703ffffff': "speed_type_fan",
-    '658704ffffff': "speed_increment_1",
-    '658705ffffff': "speed_increment_5",
-    '658706ffffff': "speed_increment_10",
-    '658707ffffff': "speed_adjust_-",
-    '658708ffffff': "speed_adjust_+",
-    '658709ffffff': "speed_reset",
-
-    '651801ffffff': 'print_opened_file', # Completed Print Page > Print Again
-
-    '65??09ffffff': "page " + PAGE_PRINTING_FILAMENT, # Printing Page > Filament
-    '65??0affffff': "page " + PAGE_PRINTING_SPEED, # Printing Page > Speed
-    '651b0cffffff': "page " + PAGE_PRINTING_SPEED, # Printing Page > Speed
-    '651c0cffffff': "page " + PAGE_PRINTING_SPEED, # Printing Page > Speed
-    '65??0dffffff': "page " + PAGE_PRINTING_ADJUST, # Printing Page > Adjust
+    },
+    24: {
+        0: 'confirm_complete',
+        1: 'print_opened_file',
+    },
+    25: {
+        0: "pause_print_confirm",
+        1: 'go_back'
+    },
+    26: {
+        0: "stop_print",
+        1: 'go_back'
+    },
+    27: {
+        1: 'temp_heater_extruder',
+        2: 'temp_heater_heater_bed',
+        3: 'temp_increment_1',
+        4: 'temp_increment_5',
+        5: 'temp_increment_10',
+        6: 'temp_adjust_-',
+        7: 'temp_adjust_+',
+        8: 'temp_reset',
+        9: 'temp_heater_heater_bed_outer',
+        12: "page " + PAGE_PRINTING_SPEED,
+        13: "page " + PAGE_PRINTING_ADJUST
+    },
+    28: {
+        1: 'temp_heater_extruder',
+        2: 'temp_heater_heater_bed',
+        3: 'temp_increment_1',
+        4: 'temp_increment_5',
+        5: 'temp_increment_10',
+        6: 'temp_adjust_-',
+        7: 'temp_adjust_+',
+        8: 'temp_reset',
+        12: "page " + PAGE_PRINTING_SPEED,
+        13: "page " + PAGE_PRINTING_ADJUST
+    },
+    32: {
+        1: "page " + PAGE_SETTINGS_TEMPERATURE_PLA,
+        2: "page " + PAGE_SETTINGS_TEMPERATURE_ABS,
+        3: "page " + PAGE_SETTINGS_TEMPERATURE_PETG,
+        4: "page " + PAGE_SETTINGS_TEMPERATURE_TPU,
+        5: "page " + PAGE_SETTINGS_TEMPERATURE_LEVEL,
+    },
+    33: {
+        4: "temp_extruder_down",
+        5: "temp_extruder_up",
+        6: "temp_bed_down",
+        7: "temp_bed_up",
+    },
+    84: {
+        1: "toggle_part_light",
+        2: "toggle_frame_light",
+    },
+    106: {
+        0: "emergency_stop",
+        1: 'go_back'
+    },
+    127: {
+        1: 'zoffsetchange_0.01',
+        2: 'zoffsetchange_0.1',
+        3: 'zoffsetchange_1',
+        4: 'zoffset_+',
+        5: 'zoffset_-',
+        7: 'page ' + PAGE_LIGHTS,
+        8: 'toggle_filament_sensor'
+    },
+    135: {
+        1: 'speed_type_print',
+        2: 'speed_type_flow',
+        3: 'speed_type_fan',
+        4: 'speed_increment_1',
+        5: 'speed_increment_5',
+        6: 'speed_increment_10',
+        7: 'speed_adjust_-',
+        8: 'speed_adjust_+',
+        9: 'speed_reset',
+    },
 }
 
 response_errors = {
-    '00ffffff': 'Invalid Instruction',
-    '02ffffff': 'Invalid Component ID',
-    '03ffffff': 'Invalid Page ID',
-    '04ffffff': 'Invalid Picture ID',
-    '05ffffff': 'Invalid Font ID',
-    '11ffffff': 'Invalid Baud Rate',
-    '1affffff': "Invalid Variable name or attribute",
-    '1bffffff': "Invalid Variable operation",
-    '1cffffff': "Assignment failed to assign",
-    '1effffff': "Invalid Quantity of Parameters",
+    '00': 'Invalid Instruction',
+    '02': 'Invalid Component ID',
+    '03': 'Invalid Page ID',
+    '04': 'Invalid Picture ID',
+    '05': 'Invalid Font ID',
+    '11': 'Invalid Baud Rate',
+    '1a': "Invalid Variable name or attribute",
+    '1b': "Invalid Variable operation",
+    '1c': "Assignment failed to assign",
+    '1e': "Invalid Quantity of Parameters",
 }

@@ -4,15 +4,15 @@ import sys
 import logging
 import pathlib
 import requests
-import serial
-import serial_asyncio
 import re
 import os, os.path
 import io
 import asyncio
 import traceback
 from PIL import Image
-
+from nextion import EventType
+from tjc import TJCClient
+from urllib.request import pathname2url
 
 from response_actions import response_actions, response_errors
 from lib_col_pic import parse_thumbnail
@@ -66,6 +66,9 @@ class DisplayController:
         self._handle_config()
         self.connected = False
 
+        self.display = TJCClient('/dev/ttyS1', 115200, self.display_event_handler)
+        self.display.encoding = 'utf-8'
+
         self.part_light_state = False
         self.frame_light_state = False
         self.fan_state = False
@@ -80,7 +83,6 @@ class DisplayController:
         self.pending_reqs = {}
         self.history = []
         padding = [0xFF, 0xFF, 0xFF]
-        self.serial_padding = serial.to_bytes(padding)
         self.current_state = "booting"
 
         self.printer_model = self.get_printer_model_from_file()
@@ -183,7 +185,7 @@ class DisplayController:
         elif self.printer_model == MODEL_PRO:
             model_image_key = "214"
             self._write(f'p[{self._page_id(PAGE_MAIN)}].disp_q5.val=1') # N4Pro Outer Bed Symbol (Bottom Rig>
-            self._write(f'vis out_bedtemp,1') # Only N4Pro
+            self._write(f'p[1].vis out_bedtemp,1') # Only N4Pro
         elif self.printer_model == MODEL_PLUS:
             model_image_key = "313"
         elif self.printer_model == MODEL_MAX:
@@ -361,9 +363,7 @@ class DisplayController:
     def _write(self, data, forced = False):
         if self.is_blocking_serial and not forced:
             return
-        message = str.encode(data)
-        self.serial_writer.write(message)
-        self.serial_writer.write(self.serial_padding)
+        self._loop.create_task(self.display.command(data, 1.0))
 
     def _set_light(self, light_name, new_state):
         gcode = f"{light_name}_{'ON' if new_state else 'OFF'}"
@@ -480,6 +480,7 @@ class DisplayController:
             self.history.pop()
             back_page = self.history[-1]
             self._write(f"page {self.mapper.map_page(back_page)}")
+            logger.info(f"Navigating back to {back_page}")
             self.special_page_handling()
         else:
             logger.info("Already at the main page.")
@@ -488,9 +489,8 @@ class DisplayController:
         self._loop.create_task(self.listen())
 
     async def listen(self):
-        self.serial_reader, self.serial_writer = await serial_asyncio.open_serial_connection(url='/dev/ttyS1', baudrate=115200)
-        self._loop.create_task(self._process_serial(self.serial_reader))
-        await self._connect()
+        await self.display.connect()
+        await self.connect_moonraker()
         ret = await self._send_moonraker_request("printer.objects.subscribe", {"objects": {
             "gcode_move": ["extrude_factor", "speed_factor", "homing_origin"],
             "motion_report": ["live_position", "live_velocity"],
@@ -506,7 +506,7 @@ class DisplayController:
             "filament_switch_sensor fila": ["enabled"]
         }})
         data = ret["result"]["status"]
-        logger.info("Printer Model: " + str(self.printer_model))
+        logger.info("Printer Model: " + str(self.get_device_name()))
         self.initialize_display()
         self.handle_status_update(data)
 
@@ -534,7 +534,7 @@ class DisplayController:
                         ips.append(ip["address"])
         return ips
 
-    async def _connect(self) -> None:
+    async def connect_moonraker(self) -> None:
         sockfile = "/home/mks/printer_data/comms/moonraker.sock"
         sockpath = pathlib.Path(sockfile).expanduser().resolve()
         logger.info(f"Connecting to Moonraker at {sockpath}")
@@ -560,12 +560,12 @@ class DisplayController:
                 "type": "other",
                 "url": "https://github.com/halfbearman/opennept4une"
             })
-        logger.debug(f"Client Identified With Moonraker: {ret}")
+        logger.debug(f"Client Identified With Moonraker: {ret['result']['connection_id']}")
 
         system = (await self._send_moonraker_request("machine.system_info"))["result"]["system_info"]
         self.ips = ", ".join(self._find_ips(system["network"]))
         self._write("p[" + self._page_id(PAGE_SETTINGS_ABOUT) +"].b[16].txt=\"" + self.ips + "\"")
-        self._write("p[" + self._page_id(PAGE_PRINTING_ADJUST) + "].b[20].txt=\"" + self.ips + "\"")
+        #self._write("p[" + self._page_id(PAGE_PRINTING_ADJUST) + "].b[20].txt=\"" + self.ips + "\"")
         software_version = (await self._send_moonraker_request("printer.info"))["result"]["software_version"]
         self._write("p[" + self._page_id(PAGE_SETTINGS_ABOUT) + "].b[10].txt=\"" + software_version.split("-")[0] + "\"")
 
@@ -578,31 +578,21 @@ class DisplayController:
             msg["params"] = kwargs
         return msg
 
-    def generate_key(self, readData):
-        return ''.join(readData)
+    def handle_response(self, page, component):
+        if page in response_actions:
+            if component in response_actions[page]:
+                self.execute_action(response_actions[page][component])
+                return
+        if component == 0:
+            self._go_back()
+            return
+        logger.info(f"Unhandled Response: {page} {component}")
 
-    def match_key(self, pattern, key):
-        return re.match(pattern.replace('??', '..'), key) is not None
-
-    def handle_response(self, readData):
-        action_key = self.generate_key(readData)
-        for key in response_actions.keys():
-            if self.match_key(key, action_key):
-                self.execute_action(response_actions[key])
-                break
-        else:
-            for key in response_errors.keys():
-                if self.match_key(key, action_key):
-                    logger.error(response_errors[key])
-                    return
-            logger.debug("No action for response: " + readData)
-
-    async def _process_serial(self, reader):
-        while True:
-            data = await reader.readuntil(self.serial_padding)
-            message = data.rstrip().hex()
-            logger.debug(f"=> {message}")
-            self.handle_response(message)
+    async def display_event_handler(self, type, data):
+        if type == EventType.TOUCH:
+            self.handle_response(data.page_id, data.component_id)
+            return
+        logger.info(f"Unhandled Event: {type} {data}")
 
     async def _process_stream(
         self, reader: asyncio.StreamReader
@@ -676,7 +666,12 @@ class DisplayController:
             self._write("p[" + str(page_number) + "].vis cp0,0", True)
             return
         
-        img = requests.get("http://localhost/server/files/gcodes/" + best_thumbnail["relative_path"])
+        path = "/".join(filename.split("/")[:-1])
+        if path != "":
+            path = path + "/"
+        path += best_thumbnail["relative_path"]
+        
+        img = requests.get("http://localhost/server/files/gcodes/" + pathname2url(path))
         thumbnail = Image.open(io.BytesIO(img.content))
         background = "29354a"
         if "thumbnails" in self.config:
@@ -717,9 +712,9 @@ class DisplayController:
                 current_page = self._get_current_page()
                 if state == "printing" or state == "paused":
                     if state == "printing":
-                        self._write(f'p[{self._page_id(PAGE_PRINTING)}].b[44]].pic=68')
+                        self._write(f'p[{self._page_id(PAGE_PRINTING)}].b[44].pic=68')
                     elif state == "paused":
-                        self._write(f'p[{self._page_id(PAGE_PRINTING)}].b[44]].pic=69')
+                        self._write(f'p[{self._page_id(PAGE_PRINTING)}].b[44].pic=69')
                     if current_page == None or current_page not in PRINTING_PAGES:
                         self._navigate_to_page(PAGE_PRINTING)
                 elif state == "complete":
