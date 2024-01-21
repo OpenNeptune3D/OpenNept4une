@@ -124,6 +124,11 @@ class DisplayController:
         self.extrude_amount = 50
         self.extrude_speed = 5
 
+        self.temperature_preset_material = "pla"
+        self.temperature_preset_step = 10
+        self.temperature_preset_extruder = 0
+        self.temperature_preset_bed = 0
+
         self.ips = "--"
 
         self.current_filename = None
@@ -225,7 +230,7 @@ class DisplayController:
         for gcode in gcodes:
             logger.debug("Sending GCODE: " + gcode)
             await self._send_moonraker_request("printer.gcode.script", {"script": gcode})
-            asyncio.sleep(0.1)
+            await asyncio.sleep(0.1)
 
     def send_gcode(self, gcode):
         logger.debug("Sending GCODE: " + gcode)
@@ -254,6 +259,8 @@ class DisplayController:
             self.update_prepare_move_ui()
         elif current_page == PAGE_PREPARE_EXTRUDER:
             self.update_prepare_extrude_ui()
+        elif current_page == PAGE_SETTINGS_TEMPERATURE_SET:
+            self.update_preset_temp_ui()
         elif current_page == PAGE_SETTINGS_ABOUT:
             self._write('fill 0,400,320,60,' + str(BACKGROUND_GRAY))
             self._write('xstr 0,400,320,30,1,65535,' + str(BACKGROUND_GRAY) + ',1,1,1,"OpenNept4une"')
@@ -401,9 +408,9 @@ class DisplayController:
             target = parts[-1]
             heater = "_".join(parts[2:-1])
             self.send_gcode(f"SET_HEATER_TEMPERATURE HEATER=" + heater + " TARGET=" + target)
-        elif action.startswith("preset_temp"):
+        elif action.startswith("set_preset_temp"):
             parts = action.split('_')
-            material = parts[2].lower()
+            material = parts[3].lower()
 
             if "temperatures." + material in self.config:
                 extruder = self.config["temperatures." + material]["extruder"]
@@ -428,7 +435,31 @@ class DisplayController:
             parts = action.split('_')
             direction = parts[1]
             self.send_gcode(f"M83\nG1 E{direction}{self.extrude_amount} F{self.extrude_speed * 60}")
-        
+        elif action.startswith("start_temp_preset_"):
+            material = action.split('_')[3]
+            self.temperature_preset_material = material
+            if "temperatures." + material in self.config:
+                self.temperature_preset_extruder = int(self.config["temperatures." + material]["extruder"])
+                self.temperature_preset_bed = int(self.config["temperatures." + material]["heater_bed"])
+            else:
+                self.temperature_preset_extruder = TEMP_DEFAULTS[material][0]
+                self.temperature_preset_bed = TEMP_DEFAULTS[material][1]
+            self._navigate_to_page(PAGE_SETTINGS_TEMPERATURE_SET)
+        elif action.startswith("preset_temp_step_"):
+            size = int(action.split('_')[3])
+            self.temperature_preset_step = size
+        elif action.startswith("preset_temp_"):
+            parts = action.split('_')
+            heater = parts[2]
+            change = self.temperature_preset_step if parts[3] == "up" else -self.temperature_preset_step
+            if heater == "extruder":
+                self.temperature_preset_extruder += change
+            else:
+                self.temperature_preset_bed += change
+            self.update_preset_temp_ui()
+        elif action == "save_temp_preset":
+            logger.info("Saving temp preset")
+            self.save_temp_preset()
 
     def _write(self, data, forced = False):
         if self.is_blocking_serial and not forced:
@@ -442,6 +473,15 @@ class DisplayController:
     def _toggle_filament_sensor(self, state):
         gcode = f"SET_FILAMENT_SENSOR SENSOR=fila ENABLE={'1' if state else '0'}"
         self.send_gcode(gcode)
+
+    def save_temp_preset(self):
+        if "temperatures." + self.temperature_preset_material not in self.config:
+            self.config["temperatures." + self.temperature_preset_material] = {}
+        self.config.set("temperatures." + self.temperature_preset_material, "extruder", str(self.temperature_preset_extruder))
+        self.config.set("temperatures." + self.temperature_preset_material, "heater_bed", str(self.temperature_preset_bed))
+        with open(config_file, 'w') as configfile:
+            self.config.write(configfile)
+        self._go_back()
 
     def update_printing_heater_settings_ui(self):
         if self.printer_model == MODEL_PRO:
@@ -473,6 +513,11 @@ class DisplayController:
         self._write(f'p[{self._page_id(PAGE_PRINTING_ADJUST)}].b[23].picc=' + str(36 if self.z_offset_distance == "0.01" else 65))
         self._write(f'p[{self._page_id(PAGE_PRINTING_ADJUST)}].b[24].picc=' + str(36 if self.z_offset_distance == "0.1" else 65))
         self._write(f'p[{self._page_id(PAGE_PRINTING_ADJUST)}].b[25].picc=' + str(36 if self.z_offset_distance == "1" else 65))
+
+    def update_preset_temp_ui(self):
+        self._write(f'p[{self._page_id(PAGE_SETTINGS_TEMPERATURE_SET)}].b[7].pic={56 + [1, 5, 10].index(self.temperature_preset_step)}')
+        self._write(f'p[{self._page_id(PAGE_SETTINGS_TEMPERATURE_SET)}].b[18].txt="{self.temperature_preset_extruder}"')
+        self._write(f'p[{self._page_id(PAGE_SETTINGS_TEMPERATURE_SET)}].b[19].txt="{self.temperature_preset_bed}"')
 
     def update_prepare_move_ui(self):
         self._write(f'p[{self._page_id(PAGE_PREPARE_MOVE)}].p0.pic={10 + ["0.1", "1", "10"].index(self.move_distance)}')
