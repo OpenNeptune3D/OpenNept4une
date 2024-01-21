@@ -46,6 +46,8 @@ response_actions = {
         16: 'page ' + PAGE_PREPARE_EXTRUDER,
     },
     9: {
+        1: 'extrude_+',
+        2: 'extrude_-',
         3: "page " + PAGE_PREPARE_MOVE,
         4: "page " + PAGE_PREPARE_TEMP,
     },
@@ -167,8 +169,12 @@ input_actions = {
         1: "set_temp_heater_bed_$",
         2: "set_temp_heater_bed_outer_$",
     },
+    9: {
+        2: "set_extrude_amount_$",
+        3: "set_extrude_speed_$",
+    },
     95: {
         0: "set_temp_extruder_$",
         1: "set_temp_heater_bed_$",
-    }
+    },
 }
