@@ -100,7 +100,7 @@ clear_screen
     echo ""
     echo "3) Base ZNP-K1 Compiled Image Config (Dont use on release images)"
     echo ""
-    echo "4) Method 2 - Elegoo Image Cleanser Script - Not Advised"
+    echo "4) Method 2 (No eMMC) - Elegoo Image Cleanser Script - Not Advised"
     echo ""
     echo "5) Resize Active Armbian Partition (for eMMC > 8GB)"
     echo ""
