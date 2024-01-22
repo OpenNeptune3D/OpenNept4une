@@ -19,15 +19,19 @@ fi
 echo "Creating systemd service file at $SERVICE_FILE..."
 cat <<EOF | sudo tee $SERVICE_FILE > /dev/null
 [Unit]
-Description=My Python Script Service
-After=network.target
+Description=OpenNept4une TouchScreen Display Service
+After=klipper.service klipper-mcu.service moonraker.service
+Wants=klipper.service moonraker.service
+Documentation=man:display(8)
 
 [Service]
-ExecStartPre=/bin/sleep 30
-ExecStart=/home/mks/OpenNept4une/display/venv/bin/python /home/mks/OpenNept4une/display/display.py >> /var/log/display.log 2>&1
-WorkingDirectory=$(dirname $SCRIPT_PATH)
-Restart=always
-User=$(whoami)
+ExecStart=/home/mks/OpenNept4une/display/venv/bin/python /home/mks/OpenNept4une/display/display.py
+WorkingDirectory=/home/mks/OpenNept4une/display
+Restart=on-failure
+RestartSec=10
+User=mks
+ProtectSystem=full
+PrivateTmp=true
 
 [Install]
 WantedBy=multi-user.target
