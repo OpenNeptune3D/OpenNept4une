@@ -217,7 +217,7 @@ class DisplayController:
         elif self.printer_model == MODEL_PLUS:
             model_image_key = "313"
         elif self.printer_model == MODEL_MAX:
-            model_image_key = "313"
+            model_image_key = "314"
 
         if self.display_name_override is None:
             self._write(f'p[{self._page_id(PAGE_MAIN)}].q4.picc={model_image_key}')
