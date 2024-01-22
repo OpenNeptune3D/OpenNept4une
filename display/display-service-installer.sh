@@ -25,6 +25,7 @@ Wants=klipper.service moonraker.service
 Documentation=man:display(8)
 
 [Service]
+ExecStartPre=/bin/sleep 5
 ExecStart=/home/mks/OpenNept4une/display/venv/bin/python /home/mks/OpenNept4une/display/display.py
 WorkingDirectory=/home/mks/OpenNept4une/display
 Restart=on-failure
