@@ -331,8 +331,8 @@ class DisplayController:
                 self._loop.create_task(self._send_moonraker_request("printer.print.resume"))
             else:
                 self._go_back()
-                self._navigate_to_page(PAGE_PRINTING_PAUSE)        
-        elif action == "pause_print_confirm": 
+                self._navigate_to_page(PAGE_PRINTING_PAUSE)
+        elif action == "pause_print_confirm":
             self._go_back()
             logger.info("Pausing print")
         elif action == "resume_print":
@@ -662,20 +662,32 @@ class DisplayController:
         logger.info(f"Connecting to Moonraker at {sockpath}")
         while True:
             try:
-                reader, writer = await asyncio.open_unix_connection(
-                    sockpath, limit=SOCKET_LIMIT
-                )
+                reader, writer = await asyncio.open_unix_connection(sockpath, limit=SOCKET_LIMIT)
+                self.writer = writer
+                self._loop.create_task(self._process_stream(reader))
+                asyncio.create_task(self.monitor_log())
+                self.connected = True
+                logger.info("Connected to Moonraker")
+
+                try:
+                    software_version_response = await self._send_moonraker_request("printer.info")
+                    software_version = software_version_response["result"]["software_version"]
+                    # Process the software_version...
+                    logger.info(f"Software Version: {software_version}")
+                    break
+
+                except KeyError:
+                    logger.error("KeyError encountered in software_version_response. Attempting to reconnect.")
+                    await asyncio.sleep(5)  # Wait before reconnecting
+                    continue  # Retry the connection loop
+
             except asyncio.CancelledError:
                 raise
-            except Exception:
-                await asyncio.sleep(1.)
+            except Exception as e:
+                logger.error(f"Error connecting to Moonraker: {e}")
+                await asyncio.sleep(5)  # Wait before reconnecting
                 continue
-            break
-        self.writer = writer
-        self._loop.create_task(self._process_stream(reader))
-        asyncio.create_task(self.monitor_log())
-        self.connected = True
-        logger.info("Connected to Moonraker")
+
         ret = await self._send_moonraker_request("server.connection.identify", {
                 "client_name": "OpenNept4une Display Connector",
                 "version": "0.0.1",
@@ -774,7 +786,7 @@ class DisplayController:
 
     async def _attempt_reconnect(self):
         logger.info("Attempting to reconnect to Moonraker...")
-        await asyncio.sleep(20)  # A delay before attempting to reconnect
+        await asyncio.sleep(10)  # A delay before attempting to reconnect
         self.start_listening()
 
     def _get_current_page(self):
@@ -795,12 +807,12 @@ class DisplayController:
         if best_thumbnail is None:
             self._write("vis cp0,0", True)
             return
-        
+
         path = "/".join(filename.split("/")[:-1])
         if path != "":
             path = path + "/"
         path += best_thumbnail["relative_path"]
-        
+
         img = requests.get("http://localhost/server/files/gcodes/" + pathname2url(path))
         thumbnail = Image.open(io.BytesIO(img.content))
         background = "29354a"
