@@ -5,45 +5,42 @@
 ## Steps:
 
 1. **Solder a Momentary Button:**
-   - Solder a momentary (push to make) button on the BOOT pads on the MKS/Elegoo control board next to the RESET button.
-   - Alternatively, further on you will need to bridge these with sharp metal tweezers.
+   - Solder a momentary push button on the BOOT pads on the MKS/Elegoo control board next to the RESET button. This button is a common 6x3x4.3 mm SMD Tactile Push Button Switch. 
+   - Alternatively, the riskier method is to bridge these with sharp metal tweezers when required (not advised due to ESD & potential for short circuit).
    - ![boot reset location](../pictures/BOOTRESET.jpg)
 
 2. **Power On and Boot Process:**
-   - Power on the machine.
-   - Press the BOOT button down (or bridge the pads).
-   - While this is pressed, also press the RESET button next to it.
-   - Release RESET then BOOT.
+   - Turn on the printer.
+   - Simultaneously press and hold the BOOT button (or bridge the BOOT pads) and the RESET button.
+   - First, let go of the RESET button and wait for about one second.
+   - Then, release the BOOT button.
 
-3. **SSH and Commands:**
+4. **SSH and Commands:**
    - Leave the printer on, and SSH in (as mks) and type:
      ```
      sudo service klipper stop
-     sudo apt update
-     sudo apt install stm32flash
-     cd ~/
-     stm32flash -r firmware-bak.bin /dev/ttyS0
+     stm32flash -r ~/firmware-bak.bin /dev/ttyS0
      ```
-   - If this errors out, repeat the BOOT/RESET button-press routine above until it works.
+   - If this errors out, repeat the BOOT/RESET button-press then re-run the stm32flash command till it works.
 
-4. **Copy Firmware Backup off the Machine (Optional):**
+5. **Copy Firmware Backup off the Machine (Optional):**
    - From another terminal on the computer, copy this off your printer using:
      ```
      scp mks@IPADDRESS:/home/mks/firmware-bak.bin .
      ```
 
-5. **Reboot:**
-   - Type `sudo reboot` (then power cycle after a few minutes).
+6. **Shutdown:**
+   - Type `sudo poweroff` (then power cycle after ~20s).
 
 ## How to Flash Updated Klipper MCU Firmware
 
 (Only do this if you have removed Elegoo services and are running standard/updated releases of Klipper.)
 
 1. **Enter Bootloader Mode:**
-   - Power on the machine.
-   - Press the BOOT button down (or bridge the pads).
-   - While this is pressed, also press the RESET button next to it.
-   - Release RESET then BOOT.
+   - Turn on the printer.
+   - Simultaneously press and hold the BOOT button (or bridge the BOOT pads) and the RESET button.
+   - First, let go of the RESET button and wait for about one second.
+   - Then, release the BOOT button.
 
 2. **SSH and Commands:**
    - Leave the printer on, and SSH in (as mks) and type:
@@ -69,21 +66,21 @@
      stm32flash -w /home/mks/klipper/out/klipper.bin -v -S 0x08008000 -g 0x08000000 /dev/ttyS0
      ```
 
-5. **Reboot:**
-   - Type `sudo reboot` (then power cycle after a few minutes).
+5. **Shutdown:**
+   - Type `sudo poweroff` (then power cycle after ~20s).
 
 6. **If this doesn't work (usually if you flashed MCU firmware before):**
    - Repeat the BOOT and RESET process.
-   - Download the provided firmware-bak.bin (in this git repo)
-   - Then, flash it with:
+   - Then, flash the provided elegoo firmware with:
      ```
      sudo service klipper stop
-     stm32flash -w ./firmware-bak.bin -v /dev/ttyS0
+     stm32flash -w /home/mks/OpenNept4une/mcu-firmware/firmware-bak.bin -v /dev/ttyS0
      ```
-   - After this reboot going forward you may use the first (compile with make menuconfig) method.
+   - Type `sudo poweroff` (then power cycle after ~20s).
+   - Going forward you may use the first (compile with make menuconfig) method to update your mcu to the latest version.
    ## How to Recover OG MCU Firmware
 
-(Pre-dumped N4Pro (might be the same as N4) firmware-bak.bin)
+(Your previously backed-up Elegoo Firmware)
 
 1. **Power On and Boot Process:**
    - Similar to the above steps.
@@ -92,8 +89,8 @@
    - Leave the printer on, and SSH in (as mks) and type:
      ```
      sudo service klipper stop
-     stm32flash -w firmware-bak.bin -v /dev/ttyS0
+     stm32flash -w ~/firmware-bak.bin -v /dev/ttyS0
      ```
-   - If this fails, retry the BOOT & RESET button method above and re-run the stm32flash command.
-   - Type `sudo reboot` (then power cycle after a few minutes).
+   - If this fails, retry the BOOT & RESET button method above then re-run the stm32flash command till it works.
+   - Type `sudo poweroff` (then power cycle after ~20s).
 
