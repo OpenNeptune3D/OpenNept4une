@@ -305,7 +305,8 @@ class DisplayController:
         if len(self.history) == 0 or self.history[-1] != page:
             if page in TABBED_PAGES and self.history[-1] in TABBED_PAGES:
                 self.history[-1] = page
-            self.history.append(page)
+            else:
+                self.history.append(page)
             self._write(f"page {self.mapper.map_page(page)}")
             logger.debug(f"Navigating page {page}")
             self._loop.create_task(self.special_page_handling())
