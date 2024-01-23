@@ -143,18 +143,15 @@ class DisplayController:
                 self.display_name_line_color = self.config["main_screen"]["display_name_line_color"]
 
         if "prepare" in self.config:
-            if "move_distance" in self.config["prepare"]:
-                distance = self.config["prepare"]["move_distance"]
+            prepare = self.config["prepare"]
+            if "move_distance" in prepare:
+                distance = prepare["move_distance"]
                 if distance in ["0.1", "1", "10"]:
                     self.move_distance = distance
-            if "xy_move_speed" in self.config["prepare"]:
-                self.xy_move_speed = self.config["prepare"]["xy_move_speed"]
-            if "z_move_speed" in self.config["prepare"]:
-                self.z_move_speed = self.config["prepare"]["z_move_speed"]
-            if "extrude_amount" in self.config["prepare"]:
-                self.extrude_amount = int(self.config["prepare"]["extrude_amount"])
-            if "extrude_speed" in self.config["prepare"]:
-                self.extrude_speed = int(self.config["prepare"]["extrude_speed"])
+            self.xy_move_speed = prepare.getint("xy_move_speed", fallback=130)
+            self.z_move_speed = prepare.getint("z_move_speed", fallback=10)
+            self.extrude_amount = prepare.getint("extrude_amount", fallback=50)
+            self.extrude_speed = prepare.getint("extrude_speed", fallback=5)
 
     async def monitor_log(self):
         log_file_path = "/home/mks/printer_data/logs/klippy.log"
@@ -545,24 +542,48 @@ class DisplayController:
             path += f"/{component}"
         return path[1:]
 
+    def sort_dir_contents(self, dir_contents):
+        key = 'modified'
+        reverse = True
+        if 'files' in self.config:
+            files_config = self.config['files']
+            if 'sort_by' in files_config:
+                key = files_config['sort_by']
+            if 'sort_order' in files_config:
+                reverse = files_config['sort_order'] == 'desc'
+        return sorted(dir_contents, key=lambda k: k[key], reverse=reverse)
+
     async def _load_files(self):
         data = (await self._send_moonraker_request("server.files.get_directory", {"path": "/".join(["gcodes", self.current_dir])}))
         dir_info = data["result"]
         self.dir_contents = []
+        dirs = []
         for item in dir_info["dirs"]:
             if not item["dirname"].startswith("."):
-                self.dir_contents.append({
+                dirs.append({
                     "type": "dir",
                     "path": self._build_path(self.current_dir, item["dirname"]),
+                    "size": item["size"],
+                    "modified": item["modified"],
                     "name": item["dirname"]
                 })
+        files = []
         for item in dir_info["files"]:
             if item["filename"].endswith(".gcode"):
-                self.dir_contents.append({
+                files.append({
                     "type": "file",
                     "path": self._build_path(self.current_dir, item["filename"]),
+                    "size": item["size"],
+                    "modified": item["modified"],
                     "name": item["filename"]
                 })
+        sort_folders_first = True
+        if "files" in self.config:
+            sort_folders_first = self.config["files"].getboolean("sort_folders_first", fallback=True)
+        if sort_folders_first:
+            self.dir_contents = self.sort_dir_contents(dirs) + self.sort_dir_contents(files)
+        else:
+            self.dir_contents = self.sort_dir_contents(dirs + files)
         self.show_files_page()
 
     def _page_id(self, page):
@@ -942,6 +963,11 @@ try:
         logger.info("Creating config file")
         config.add_section('LOGGING')
         config.set('LOGGING', 'file_log_level', 'ERROR')
+
+        config.add_section('files')
+        config.set('files', 'sort_by', 'modified')
+        config.set('files', 'sort_order', 'desc')
+        config.set('files', 'sort_folders_first', 'true')
 
         config.add_section('main_screen')
         config.set('main_screen', '; set to MODEL_NAME for built in model name. Remove to use Elegoo model images.')
