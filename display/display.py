@@ -20,9 +20,19 @@ from lib_col_pic import parse_thumbnail
 from elegoo_neptune4 import Neptune4Mapper, Neptune4ProMapper, Neptune4PlusMapper, Neptune4MaxMapper
 from mapping import *
 
-logger = logging.getLogger(__name__)
-
 log_file = "/home/mks/printer_data/logs/display_connector.log"
+logger = logging.getLogger(__name__)
+ch_log = logging.StreamHandler(sys.stdout)
+ch_log.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+ch_log.setFormatter(formatter)
+logger.addHandler(ch_log)
+file_log = logging.FileHandler(log_file)
+file_log.setLevel(logging.ERROR)
+file_log.setFormatter(formatter)
+logger.addHandler(file_log)
+logger.setLevel(logging.DEBUG)
+
 config_file = "/home/mks/printer_data/config/display_connector.cfg"
 
 TEMP_DEFAULTS = {
@@ -149,6 +159,13 @@ class DisplayController:
 
     def _handle_config(self):
         logger.info("Loading config")
+
+
+        if "LOGGING" in self.config:
+            if "file_log_level" in  self.config["LOGGING"]:
+                file_log.setLevel( self.config["LOGGING"]["file_log_level"])
+                logger.setLevel(logging.DEBUG)
+
         if "main_screen" in self.config:
             if "display_name" in self.config["main_screen"]:
                 self.display_name_override = self.config["main_screen"]["display_name"]
@@ -963,16 +980,6 @@ loop = asyncio.get_event_loop()
 config_observer = Observer()
 
 try:
-    ch_log = logging.StreamHandler(sys.stdout)
-    ch_log.setLevel(logging.DEBUG)
-    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-    ch_log.setFormatter(formatter)
-    logger.addHandler(ch_log)
-    file_log = logging.FileHandler(log_file)
-    file_log.setLevel(logging.ERROR)
-    file_log.setFormatter(formatter)
-    logger.addHandler(file_log)
-    logger.setLevel(logging.DEBUG)
 
     config = configparser.ConfigParser(allow_no_value=True)
     if not os.path.exists(config_file):
@@ -1018,11 +1025,6 @@ try:
         with open(config_file, 'w') as configfile:
             config.write(configfile)
     config.read(config_file)
-
-    if "LOGGING" in config:
-        if "file_log_level" in config["LOGGING"]:
-            file_log.setLevel(config["LOGGING"]["file_log_level"])
-            logger.setLevel(logging.DEBUG)
 
     controller = DisplayController(config)
     controller._loop = loop
