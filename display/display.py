@@ -12,15 +12,27 @@ import traceback
 from PIL import Image
 from tjc import TJCClient, EventType
 from urllib.request import pathname2url
+from watchdog.observers import Observer
+from watchdog.events import PatternMatchingEventHandler
 
 from response_actions import response_actions, input_actions
 from lib_col_pic import parse_thumbnail
 from elegoo_neptune4 import Neptune4Mapper, Neptune4ProMapper, Neptune4PlusMapper, Neptune4MaxMapper
 from mapping import *
 
-logger = logging.getLogger(__name__)
-
 log_file = "/home/mks/printer_data/logs/display_connector.log"
+logger = logging.getLogger(__name__)
+ch_log = logging.StreamHandler(sys.stdout)
+ch_log.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+ch_log.setFormatter(formatter)
+logger.addHandler(ch_log)
+file_log = logging.FileHandler(log_file)
+file_log.setLevel(logging.ERROR)
+file_log.setFormatter(formatter)
+logger.addHandler(file_log)
+logger.setLevel(logging.DEBUG)
+
 config_file = "/home/mks/printer_data/config/display_connector.cfg"
 
 TEMP_DEFAULTS = {
@@ -36,7 +48,6 @@ PRINTING_PAGES = [
     PAGE_PRINTING_PAUSE,
     PAGE_PRINTING_STOP,
     PAGE_PRINTING_EMERGENCY_STOP,
-    PAGE_PRINTING_COMPLETE,
     PAGE_PRINTING_FILAMENT,
     PAGE_PRINTING_SPEED,
     PAGE_PRINTING_ADJUST,
@@ -64,6 +75,7 @@ BACKGROUND_GRAY = 10665
 
 SOCKET_LIMIT = 20 * 1024 * 1024
 class DisplayController:
+    last_config_change = 0
 
     def __init__(self, config):
         self.config = config
@@ -135,8 +147,25 @@ class DisplayController:
 
         self.klipper_restart_event = asyncio.Event()
 
+    def handle_config_change(self):
+        if self.last_config_change + 5 > time.time():
+            return
+        self.last_config_change = time.time()
+        logger.info("Config file changed, Reloading")
+        self._navigate_to_page(PAGE_OVERLAY_LOADING)
+        self.config.read(config_file)
+        self._handle_config()
+        self._go_back()
+
     def _handle_config(self):
         logger.info("Loading config")
+
+
+        if "LOGGING" in self.config:
+            if "file_log_level" in  self.config["LOGGING"]:
+                file_log.setLevel( self.config["LOGGING"]["file_log_level"])
+                logger.setLevel(logging.DEBUG)
+
         if "main_screen" in self.config:
             if "display_name" in self.config["main_screen"]:
                 self.display_name_override = self.config["main_screen"]["display_name"]
@@ -144,18 +173,15 @@ class DisplayController:
                 self.display_name_line_color = self.config["main_screen"]["display_name_line_color"]
 
         if "prepare" in self.config:
-            if "move_distance" in self.config["prepare"]:
-                distance = self.config["prepare"]["move_distance"]
+            prepare = self.config["prepare"]
+            if "move_distance" in prepare:
+                distance = prepare["move_distance"]
                 if distance in ["0.1", "1", "10"]:
                     self.move_distance = distance
-            if "xy_move_speed" in self.config["prepare"]:
-                self.xy_move_speed = self.config["prepare"]["xy_move_speed"]
-            if "z_move_speed" in self.config["prepare"]:
-                self.z_move_speed = self.config["prepare"]["z_move_speed"]
-            if "extrude_amount" in self.config["prepare"]:
-                self.extrude_amount = int(self.config["prepare"]["extrude_amount"])
-            if "extrude_speed" in self.config["prepare"]:
-                self.extrude_speed = int(self.config["prepare"]["extrude_speed"])
+            self.xy_move_speed = prepare.getint("xy_move_speed", fallback=130)
+            self.z_move_speed = prepare.getint("z_move_speed", fallback=10)
+            self.extrude_amount = prepare.getint("extrude_amount", fallback=50)
+            self.extrude_speed = prepare.getint("extrude_speed", fallback=5)
 
     async def monitor_log(self):
         log_file_path = "/home/mks/printer_data/logs/klippy.log"
@@ -279,10 +305,10 @@ class DisplayController:
         if len(self.history) == 0 or self.history[-1] != page:
             if page in TABBED_PAGES and self.history[-1] in TABBED_PAGES:
                 self.history[-1] = page
-            elif page not in TRANSITION_PAGES:
+            else:
                 self.history.append(page)
             self._write(f"page {self.mapper.map_page(page)}")
-            logger.info(f"Navigating page {page}")
+            logger.debug(f"Navigating page {page}")
             self._loop.create_task(self.special_page_handling())
 
     def execute_action(self, action):
@@ -546,24 +572,48 @@ class DisplayController:
             path += f"/{component}"
         return path[1:]
 
+    def sort_dir_contents(self, dir_contents):
+        key = 'modified'
+        reverse = True
+        if 'files' in self.config:
+            files_config = self.config['files']
+            if 'sort_by' in files_config:
+                key = files_config['sort_by']
+            if 'sort_order' in files_config:
+                reverse = files_config['sort_order'] == 'desc'
+        return sorted(dir_contents, key=lambda k: k[key], reverse=reverse)
+
     async def _load_files(self):
         data = (await self._send_moonraker_request("server.files.get_directory", {"path": "/".join(["gcodes", self.current_dir])}))
         dir_info = data["result"]
         self.dir_contents = []
+        dirs = []
         for item in dir_info["dirs"]:
             if not item["dirname"].startswith("."):
-                self.dir_contents.append({
+                dirs.append({
                     "type": "dir",
                     "path": self._build_path(self.current_dir, item["dirname"]),
+                    "size": item["size"],
+                    "modified": item["modified"],
                     "name": item["dirname"]
                 })
+        files = []
         for item in dir_info["files"]:
             if item["filename"].endswith(".gcode"):
-                self.dir_contents.append({
+                files.append({
                     "type": "file",
                     "path": self._build_path(self.current_dir, item["filename"]),
+                    "size": item["size"],
+                    "modified": item["modified"],
                     "name": item["filename"]
                 })
+        sort_folders_first = True
+        if "files" in self.config:
+            sort_folders_first = self.config["files"].getboolean("sort_folders_first", fallback=True)
+        if sort_folders_first:
+            self.dir_contents = self.sort_dir_contents(dirs) + self.sort_dir_contents(files)
+        else:
+            self.dir_contents = self.sort_dir_contents(dirs + files)
         self.show_files_page()
 
     def _page_id(self, page):
@@ -600,12 +650,14 @@ class DisplayController:
                 self._loop.create_task(self._load_files())
                 return
             self.history.pop()
+            while len(self.history) > 1 and self.history[-1] in TRANSITION_PAGES:
+                self.history.pop()
             back_page = self.history[-1]
             self._write(f"page {self.mapper.map_page(back_page)}")
-            logger.info(f"Navigating back to {back_page}")
+            logger.debug(f"Navigating back to {back_page}")
             self._loop.create_task(self.special_page_handling())
         else:
-            logger.info("Already at the main page.")
+            logger.debug("Already at the main page.")
 
     def start_listening(self):
         self._loop.create_task(self.listen())
@@ -768,7 +820,7 @@ class DisplayController:
         logger.info("Unix Socket Disconnection from _process_stream()")
         await self.close()
 
-    def handle_config_change(self, new_data):
+    def handle_machine_config_change(self, new_data):
         max_x, max_y, max_z = 0, 0, 0
         if "config" in new_data:
             if "stepper_x" in new_data["config"]:
@@ -882,7 +934,7 @@ class DisplayController:
         if "filament_switch_sensor fila" in new_data:
             self.filament_sensor_state = int(new_data["filament_switch_sensor fila"]["enabled"]) == 1
         if "configfile" in new_data:
-            self.handle_config_change(new_data["configfile"])
+            self.handle_machine_config_change(new_data["configfile"])
 
         if "extruder" in new_data:
             if "target" in new_data["extruder"]:
@@ -925,24 +977,21 @@ class DisplayController:
         await self.writer.wait_closed()
 
 
-try:
+loop = asyncio.get_event_loop()
+config_observer = Observer()
 
-    ch_log = logging.StreamHandler(sys.stdout)
-    ch_log.setLevel(logging.DEBUG)
-    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-    ch_log.setFormatter(formatter)
-    logger.addHandler(ch_log)
-    file_log = logging.FileHandler(log_file)
-    file_log.setLevel(logging.ERROR)
-    file_log.setFormatter(formatter)
-    logger.addHandler(file_log)
-    logger.setLevel(logging.DEBUG)
+try:
 
     config = configparser.ConfigParser(allow_no_value=True)
     if not os.path.exists(config_file):
         logger.info("Creating config file")
         config.add_section('LOGGING')
         config.set('LOGGING', 'file_log_level', 'ERROR')
+
+        config.add_section('files')
+        config.set('files', 'sort_by', 'modified')
+        config.set('files', 'sort_order', 'desc')
+        config.set('files', 'sort_folders_first', 'true')
 
         config.add_section('main_screen')
         config.set('main_screen', '; set to MODEL_NAME for built in model name. Remove to use Elegoo model images.')
@@ -978,17 +1027,26 @@ try:
             config.write(configfile)
     config.read(config_file)
 
-    if "LOGGING" in config:
-        if "file_log_level" in config["LOGGING"]:
-            file_log.setLevel(config["LOGGING"]["file_log_level"])
-            logger.setLevel(logging.DEBUG)
-
-
-    loop = asyncio.get_event_loop()
     controller = DisplayController(config)
     controller._loop = loop
+
+    def handle_wd_callback(notifier):
+        controller.handle_config_change()
+
+    patterns = ["display_connector.cfg"]
+    event_handler = PatternMatchingEventHandler(patterns, None, True, True)
+    event_handler.on_modified = handle_wd_callback
+    event_handler.on_created = handle_wd_callback
+    config_observer.schedule(event_handler, config_file, recursive=False)
+    config_observer.start()
+
+
     loop.call_later(1, controller.start_listening)
     loop.run_forever()
 except Exception as e:
     logger.error("Error communicating...: " + str(e))
     logger.error(traceback.format_exc())
+finally:
+    config_observer.stop()
+    config_observer.join()
+    loop.close()
