@@ -50,10 +50,10 @@
 1. Determine stepper motor current & PCB version (N4 & Pro Only)
 2. Flash eMMC with the latest OpenNept4une release image
 3. Update third-party modules in Kiauh / Fluidd or Mailsail
-4. Run the install script to Install the latest OpenNept4une Printer.cfg & Update (Virtual) MCU rpi Firmware. 
+4. Run the install script to Install the latest OpenNept4une Printer.cfg 
 6. Flash MCU as [described here](mcu-firmware)
 
-**Preparation (N4 & N4 Pro Only):**
+**Preparation (N4 & N4 Pro Models Only: If Plus or Max skip to - Requirements for Flashing the Image):**
 
 The setup script will prompt you for two inputs: the stepper motor current, as well as the PCB version (N4 and N4 Pro only). ELEGOO has released the printers with two different types of steppers using different current and multiple board revisions. **Warning:** Choosing the wrong current might damage the stepper motors permanently, so it is better to double check, before picking a value.
 
@@ -81,7 +81,7 @@ The second value needed by the install script is the PCB version. When you remov
 
 ![version 1.0](pictures/pads-bridge-version10.jpg) ![version 1.1](pictures/version11.jpg)
 
-**Requirements:**
+**Requirements for Flashing the Image:**
 
 - Makerbase MKS EMMC-ADAPTER V2 USB 3.0 Reader For MKS EMMC Module: [AliExpress](https://www.aliexpress.com/item/1005005614719377.html)
 - Alternatively, a spare eMMC & eMMC > microSD adapter: [AliExpress](https://www.aliexpress.com/item/1005005549477887.html)
