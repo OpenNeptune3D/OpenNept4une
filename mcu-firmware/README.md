@@ -24,7 +24,7 @@
   
 3. **Firmware Update:**
    - Ensure your printer is powered off
-   - Insert the MicroSD into your printer
+   - Insert the MicroSD into your printer (Internal access only on some variants)
    - Power on the printer and wait 2min
    - Check Fluidd's System tab for the updated klipper version [mcu Information v0.12.0-93]
    - If you read the MicroSD card from a computer you should see that X_4.bin has been renamed to X_4.CUR if it has been successfully updated
