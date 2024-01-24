@@ -39,7 +39,7 @@
    - Your printer will then reboot
    - Check Fluidd's System tab for the updated klipper version [mcu rpi Information v0.12.xxx]
 
-## If MicroSD update doesn't work (usually if you flashed MCU firmware before):**
+## If MicroSD update doesn't work (usually if you flashed MCU firmware before with the boot/reset method):**
 
 . **Enter Bootloader Mode:**
    - Turn on the printer.
@@ -49,7 +49,7 @@
    - Then, flash the provided 0.12.0.93 firmware with:
      ```
      sudo service klipper stop
-     stm32flash -w /home/mks/OpenNept4une/mcu-firmware/12-093-full.bin -v /dev/ttyS0
+     stm32flash -w ~/OpenNept4une/mcu-firmware/12-093-full.bin -v /dev/ttyS0
      ```
    - Type `sudo poweroff` (then power cycle after ~20s).
    - Going forward you may use the first MicroSD method to update your MCU to the latest version.
@@ -99,7 +99,7 @@
 2. **SSH and Commands:**
    - Turn the printer on, SSH in (as mks) and type:
      ```
-     cd /home/mks/klipper/
+     cd ~/klipper/
      make clean
      make menuconfig
      ```
