@@ -8,6 +8,7 @@ SERVICE_FILE="/etc/systemd/system/display.service"
 SCRIPT_PATH="/home/mks/OpenNept4une/display/display.py"
 VENV_PATH="/home/mks/OpenNept4une/display/venv"
 LOG_FILE="/var/log/display.log"
+MOONRAKER_ASVC="/home/mks/printer_data/moonraker.asvc"
 
 # Check if the script exists
 if [ ! -f "$SCRIPT_PATH" ]; then
@@ -47,5 +48,8 @@ sudo systemctl daemon-reload
 echo "Enabling and starting the service..."
 sudo systemctl enable display.service
 sudo systemctl start display.service
+
+echo "Allowing Moonraker to control display service"
+grep -qxF 'display' $MOONRAKER_ASVC || echo 'display' >> $MOONRAKER_ASVC
 
 echo "Service setup complete."
