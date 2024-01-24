@@ -32,6 +32,22 @@ make menuconfig
 # Stop, flash, and start klipper service
 sudo service klipper stop
 make flash
-sudo service klipper start
+echo "kernel.sched_rt_runtime_us = -1" | sudo tee -a /etc/sysctl.d/10-disable-rt-group-limit.conf
 
 echo "Script execution completed."
+
+countdown=20
+
+echo "System will reboot in $countdown seconds..."
+
+# Countdown loop
+while [ $countdown -gt 0 ]; do
+    echo "$countdown..."
+    sleep 1
+    countdown=$((countdown-1))
+done
+
+echo "Rebooting now!"
+
+# Reboot command (requires sudo privileges)
+sudo reboot
