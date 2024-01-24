@@ -8,14 +8,24 @@
    - Solder a momentary push button on the BOOT pads on the MKS/Elegoo control board next to the RESET button. This button is a common 6x3x4.3 mm SMD Tactile Push Button Switch. 
    - Alternatively, the riskier method is to bridge these with sharp metal tweezers when required (not advised due to ESD & potential for short circuit).
    - ![boot reset location](../pictures/BOOTRESET.jpg)
-
-2. **Power On and Boot Process:**
-   - Turn on the printer.
+  
+2. **Update Klipper etc in Kiauh:**
+   ```
+   ~/kiauh/kiauh.sh
+   ```
+   - Select Menu Option 2
+   - Wait for kiauh to check for updates
+   - Type the letter 'a' to select update all
+   - Press ENTER to initiate updates
+   - Exit out of kiauh
+   
+4. **Power On and Boot Process:**
+   - Ensure the printer is on.
    - Simultaneously press and hold the BOOT button (or bridge the BOOT pads) and the RESET button.
    - First, let go of the RESET button and wait for about one second.
    - Then, release the BOOT button.
 
-4. **SSH and Commands:**
+5. **SSH and Commands:**
    - Leave the printer on, and SSH in (as mks) and type:
      ```
      sudo service klipper stop
@@ -23,13 +33,13 @@
      ```
    - If this errors out, repeat the BOOT/RESET button-press then re-run the stm32flash command till it works.
 
-5. **Copy Firmware Backup off the Machine (Optional):**
+6. **Copy Firmware Backup off the Machine (Optional):**
    - From another terminal on the computer, copy this off your printer using:
      ```
      scp mks@IPADDRESS:/home/mks/firmware-bak.bin .
      ```
 
-6. **Shutdown:**
+7. **Shutdown:**
    - Type `sudo poweroff` (then power cycle after ~20s).
 
 ## How to Flash Updated Klipper MCU Firmware
