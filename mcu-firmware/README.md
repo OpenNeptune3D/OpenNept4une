@@ -18,7 +18,7 @@
 2. **MicroSD Preparation:**
    - Format a MicroSD card to FAT32
    - Download this firmware file [X_4.bin](https://github.com/halfmanbear/OpenNept4une/raw/main/mcu-firmware/X_4.bin). Alternatively, compile the latest (INFO further down #Compile Latest klipper.bin)
-   - Copy the file to the root of the MicroSD
+   - Copy the file to the root of the MicroSD (some models require this to be named elegoo_k1.bin so rename if required)
    - Safely Eject the MicroSD
    - Backup your current MCU firmware (Optional: A standard Elegoo firmware-back.bin is provided in this repo so you don't have to make your own)
   
@@ -28,6 +28,7 @@
    - Power on the printer and wait 2min
    - Check Fluidd's System tab for the updated klipper version [mcu Information v0.12.0-93]
    - If you read the MicroSD card from a computer you should see that X_4.bin has been renamed to X_4.CUR if it has been successfully updated
+   - If the file hasn't been renamed to (.CUR) try renaming the X_4.bin to elegoo_k1.bin and try again
 
 4. **Update MCU RPi (Virtual MCU):**
    - Run the main install script with,
@@ -39,7 +40,7 @@
    - Your printer will then reboot
    - Check Fluidd's System tab for the updated klipper version [mcu rpi Information v0.12.xxx]
 
-## If MicroSD update doesn't work (usually if you flashed MCU firmware before with the boot/reset method):**
+## If MicroSD update still doesn't work (usually if you flashed MCU firmware before with the boot/reset method):**
 
 . **Enter Bootloader Mode:**
    - Turn on the printer.
