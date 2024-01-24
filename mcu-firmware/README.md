@@ -99,18 +99,12 @@
 2. **SSH and Commands:**
    - Turn the printer on, SSH in (as mks) and type:
      ```
-     cd ~/klipper/
-     make clean
-     make menuconfig
+     cd ~/klipper && make clean && make menuconfig && make
      ```
    - Enter the following configurations using arrow keys and SPACEBAR to select.
    - STMicroelectronics STM32 - STM32F401 - 32KiB Bootloader - and USART PA10/PA9 - settings.
-   - Once you have selected the correct options hit the Q key and then Y to close and save.
-   - Now run:
+   - Once you have selected the correct options hit the Q key and then Y to close, save and compile.
 
-     ```
-     make
-     ```
 3. **Download File to MicroSD:**
    - Move and rename the compiled klipper.bin with the following command
    ```
