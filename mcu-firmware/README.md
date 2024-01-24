@@ -28,7 +28,7 @@
    - Power on the printer and wait 2min
    - Check Fluidd's System tab for the updated klipper version [mcu Information v0.12.0-93]
    - If you read the MicroSD card from a computer you should see that X_4.bin has been renamed to X_4.CUR if it has been successfully updated
-   - If the file hasn't been renamed to (.CUR) try renaming the X_4.bin to elegoo_k1.bin and try again
+   - If the file hasn't been renamed to (.CUR) try renaming the X_4.bin to elegoo_k1.bin and try again else see section below
 
 4. **Update MCU RPi (Virtual MCU):**
    - Run the main install script with,
