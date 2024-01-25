@@ -149,7 +149,7 @@ echo "Then Install the following, in this ORDER."
 echo "Klipper, Moonraker, Fluidd, Mainsail (on port 81) then Mobileraker"
 sleep 20
 echo ""
-echo "You should then run chmod +x ~/OpenNept4une/OpenNept4une.sh && ~/OpenNept4une/OpenNept4une.sh"
+echo "You should then run ~/OpenNept4une/OpenNept4une.sh"
 echo ""
 echo "The main requirement here is to Install the latest OpenNept4une Printer.cfg AND Update (Virtual) MCU rpi Firmware"
 echo ""
