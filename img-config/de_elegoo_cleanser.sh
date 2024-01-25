@@ -21,37 +21,37 @@ sudo service nginx stop
 sudo rm /boot/wpa_supplicant/wpa_supplicant-wlan0.conf
 sudo rm /etc/wpa_supplicant/wpa_supplicant-wlan0.conf
 
-# sudo cp /home/mks/OpenNept4une/img-config/spidev-fix/rockchip-spi-spidev.dtbo /boot/dtb/rockchip/overlay/
-# sudo cp /home/mks/OpenNept4une/img-config/spidev-fix/rockchip-spi-spidev.dtbo /boot/dtb-5.16.20-rockchip64/rockchip/overlay/
+# sudo cp ~/OpenNept4une/img-config/spidev-fix/rockchip-spi-spidev.dtbo /boot/dtb/rockchip/overlay/
+# sudo cp ~/OpenNept4une/img-config/spidev-fix/rockchip-spi-spidev.dtbo /boot/dtb-5.16.20-rockchip64/rockchip/overlay/
 
-# sudo cp /home/mks/OpenNept4une/img-config/spidev-fix/rockchip-fixup.scr /boot/dtb/rockchip/overlay/
-# sudo cp /home/mks/OpenNept4une/img-config/spidev-fix/rockchip-fixup.scr /boot/dtb-5.16.20-rockchip64/rockchip/overlay/
+# sudo cp ~/OpenNept4une/img-config/spidev-fix/rockchip-fixup.scr /boot/dtb/rockchip/overlay/
+# sudo cp ~/OpenNept4une/img-config/spidev-fix/rockchip-fixup.scr /boot/dtb-5.16.20-rockchip64/rockchip/overlay/
 
-# sudo cp /home/mks/OpenNept4une/img-config/spidev-fix/99-spidev.rules /etc/udev/rules.d/
+# sudo cp ~/OpenNept4une/img-config/spidev-fix/99-spidev.rules /etc/udev/rules.d/
 
-sudo cp /home/mks/OpenNept4une/img-config/led-v1.1+fix/99-gpio.rules /etc/udev/rules.d/
+sudo cp ~/OpenNept4une/img-config/led-v1.1+fix/99-gpio.rules /etc/udev/rules.d/
 
-/home/mks/klipper/scripts/klipper-uninstall.sh
-/home/mks/moonraker/scripts/uninstall-moonraker.sh
-/home/mks/crowsnest/tools/uninstall.sh
+~/klipper/scripts/klipper-uninstall.sh
+~/moonraker/scripts/uninstall-moonraker.sh
+~/crowsnest/tools/uninstall.sh
 
-sudo find /home/mks/ -mindepth 1 ! -path '/home/mks/OpenNept4une*' -exec rm -rf {} +
+sudo find ~/ -mindepth 1 ! -path '~/OpenNept4une*' -exec rm -rf {} +
 sudo rm -rf /root/*
 
 # Create the config directory structure if not exists
-[ ! -d "/home/mks/printer_data/config/" ] && mkdir -p /home/mks/printer_data/config/
+[ ! -d "~/printer_data/config/" ] && mkdir -p ~/printer_data/config/
 
 # Clone the KAMP git repository if not exists
-if [ ! -d "/home/mks/Klipper-Adaptive-Meshing-Purging" ]; then
+if [ ! -d "~/Klipper-Adaptive-Meshing-Purging" ]; then
     cd /home/mks
     git clone https://github.com/kyleisah/Klipper-Adaptive-Meshing-Purging.git
 fi
 
 # Create a symbolic link if not exists
-[ ! -L "/home/mks/printer_data/config/KAMP" ] && ln -s /home/mks/Klipper-Adaptive-Meshing-Purging/Configuration /home/mks/printer_data/config/KAMP
+[ ! -L "~/printer_data/config/KAMP" ] && ln -s ~/Klipper-Adaptive-Meshing-Purging/Configuration ~/printer_data/config/KAMP
 
 # Clone Kiauh git repository if not exists
-if [ ! -d "/home/mks/kiauh" ]; then
+if [ ! -d "~/kiauh" ]; then
     cd /home/mks
     git clone https://github.com/dw-0/kiauh.git
 fi
@@ -66,7 +66,7 @@ declare -A LINKS_AND_NAMES=(
 )
 
 # Destination directory
-DEST_DIR="/home/mks/printer_data/config"
+DEST_DIR="~/printer_data/config"
 
 # Loop through each link and download the file only if it doesn't exist
 for link in "${!LINKS_AND_NAMES[@]}"; do
@@ -82,7 +82,7 @@ done
 # Fluidd DB transfer
 SHARE_LINK="https://raw.githubusercontent.com/halfmanbear/OpenNept4une/main/img-config/printer-data/data.mdb"
 
-DESTINATION_DIR="/home/mks/printer_data/database"
+DESTINATION_DIR="~/printer_data/database"
 DESTINATION_FILE="${DESTINATION_DIR}/data.mdb"
 
 # Check and create the output directory if it doesn't exist
@@ -113,7 +113,7 @@ sudo rm -rf /usr/share/man/*
 git clone --branch legacy/v3 https://github.com/mainsail-crew/crowsnest.git
 
 # Define the file path
-FILE="/home/mks/printer_data/config/moonraker.conf"
+FILE="~/printer_data/config/moonraker.conf"
 
 # Check if the file exists
 if [[ ! -f "$FILE" ]]; then
@@ -171,4 +171,4 @@ echo "Countdown finished."
 sync 
 
 # Run kiauh.sh as the mks user
-sudo -u mks /home/mks/kiauh/kiauh.sh
+sudo -u mks ~/kiauh/kiauh.sh

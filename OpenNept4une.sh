@@ -1,14 +1,14 @@
 #!/bin/bash
 
 # Path to the script and other resources
-SCRIPT="/home/mks/OpenNept4une/OpenNept4une.sh"
-DISPLAY_SERVICE_INSTALLER="/home/mks/OpenNept4une/display/display-service-installer.sh"
-MCU_RPI_INSTALLER="/home/mks/OpenNept4une/img-config/rpi-mcu-install.sh"
-USB_STORAGE_AUTOMOUNT="/home/mks/OpenNept4une/img-config/usb-storage-automount.sh"
-ANDROID_RULE_INSTALLER="/home/mks/OpenNept4une/img-config/adb-automount.sh"
-CROWSNEST_FIX_INSTALLER="/home/mks/OpenNept4une/img-config/crowsnest-lag-fix.sh"
-BASE_IMAGE_INSTALLER="/home/mks/OpenNept4une/img-config/base_image_configuration.sh"
-DE_ELEGOO_IMAGE_CLEANSER="/home/mks/OpenNept4une/img-config/de_elegoo_cleanser.sh"
+SCRIPT="~/OpenNept4une/OpenNept4une.sh"
+DISPLAY_SERVICE_INSTALLER="~/OpenNept4une/display/display-service-installer.sh"
+MCU_RPI_INSTALLER="~/OpenNept4une/img-config/rpi-mcu-install.sh"
+USB_STORAGE_AUTOMOUNT="~/OpenNept4une/img-config/usb-storage-automount.sh"
+ANDROID_RULE_INSTALLER="~/OpenNept4une/img-config/adb-automount.sh"
+CROWSNEST_FIX_INSTALLER="~/OpenNept4une/img-config/crowsnest-lag-fix.sh"
+BASE_IMAGE_INSTALLER="~/OpenNept4une/img-config/base_image_configuration.sh"
+DE_ELEGOO_IMAGE_CLEANSER="~/OpenNept4une/img-config/de_elegoo_cleanser.sh"
 FLAG_FILE="/boot/.OpenNept4une.txt"
 
 # Image Fixes 
@@ -52,7 +52,7 @@ update_repo() {
     echo "======================================"
     echo "Checking for updates..."
     echo "======================================"
-    repo_dir="/home/mks/OpenNept4une"
+    repo_dir="~/OpenNept4une"
     if [ -d "$repo_dir" ]; then
         cd "$repo_dir"
     else
@@ -232,8 +232,8 @@ install_screen_service() {
     if [[ $install_screen == "y" ]]; then
         echo "Installing Touch-Screen Service..."
         if [ -f "$DISPLAY_SERVICE_INSTALLER" ]; then
-            sudo rm -rf /home/mks/OpenNept4une/display/venv
-            rm -rf /home/mks/OpenNept4une/display/__pycache__
+            sudo rm -rf ~/OpenNept4une/display/venv
+            rm -rf ~/OpenNept4une/display/__pycache__
             "$DISPLAY_SERVICE_INSTALLER"
         else
             echo "Error: Display service installer script not found."
@@ -281,7 +281,7 @@ usb_auto_mount() {
 
 # Function to copy files with error handling
 copy_file() {
-    local base_path="/home/mks/OpenNept4une"
+    local base_path="~/OpenNept4une"
     local src="$base_path/$1"
     local dest=$2
     local use_sudo=${3:-false}
@@ -355,8 +355,8 @@ apply_configuration() {
         # Commands to install the latest configurations
         echo "Installing latest configurations..."
         echo ""
-        cp -r /home/mks/OpenNept4une/img-config/printer-data/* /home/mks/printer_data/config/
-        mv /home/mks/printer_data/config/data.mdb /home/mks/printer_data/database/data.mdb
+        cp -r ~/OpenNept4une/img-config/printer-data/* ~/printer_data/config/
+        mv ~/printer_data/config/data.mdb ~/printer_data/database/data.mdb
     else
         echo "Skipping the installation of latest configurations."
         echo ""
@@ -373,9 +373,9 @@ install_printer_cfg() {
     echo "4) Neptune4 Max"
     read -p "Enter your choice (1-4): " MACHINE_TYPE
 
-    PRINTER_CFG_DEST="/home/mks/printer_data/config"
+    PRINTER_CFG_DEST="~/printer_data/config"
     DTB_DEST="/boot/dtb/rockchip/rk3328-roc-cc.dtb"
-    DATABASE_DEST="/home/mks/printer_data/database"
+    DATABASE_DEST="~/printer_data/database"
     PRINTER_CFG_FILE="$PRINTER_CFG_DEST/printer.cfg"
     BACKUP_PRINTER_CFG_FILE="$PRINTER_CFG_DEST/backup-printer.cfg.bak"
 

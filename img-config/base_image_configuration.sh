@@ -1,19 +1,19 @@
 #!/bin/bash
 
 # Create the config directory structure if not exists
-[ ! -d "/home/mks/printer_data/config/" ] && mkdir -p /home/mks/printer_data/config/
+[ ! -d "~/printer_data/config/" ] && mkdir -p ~/printer_data/config/
 
 # Clone the KAMP git repository if not exists
-if [ ! -d "/home/mks/Klipper-Adaptive-Meshing-Purging" ]; then
+if [ ! -d "~/Klipper-Adaptive-Meshing-Purging" ]; then
     cd /home/mks
     git clone https://github.com/kyleisah/Klipper-Adaptive-Meshing-Purging.git
 fi
 
 # Create a symbolic link if not exists
-[ ! -L "/home/mks/printer_data/config/KAMP" ] && ln -s /home/mks/Klipper-Adaptive-Meshing-Purging/Configuration /home/mks/printer_data/config/KAMP
+[ ! -L "~/printer_data/config/KAMP" ] && ln -s ~/Klipper-Adaptive-Meshing-Purging/Configuration ~/printer_data/config/KAMP
 
 # Clone Kiauh git repository if not exists
-if [ ! -d "/home/mks/kiauh" ]; then
+if [ ! -d "~/kiauh" ]; then
     cd /home/mks
     git clone https://github.com/dw-0/kiauh.git
 fi
@@ -38,7 +38,7 @@ declare -A LINKS_AND_NAMES=(
 )
 
 # Destination directory
-DEST_DIR="/home/mks/printer_data/config"
+DEST_DIR="~/printer_data/config"
 
 # Loop through each link and download the file only if it doesn't exist
 for link in "${!LINKS_AND_NAMES[@]}"; do
@@ -54,7 +54,7 @@ done
 # Fluidd DB transfer
 SHARE_LINK="https://raw.githubusercontent.com/halfmanbear/OpenNept4une/main/img-config/printer-data/data.mdb"
 
-DESTINATION_DIR="/home/mks/printer_data/database"
+DESTINATION_DIR="~/printer_data/database"
 DESTINATION_FILE="${DESTINATION_DIR}/data.mdb"
 
 # Check and create the output directory if it doesn't exist
@@ -114,4 +114,4 @@ sync
 sudo nmtui
 
 # Run kiauh.sh as the mks user
-sudo -u mks /home/mks/kiauh/kiauh.sh
+sudo -u mks ~/kiauh/kiauh.sh

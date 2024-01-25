@@ -86,7 +86,7 @@ make clean
 make
 # Flash the new firmware
 echo "Flashing new firmware to STM32F4..."
-stm32flash -w /home/mks/klipper/out/klipper.bin -v -S 0x08008000 -g 0x08000000 /dev/ttyS0
+stm32flash -w ~/klipper/out/klipper.bin -v -S 0x08008000 -g 0x08000000 /dev/ttyS0
 
 echo "Flashing complete"
 gpioset gpiochip1 15=0; sleep 0.5; gpioset gpiochip1 15=1; sleep 1

@@ -80,7 +80,7 @@
 4. **Copy Firmware Backup off the Machine (Optional):**
    - From another terminal on the computer, copy this off your printer using:
      ```
-     scp mks@IPADDRESS:/home/mks/firmware-bak.bin .
+     scp mks@IPADDRESS:~/firmware-bak.bin .
      ```
 
 5. **Shutdown:**

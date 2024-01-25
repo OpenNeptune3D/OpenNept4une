@@ -20,7 +20,7 @@ from lib_col_pic import parse_thumbnail
 from elegoo_neptune4 import Neptune4Mapper, Neptune4ProMapper, Neptune4PlusMapper, Neptune4MaxMapper
 from mapping import *
 
-log_file = "/home/mks/printer_data/logs/display_connector.log"
+log_file = "~/printer_data/logs/display_connector.log"
 logger = logging.getLogger(__name__)
 ch_log = logging.StreamHandler(sys.stdout)
 ch_log.setLevel(logging.DEBUG)
@@ -33,7 +33,7 @@ file_log.setFormatter(formatter)
 logger.addHandler(file_log)
 logger.setLevel(logging.DEBUG)
 
-config_file = "/home/mks/printer_data/config/display_connector.cfg"
+config_file = "~/printer_data/config/display_connector.cfg"
 
 TEMP_DEFAULTS = {
     "pla": [210, 60],
@@ -184,7 +184,7 @@ class DisplayController:
             self.extrude_speed = prepare.getint("extrude_speed", fallback=5)
 
     async def monitor_log(self):
-        log_file_path = "/home/mks/printer_data/logs/klippy.log"
+        log_file_path = "~/printer_data/logs/klippy.log"
 
         try:
             # Open the log file for reading in text mode
@@ -709,7 +709,7 @@ class DisplayController:
         return ips
 
     async def connect_moonraker(self) -> None:
-        sockfile = "/home/mks/printer_data/comms/moonraker.sock"
+        sockfile = "~/printer_data/comms/moonraker.sock"
         sockpath = pathlib.Path(sockfile).expanduser().resolve()
         logger.info(f"Connecting to Moonraker at {sockpath}")
         while True:
