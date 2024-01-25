@@ -50,8 +50,8 @@
 1. Determine stepper motor current & PCB version (N4 & Pro Only)
 2. Flash eMMC with the latest OpenNept4une release image
 3. Update third-party modules in Kiauh / Fluidd or Mailsail
-4. Run the install script to Install the latest OpenNept4une Printer.cfg 
-6. Flash MCU as [described here](mcu-firmware)
+4. Run the OpenNept4une script and select: 0ption 1) Install the latest OpenNept4une Printer.cfg (Select y for all prompts)
+5. After reboot re-run the OpenNept4une script and select: Option 4) Update MCU & (Virtual) MCU RPi Firmware (Select Both)
 
 **Preparation (N4 & N4 Pro Models Only: If Plus or Max skip to - Requirements for Flashing the Image):**
 
@@ -119,7 +119,7 @@ Pass: makerbase\
 - In the Kiauh menu, select Option (2), type key (a), and press ENTER.
 - Once complete quit out of Kiauh.
 
-**Install latest OpenNept4une Printer.cfg & Update (Virtual) MCU rpi Firmware**
+**Install latest OpenNept4une Printer.cfg & Update MCU & (Virtual) MCU RPi Firmware**
 
 ```bash
 cd ~/OpenNept4une/ && git fetch --all && git reset --hard origin/main && git clean -fd
@@ -134,10 +134,7 @@ chmod +x ~/OpenNept4une/OpenNept4une.sh && ~/OpenNept4une/OpenNept4une.sh
 ```bash
 ~/OpenNept4une/OpenNept4une.sh
 ```
-- Then Perform Option (4): Update (Virtual) MCU rpi Firmware, In the menu, set 'Microcontroller Architecture' to 'Linux process,'.
-- Once the correct option has been selected with SPACEBAR, quit with Q, then confirm with Y.
-
-**Finally Flash MCU as [described here](mcu-firmware)**
+- Then Perform Option (4): Update MCU & (Virtual) MCU RPi Firmware (Select Both)
 
 # General Configuration Instructions
 
@@ -148,7 +145,7 @@ Follow these steps to configure the basic settings on your Neptune 4 printer's c
 1. **Access Armbian Configuration:**
    Open the terminal and enter the following command:
 ```bash
-  sudo armbian-config
+sudo armbian-config
 ```
 2. **Set Timezone:**
 - Navigate to `Personal`.
@@ -160,8 +157,9 @@ Follow these steps to configure the basic settings on your Neptune 4 printer's c
 1. **Access Network Manager:**
 Use the following command in the terminal to open the network manager:
 ```bash
-  sudo nmtui
+~/OpenNept4une/OpenNept4une.sh
 ```
+Option (2): WiFi Config
 2. **Connect to Wi-Fi:**
 - In the network manager, navigate to `Activate a connection`.
 - Select your Wi-Fi network and enter the necessary credentials to connect.
