@@ -252,17 +252,17 @@ update_mcu_rpi_fw() {
     clear_screen
     echo -e "\033[0;33m$OPENNEPT4UNE_ART\033[0m"
     echo "======================================"
-    echo "Do you want to update the Virtual MCU rpi?"
+    echo "Do you want to update the MCU or Virtual MCU?"
     echo ""
     read -p "Enter 'y' to install, any other key to skip: " install_mcu_rpi
 
     if [[ $install_mcu_rpi == "y" ]]; then
-        echo "Running MCU rpi Installer..."
+        echo "Running MCU / MCU RPi Installer..."
         if [ -f "$MCU_RPI_INSTALLER" ]; then
             chmod +x "$MCU_RPI_INSTALLER"
             "$MCU_RPI_INSTALLER"
         else
-            echo "Error: Virtual MCU installer script not found."
+            echo "Error: Virtual / MCU installer script not found."
         fi
         echo "======================================"
     fi
@@ -499,7 +499,7 @@ print_menu() {
     echo ""
     echo "3) Enable USB Storage AutoMount"
     echo ""
-    echo "4) Install/Update (Virtual) MCU rpi Firmware"
+    echo "4) Update MCU & (Virtual) MCU RPi Firmware"
     echo ""
     echo "5) Install/Update Touch-Screen Display Service (BETA)"
     echo ""
