@@ -231,7 +231,7 @@ install_screen_service() {
     clear_screen
     echo -e "\033[0;33m$OPENNEPT4UNE_ART\033[0m"
     echo "======================================"
-    echo "Do you want to install the (WIP) Touch-Screen implementation? (barely functional, frequent updates)"
+    echo "Do you want to install the Touch-Screen Display Service? (BETA)"
     read -p "Enter 'y' to install, any other key to skip: " install_screen
 
     if [[ $install_screen == "y" ]]; then
@@ -501,7 +501,7 @@ print_menu() {
     echo ""
     echo "4) Install/Update (Virtual) MCU rpi Firmware"
     echo ""
-    echo "5) Install/Update (WIP) Touch Screen Implementation"
+    echo "5) Install/Update Touch-Screen Display Service (BETA)"
     echo ""
     echo "6) Advanced / More"
     echo ""
