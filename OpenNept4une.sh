@@ -1,14 +1,14 @@
 #!/bin/bash
 
 # Path to the script and other resources
-SCRIPT="~/OpenNept4une/OpenNept4une.sh"
-DISPLAY_SERVICE_INSTALLER="~/OpenNept4une/display/display-service-installer.sh"
-MCU_RPI_INSTALLER="~/OpenNept4une/img-config/rpi-mcu-install.sh"
-USB_STORAGE_AUTOMOUNT="~/OpenNept4une/img-config/usb-storage-automount.sh"
-ANDROID_RULE_INSTALLER="~/OpenNept4une/img-config/adb-automount.sh"
-CROWSNEST_FIX_INSTALLER="~/OpenNept4une/img-config/crowsnest-lag-fix.sh"
-BASE_IMAGE_INSTALLER="~/OpenNept4une/img-config/base_image_configuration.sh"
-DE_ELEGOO_IMAGE_CLEANSER="~/OpenNept4une/img-config/de_elegoo_cleanser.sh"
+SCRIPT="$HOME/OpenNept4une/OpenNept4une.sh"
+DISPLAY_SERVICE_INSTALLER="$HOME/OpenNept4une/display/display-service-installer.sh"
+MCU_RPI_INSTALLER="$HOME/OpenNept4une/img-config/rpi-mcu-install.sh"
+USB_STORAGE_AUTOMOUNT="$HOME/OpenNept4une/img-config/usb-storage-automount.sh"
+ANDROID_RULE_INSTALLER="$HOME/OpenNept4une/img-config/adb-automount.sh"
+CROWSNEST_FIX_INSTALLER="$HOME/OpenNept4une/img-config/crowsnest-lag-fix.sh"
+BASE_IMAGE_INSTALLER="$HOME/OpenNept4une/img-config/base_image_configuration.sh"
+DE_ELEGOO_IMAGE_CLEANSER="$HOME/OpenNept4une/img-config/de_elegoo_cleanser.sh"
 FLAG_FILE="/boot/.OpenNept4une.txt"
 
 # Image Fixes 
