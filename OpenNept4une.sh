@@ -415,7 +415,7 @@ install_printer_cfg() {
             echo "Configuring for Neptune4..."
             stepper_motor_current
             pcb_version
-            PRINTER_CFG_SOURCE="${HOME}/printer-confs/n4/n4-${MOTOR_CURRENT}-printer.cfg"
+            PRINTER_CFG_SOURCE="${HOME}/OpenNept4une/printer-confs/n4/n4-${MOTOR_CURRENT}-printer.cfg"
             DTB_SOURCE="${HOME}/OpenNept4une/dtb/n4-n4pro-v${PCB_VERSION}/rk3328-roc-cc.dtb"
             FLAG_LINE="N4-${MOTOR_CURRENT}A-v${PCB_VERSION}"
             ;;
@@ -425,7 +425,7 @@ install_printer_cfg() {
             echo "Configuring for Neptune4 Pro..."
             stepper_motor_current
             pcb_version
-            PRINTER_CFG_SOURCE="${HOME}/printer-confs/n4pro/n4pro-${MOTOR_CURRENT}-printer.cfg"
+            PRINTER_CFG_SOURCE="${HOME}/OpenNept4une/printer-confs/n4pro/n4pro-${MOTOR_CURRENT}-printer.cfg"
             DTB_SOURCE="${HOME}/OpenNept4une/dtb/n4-n4pro-v${PCB_VERSION}/rk3328-roc-cc.dtb"
             FLAG_LINE="N4Pro-${MOTOR_CURRENT}A-v${PCB_VERSION}"
             ;;
@@ -433,7 +433,7 @@ install_printer_cfg() {
             clear_screen
             echo -e "\033[0;33m$OPENNEPT4UNE_ART\033[0m"
             echo "Configuring for Neptune4 Plus..."
-            PRINTER_CFG_SOURCE="${HOME}/printer-confs/n4plus/n4plus-printer.cfg"
+            PRINTER_CFG_SOURCE="${HOME}/OpenNept4une/printer-confs/n4plus/n4plus-printer.cfg"
             DTB_SOURCE="${HOME}/OpenNept4une/dtb/n4plus-n4max-v1.1-2.0/rk3328-roc-cc.dtb"
             FLAG_LINE="N4Plus"
             ;;
@@ -441,7 +441,7 @@ install_printer_cfg() {
             clear_screen
             echo -e "\033[0;33m$OPENNEPT4UNE_ART\033[0m"
             echo "Configuring for Neptune4 Max..."
-            PRINTER_CFG_SOURCE="${HOME}/configs/neptune4max/printer.cfg"
+            PRINTER_CFG_SOURCE="${HOME}/OpenNept4une/configs/neptune4max/printer.cfg"
             DTB_SOURCE="${HOME}/OpenNept4une/dtb/n4plus-n4max-v1.1-2.0/rk3328-roc-cc.dtb"
             FLAG_LINE="N4Max"
             ;;
