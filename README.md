@@ -125,7 +125,7 @@ Pass: makerbase\
 cd ~/OpenNept4une/ && git fetch --all && git reset --hard origin/main && git clean -fd
 ```
 ```bash
-chmod +x ~/OpenNept4une/OpenNept4une.sh && ~/OpenNept4une/OpenNept4une.sh
+~/OpenNept4une/OpenNept4une.sh
 ``` 
 
 - Perform Option (1): Install the latest OpenNept4une Printer.cfg, When prompted answer (yes) to updating other configurations (KAMP / moonraker etc).

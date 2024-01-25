@@ -74,7 +74,6 @@ update_repo() {
             git clean -fd
             # Pull the updates
             git pull origin main --force
-            chmod +x "$SCRIPT"
             exec "$SCRIPT"
             exit 0
         else
@@ -140,7 +139,6 @@ android_rules() {
     if [[ $install_android_rules == "y" ]]; then
         echo "Running ADB Rule Installer..."
         if [ -f "$ANDROID_RULE_INSTALLER" ]; then
-            chmod +x "$ANDROID_RULE_INSTALLER"
             "$ANDROID_RULE_INSTALLER"
         else
             echo "Error: Android rule installer script not found."
@@ -159,7 +157,6 @@ crowsnest_fix() {
     if [[ $install_crowsnest_fix == "y" ]]; then
         echo "Running crowsnest Fix Installer..."
         if [ -f "$CROWSNEST_FIX_INSTALLER" ]; then
-            chmod +x "$CROWSNEST_FIX_INSTALLER"
             "$CROWSNEST_FIX_INSTALLER"
         else
             echo "Error: crowsnest fix installer script not found."
@@ -178,7 +175,6 @@ base_image_config() {
     if [[ $install_base_image_config == "y" ]]; then
         echo "Running base/fresh image Installer..."
         if [ -f "$BASE_IMAGE_INSTALLER" ]; then
-            chmod +x "$BASE_IMAGE_INSTALLER"
             "$BASE_IMAGE_INSTALLER"
         else
             echo "Error: Base Image installer script not found."
@@ -198,7 +194,6 @@ de_elegoo_image_cleanser() {
     if [[ $install_de_elegoo_image_cleanser == "y" ]]; then
         echo "Running De-Elegoo Script..."
         if [ -f "$DE_ELEGOO_IMAGE_CLEANSER" ]; then
-            chmod +x "$DE_ELEGOO_IMAGE_CLEANSER"
             "$DE_ELEGOO_IMAGE_CLEANSER"
         else
             echo "Error: De-Elegoo script not found."
@@ -239,7 +234,6 @@ install_screen_service() {
         if [ -f "$DISPLAY_SERVICE_INSTALLER" ]; then
             sudo rm -rf /home/mks/OpenNept4une/display/venv
             rm -rf /home/mks/OpenNept4une/display/__pycache__
-            chmod +x "$DISPLAY_SERVICE_INSTALLER"
             "$DISPLAY_SERVICE_INSTALLER"
         else
             echo "Error: Display service installer script not found."
@@ -259,7 +253,6 @@ update_mcu_rpi_fw() {
     if [[ $install_mcu_rpi == "y" ]]; then
         echo "Running MCU / MCU RPi Installer..."
         if [ -f "$MCU_RPI_INSTALLER" ]; then
-            chmod +x "$MCU_RPI_INSTALLER"
             "$MCU_RPI_INSTALLER"
         else
             echo "Error: Virtual / MCU installer script not found."
@@ -278,7 +271,6 @@ usb_auto_mount() {
     if [[ $install_usb_auto_mount == "y" ]]; then
         echo "Running USB Auto Mount Installer..."
         if [ -f "$USB_STORAGE_AUTOMOUNT" ]; then
-            chmod +x "$USB_STORAGE_AUTOMOUNT"
             "$USB_STORAGE_AUTOMOUNT"
         else
             echo "Error: USB Auto Mount installer script not found."
