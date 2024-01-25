@@ -1,14 +1,14 @@
 #!/bin/bash
 
 # Path to the script and other resources
-SCRIPT="$HOME//OpenNept4une/OpenNept4une.sh"
-DISPLAY_SERVICE_INSTALLER="$HOME//OpenNept4une/display/display-service-installer.sh"
-MCU_RPI_INSTALLER="$HOME//OpenNept4une/img-config/rpi-mcu-install.sh"
-USB_STORAGE_AUTOMOUNT="$HOME//OpenNept4une/img-config/usb-storage-automount.sh"
-ANDROID_RULE_INSTALLER="$HOME//OpenNept4une/img-config/adb-automount.sh"
-CROWSNEST_FIX_INSTALLER="$HOME//OpenNept4une/img-config/crowsnest-lag-fix.sh"
-BASE_IMAGE_INSTALLER="$HOME//OpenNept4une/img-config/base_image_configuration.sh"
-DE_ELEGOO_IMAGE_CLEANSER="$HOME//OpenNept4une/img-config/de_elegoo_cleanser.sh"
+SCRIPT="$HOME/OpenNept4une/OpenNept4une.sh"
+DISPLAY_SERVICE_INSTALLER="$HOME/OpenNept4une/display/display-service-installer.sh"
+MCU_RPI_INSTALLER="$HOME/OpenNept4une/img-config/rpi-mcu-install.sh"
+USB_STORAGE_AUTOMOUNT="$HOME/OpenNept4une/img-config/usb-storage-automount.sh"
+ANDROID_RULE_INSTALLER="$HOME/OpenNept4une/img-config/adb-automount.sh"
+CROWSNEST_FIX_INSTALLER="$HOME/OpenNept4une/img-config/crowsnest-lag-fix.sh"
+BASE_IMAGE_INSTALLER="$HOME/OpenNept4une/img-config/base_image_configuration.sh"
+DE_ELEGOO_IMAGE_CLEANSER="$HOME/OpenNept4une/img-config/de_elegoo_cleanser.sh"
 FLAG_FILE="/boot/.OpenNept4une.txt"
 
 # Image Fixes 
@@ -52,7 +52,7 @@ update_repo() {
     echo "======================================"
     echo "Checking for updates..."
     echo "======================================"
-    repo_dir="$HOME/OpenNept4une"
+    repo_dir="$HOMEOpenNept4une"
     if [ -d "$repo_dir" ]; then
         cd "$repo_dir"
     else
@@ -281,7 +281,7 @@ usb_auto_mount() {
 
 # Function to copy files with error handling
 copy_file() {
-    local base_path="$HOME/OpenNept4une"
+    local base_path="$HOMEOpenNept4une"
     local src="$base_path/$1"
     local dest=$2
     local use_sudo=${3:-false}
@@ -373,9 +373,9 @@ install_printer_cfg() {
     echo "4) Neptune4 Max"
     read -p "Enter your choice (1-4): " MACHINE_TYPE
 
-    PRINTER_CFG_DEST="$HOME/printer_data/config"
+    PRINTER_CFG_DEST="$HOMEprinter_data/config"
     DTB_DEST="/boot/dtb/rockchip/rk3328-roc-cc.dtb"
-    DATABASE_DEST="$HOME/printer_data/database"
+    DATABASE_DEST="$HOMEprinter_data/database"
     PRINTER_CFG_FILE="$PRINTER_CFG_DEST/printer.cfg"
     BACKUP_PRINTER_CFG_FILE="$PRINTER_CFG_DEST/backup-printer.cfg.bak"
 
