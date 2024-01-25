@@ -1,14 +1,14 @@
 #!/bin/bash
 
 # Path to the script and other resources
-SCRIPT="$HOME/OpenNept4une/OpenNept4une.sh"
-DISPLAY_SERVICE_INSTALLER="$HOME/OpenNept4une/display/display-service-installer.sh"
-MCU_RPI_INSTALLER="$HOME/OpenNept4une/img-config/rpi-mcu-install.sh"
-USB_STORAGE_AUTOMOUNT="$HOME/OpenNept4une/img-config/usb-storage-automount.sh"
-ANDROID_RULE_INSTALLER="$HOME/OpenNept4une/img-config/adb-automount.sh"
-CROWSNEST_FIX_INSTALLER="$HOME/OpenNept4une/img-config/crowsnest-lag-fix.sh"
-BASE_IMAGE_INSTALLER="$HOME/OpenNept4une/img-config/base_image_configuration.sh"
-DE_ELEGOO_IMAGE_CLEANSER="$HOME/OpenNept4une/img-config/de_elegoo_cleanser.sh"
+SCRIPT="${HOME}OpenNept4une/OpenNept4une.sh"
+DISPLAY_SERVICE_INSTALLER="${HOME}OpenNept4une/display/display-service-installer.sh"
+MCU_RPI_INSTALLER="${HOME}OpenNept4une/img-config/rpi-mcu-install.sh"
+USB_STORAGE_AUTOMOUNT="${HOME}OpenNept4une/img-config/usb-storage-automount.sh"
+ANDROID_RULE_INSTALLER="${HOME}OpenNept4une/img-config/adb-automount.sh"
+CROWSNEST_FIX_INSTALLER="${HOME}OpenNept4une/img-config/crowsnest-lag-fix.sh"
+BASE_IMAGE_INSTALLER="${HOME}OpenNept4une/img-config/base_image_configuration.sh"
+DE_ELEGOO_IMAGE_CLEANSER="${HOME}OpenNept4une/img-config/de_elegoo_cleanser.sh"
 FLAG_FILE="/boot/.OpenNept4une.txt"
 
 # Image Fixes 
@@ -372,9 +372,9 @@ install_printer_cfg() {
     echo "4) Neptune4 Max"
     read -p "Enter your choice (1-4): " MACHINE_TYPE
 
-    PRINTER_CFG_DEST="$HOME/printer_data/config"
+    PRINTER_CFG_DEST="${HOME}printer_data/config"
     DTB_DEST="/boot/dtb/rockchip/rk3328-roc-cc.dtb"
-    DATABASE_DEST="$HOME/printer_data/database"
+    DATABASE_DEST="${HOME}printer_data/database"
     PRINTER_CFG_FILE="$PRINTER_CFG_DEST/printer.cfg"
     BACKUP_PRINTER_CFG_FILE="$PRINTER_CFG_DEST/backup-printer.cfg.bak"
 
@@ -415,8 +415,8 @@ install_printer_cfg() {
             echo "Configuring for Neptune4..."
             stepper_motor_current
             pcb_version
-            PRINTER_CFG_SOURCE="$HOME/printer-confs/n4/n4-${MOTOR_CURRENT}-printer.cfg"
-            DTB_SOURCE="$HOME/OpenNept4une/dtb/n4-n4pro-v${PCB_VERSION}/rk3328-roc-cc.dtb"
+            PRINTER_CFG_SOURCE="${HOME}printer-confs/n4/n4-${MOTOR_CURRENT}-printer.cfg"
+            DTB_SOURCE="${HOME}OpenNept4une/dtb/n4-n4pro-v${PCB_VERSION}/rk3328-roc-cc.dtb"
             FLAG_LINE="N4-${MOTOR_CURRENT}A-v${PCB_VERSION}"
             ;;
         2)
@@ -425,24 +425,24 @@ install_printer_cfg() {
             echo "Configuring for Neptune4 Pro..."
             stepper_motor_current
             pcb_version
-            PRINTER_CFG_SOURCE="$HOME/printer-confs/n4pro/n4pro-${MOTOR_CURRENT}-printer.cfg"
-            DTB_SOURCE="$HOME/OpenNept4une/dtb/n4-n4pro-v${PCB_VERSION}/rk3328-roc-cc.dtb"
+            PRINTER_CFG_SOURCE="${HOME}printer-confs/n4pro/n4pro-${MOTOR_CURRENT}-printer.cfg"
+            DTB_SOURCE="${HOME}OpenNept4une/dtb/n4-n4pro-v${PCB_VERSION}/rk3328-roc-cc.dtb"
             FLAG_LINE="N4Pro-${MOTOR_CURRENT}A-v${PCB_VERSION}"
             ;;
         3)
             clear_screen
             echo -e "\033[0;33m$OPENNEPT4UNE_ART\033[0m"
             echo "Configuring for Neptune4 Plus..."
-            PRINTER_CFG_SOURCE="$HOME/printer-confs/n4plus/n4plus-printer.cfg"
-            DTB_SOURCE="$HOME/OpenNept4une/dtb/n4plus-n4max-v1.1-2.0/rk3328-roc-cc.dtb"
+            PRINTER_CFG_SOURCE="${HOME}printer-confs/n4plus/n4plus-printer.cfg"
+            DTB_SOURCE="${HOME}OpenNept4une/dtb/n4plus-n4max-v1.1-2.0/rk3328-roc-cc.dtb"
             FLAG_LINE="N4Plus"
             ;;
         4)
             clear_screen
             echo -e "\033[0;33m$OPENNEPT4UNE_ART\033[0m"
             echo "Configuring for Neptune4 Max..."
-            PRINTER_CFG_SOURCE="$HOME/configs/neptune4max/printer.cfg"
-            DTB_SOURCE="$HOME/OpenNept4une/dtb/n4plus-n4max-v1.1-2.0/rk3328-roc-cc.dtb"
+            PRINTER_CFG_SOURCE="${HOME}configs/neptune4max/printer.cfg"
+            DTB_SOURCE="${HOME}OpenNept4une/dtb/n4plus-n4max-v1.1-2.0/rk3328-roc-cc.dtb"
             FLAG_LINE="N4Max"
             ;;
         *)
