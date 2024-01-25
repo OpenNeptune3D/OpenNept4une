@@ -39,21 +39,19 @@ sudo find ~/ -mindepth 1 ! -path '~/OpenNept4une*' -exec rm -rf {} +
 sudo rm -rf /root/*
 
 # Create the config directory structure if not exists
-[ ! -d "~/printer_data/config/" ] && mkdir -p ~/printer_data/config/
+[ ! -d "$HOME/printer_data/config/" ] && mkdir -p ~/printer_data/config/
 
 # Clone the KAMP git repository if not exists
-if [ ! -d "~/Klipper-Adaptive-Meshing-Purging" ]; then
-    cd /home/mks
-    git clone https://github.com/kyleisah/Klipper-Adaptive-Meshing-Purging.git
+if [ ! -d "$HOME/Klipper-Adaptive-Meshing-Purging" ]; then
+    cd ~/ && git clone https://github.com/kyleisah/Klipper-Adaptive-Meshing-Purging.git
 fi
 
 # Create a symbolic link if not exists
-[ ! -L "~/printer_data/config/KAMP" ] && ln -s ~/Klipper-Adaptive-Meshing-Purging/Configuration ~/printer_data/config/KAMP
+[ ! -L "$HOME/printer_data/config/KAMP" ] && ln -s ~/Klipper-Adaptive-Meshing-Purging/Configuration ~/printer_data/config/KAMP
 
 # Clone Kiauh git repository if not exists
-if [ ! -d "~/kiauh" ]; then
-    cd /home/mks
-    git clone https://github.com/dw-0/kiauh.git
+if [ ! -d "$HOME/kiauh" ]; then
+    cd ~/ && git clone https://github.com/dw-0/kiauh.git
 fi
 
 # Hardcoded list of GitHub raw links paired with filenames
@@ -66,7 +64,7 @@ declare -A LINKS_AND_NAMES=(
 )
 
 # Destination directory
-DEST_DIR="~/printer_data/config"
+DEST_DIR="$HOME/printer_data/config"
 
 # Loop through each link and download the file only if it doesn't exist
 for link in "${!LINKS_AND_NAMES[@]}"; do
@@ -82,7 +80,7 @@ done
 # Fluidd DB transfer
 SHARE_LINK="https://raw.githubusercontent.com/halfmanbear/OpenNept4une/main/img-config/printer-data/data.mdb"
 
-DESTINATION_DIR="~/printer_data/database"
+DESTINATION_DIR="$HOME/printer_data/database"
 DESTINATION_FILE="${DESTINATION_DIR}/data.mdb"
 
 # Check and create the output directory if it doesn't exist
@@ -113,7 +111,7 @@ sudo rm -rf /usr/share/man/*
 git clone --branch legacy/v3 https://github.com/mainsail-crew/crowsnest.git
 
 # Define the file path
-FILE="~/printer_data/config/moonraker.conf"
+FILE="$HOME/printer_data/config/moonraker.conf"
 
 # Check if the file exists
 if [[ ! -f "$FILE" ]]; then
@@ -171,4 +169,4 @@ echo "Countdown finished."
 sync 
 
 # Run kiauh.sh as the mks user
-sudo -u mks ~/kiauh/kiauh.sh
+~/kiauh/kiauh.sh
