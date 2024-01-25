@@ -2,7 +2,7 @@
 
 ## De-Elegoo-izing the Neptune 4 Series 3D Printers
 
-**NOTE: The touch-screen will not be functional after this! Please download mobileraker phone app instead** 
+**NOTE: The Touch-Screen Display Service is in Beta (Most functions work and recieves frequent code updates). An alternative until the service is completed is the mobileraker phone app ** 
 
 **LED’s, ADXL & WiFi Working on all Variants**
 
