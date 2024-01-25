@@ -14,6 +14,7 @@ from tjc import TJCClient, EventType
 from urllib.request import pathname2url
 from watchdog.observers import Observer
 from watchdog.events import PatternMatchingEventHandler
+from math import ceil
 
 from response_actions import response_actions, input_actions
 from lib_col_pic import parse_thumbnail
@@ -142,6 +143,12 @@ class DisplayController:
         self.temperature_preset_bed = 0
 
         self.ips = "--"
+
+        self.leveling_mode = None
+        self.screw_probe_count = 0
+        self.screw_levels = {}
+        self.z_probe_step = "0.1"
+        self.z_probe_distance = "0.0"
 
         self.current_filename = None
 
@@ -296,10 +303,22 @@ class DisplayController:
             self.update_printing_temperature_increment_ui()
         elif current_page == PAGE_PRINTING_ADJUST:
             self.update_printing_zoffset_increment_ui()
-            self._write("p[" + PAGE_PRINTING_ADJUST + "].b[20].txt=\"" + self.ips + "\"")
+            self._write("b[20].txt=\"" + self.ips + "\"")
         elif current_page == PAGE_PRINTING_SPEED:
             self.update_printing_speed_settings_ui()
             self.update_printing_speed_increment_ui()
+        elif current_page == PAGE_LEVELING:
+            self._write("b[12].txt=\"Leveling\"")
+            self._write("b[18].txt=\"Screws Tilt Adjust\"")
+            self._write("b[19].txt=\"Z-Probe Offset\"")
+            self.leveling_mode = None
+        elif current_page == PAGE_LEVELING_SCREW_ADJUST:
+            self.draw_initial_screw_leveling()
+            self._loop.create_task(self.handle_screw_leveling())
+        elif current_page == PAGE_LEVELING_Z_OFFSET_ADJUST:
+            self.draw_initial_zprobe_leveling()
+            self._loop.create_task(self.handle_zprobe_leveling())
+
 
     def _navigate_to_page(self, page):
         if len(self.history) == 0 or self.history[-1] != page:
@@ -486,6 +505,24 @@ class DisplayController:
         elif action == "save_temp_preset":
             logger.info("Saving temp preset")
             self.save_temp_preset()
+        elif action == "retry_screw_leveling":
+            self.draw_initial_screw_leveling()
+            self._loop.create_task(self.handle_screw_leveling())
+        elif action.startswith("zprobe_step_"):
+            parts = action.split('_')
+            self.z_probe_step = parts[2]
+            self.update_zprobe_leveling_ui()
+        elif action.startswith("zprobe_"):
+            parts = action.split('_')
+            direction = parts[1]
+            self.send_gcode(f"TESTZ Z={direction}{self.z_probe_step}")
+        elif action == "abort_zprobe":
+            self.send_gcode("ABORT")
+            self._go_back()
+        elif action == "save_zprobe":
+            self.send_gcode("ACCEPT")
+            self.send_gcode("SAVE_CONFIG")
+            self._go_back()
 
     def _write(self, data, forced = False):
         if self.is_blocking_serial and not forced:
@@ -817,6 +854,8 @@ class DisplayController:
                     fut.set_result(item)
             elif item["method"] == "notify_status_update":
                 self.handle_status_update(item["params"][0])
+            elif item["method"] == "notify_gcode_response":
+                self.handle_gcode_response(item["params"][0])
         logger.info("Unix Socket Disconnection from _process_stream()")
         await self.close()
 
@@ -976,6 +1015,91 @@ class DisplayController:
         self.writer.close()
         await self.writer.wait_closed()
 
+    def draw_initial_screw_leveling(self):
+        self._write("b[1].txt=\"Screws Tilt Adjust\"")
+        self._write("b[2].txt=\"Please Wait...\"")
+        self._write("b[3].txt=\"Heating...\"")
+        self._write("vis b[4],0")
+        self._write("vis b[5],0")
+        self._write("vis b[6],0")
+        self._write("vis b[7],0")
+        self._write("vis b[8],0")
+        self._write("fill 0,110,320,290,10665")
+
+    def draw_completed_screw_leveling(self):
+        self._write("b[1].txt=\"Screws Tilt Adjust\"")
+        self._write("b[2].txt=\"Adjust the screws as indicated\"")
+        self._write("b[3].txt=\"01:20 means 1  turn and 20 mins\\rCW=clockwise\\rCCW=counter-clockwise\"")
+        self._write("vis b[4],0")
+        self._write("vis b[5],0")
+        self._write("vis b[6],0")
+        self._write("vis b[7],0")
+        self._write("vis b[8],1")
+        self._write("fill 0,110,320,290,10665")
+        green = 26347
+        red = 10665
+        self._write("xstr 12,320,90,20,1,65535,10665,1,1,1,\"front left\"")
+        self.draw_screw_level_info_at("12,340,90,20", self.screw_levels["front left"], green, red)
+
+        self._write("xstr 170,320,90,20,1,65535,10665,1,1,1,\"front right\"")
+        self.draw_screw_level_info_at("170,340,90,20", self.screw_levels["front right"], green, red)
+
+        self._write("xstr 170,120,90,20,1,65535,10665,1,1,1,\"rear right\"")
+        self.draw_screw_level_info_at("170,140,90,20", self.screw_levels["rear right"], green, red)
+
+        self._write("xstr 12,120,90,20,1,65535,10665,1,1,1,\"rear left\"")
+        self.draw_screw_level_info_at("12,140,90,20", self.screw_levels["rear left"], green, red)
+
+        self._write("xstr 96,215,90,50,1,65535,15319,1,1,1,\"Retry\"")
+
+    def draw_screw_level_info_at(self, position, level, green, red):
+        if level == "base":
+            self._write(f"xstr {position},0,65535,10665,1,1,1,\"base\"")
+        else:
+            color = green if int(level[-2:]) < 5 else red
+            self._write(f"xstr {position},0,{color},10665,1,1,1,\"{level}\"")
+
+    async def handle_screw_leveling(self):
+        self.leveling_mode = "screw"
+        self.screw_levels = {}
+        self.screw_probe_count = 0
+        response = await self._send_moonraker_request("printer.gcode.script", {"script": "BED_LEVEL_SCREWS_TUNE"})
+        self.draw_completed_screw_leveling()
+
+    def draw_initial_zprobe_leveling(self):
+        self._write("p[137].b[19].txt=\"Z-Probe\"")
+        self._write("fill 0,250,320,320,10665")
+        self._write("fill 0,50,320,80,10665")
+        self.update_zprobe_leveling_ui()
+
+    def update_zprobe_leveling_ui(self):
+        self._write("p[137].b[19].txt=\"Z-Probe\"")
+        self._write(f'p[137].b[11].pic={7 + ["0.01", "0.1", "1"].index(self.z_probe_step)}')
+        self._write(f'p[137].b[20].txt=\"{self.z_probe_distance}\"')
+
+    async def handle_zprobe_leveling(self):
+        if self.leveling_mode == "zprobe":
+            return
+        self.leveling_mode = "zprobe"
+        self.z_probe_step = "0.1"
+        self.z_probe_distance = "0.0"
+        self._navigate_to_page(PAGE_OVERLAY_LOADING)
+        response = await self._send_moonraker_request("printer.gcode.script", {"script": "CALIBRATE_PROBE_Z_OFFSET"})
+        self._go_back()
+
+    def handle_gcode_response(self, response):
+        if self.leveling_mode == "screw":
+            if "probe at" in response:
+                self.screw_probe_count += 1
+                self._write(f"b[3].txt=\"Probing Screws ({ceil(self.screw_probe_count/2)}/4)...\"")
+            if "screw (base) :" in response:
+                self.screw_levels[response.split("screw")[0][3:].strip()] = "base"
+            if "screw :" in response:
+                self.screw_levels[response.split("screw")[0][3:].strip()] = response.split("adjust")[1].strip()
+        if self.leveling_mode == "zprobe":
+            if "Z position:" in response:
+                self.z_probe_distance = response.split("->")[1].split("<-")[0].strip()
+                self.update_zprobe_leveling_ui()
 
 loop = asyncio.get_event_loop()
 config_observer = Observer()
