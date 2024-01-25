@@ -281,8 +281,7 @@ usb_auto_mount() {
 
 # Function to copy files with error handling
 copy_file() {
-    local base_path="$HOMEOpenNept4une"
-    local src="$base_path/$1"
+    local src="$1"
     local dest=$2
     local use_sudo=${3:-false}
 
