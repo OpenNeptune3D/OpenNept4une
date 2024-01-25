@@ -5,10 +5,10 @@
 
 # Define the service file path, script path, and log file path
 SERVICE_FILE="/etc/systemd/system/display.service"
-SCRIPT_PATH="~/OpenNept4une/display/display.py"
-VENV_PATH="~/OpenNept4une/display/venv"
+SCRIPT_PATH="$HOME/OpenNept4une/display/display.py"
+VENV_PATH="$HOME/OpenNept4une/display/venv"
 LOG_FILE="/var/log/display.log"
-MOONRAKER_ASVC="~/printer_data/moonraker.asvc"
+MOONRAKER_ASVC="$HOME/printer_data/moonraker.asvc"
 
 # Check if the script exists
 if [ ! -f "$SCRIPT_PATH" ]; then
@@ -27,8 +27,8 @@ Documentation=man:display(8)
 
 [Service]
 ExecStartPre=/bin/sleep 10
-ExecStart=~/OpenNept4une/display/venv/bin/python ~/OpenNept4une/display/display.py
-WorkingDirectory=~/OpenNept4une/display
+ExecStart=/home/mks/OpenNept4une/display/venv/bin/python /home/mks/OpenNept4une/display/display.py
+WorkingDirectory=/home/mks/OpenNept4une/display
 Restart=on-failure
 CPUQuota=50%
 RestartSec=10
