@@ -65,10 +65,9 @@ if [ -f "$KLIPPER_BIN" ]; then
     fi
 fi
 
-# Navigate to the Klipper directory and run make menuconfig
-echo "Running make menuconfig in the Klipper directory..."
-cd ~/klipper/
-make menuconfig
+# Setup config for STM32 MCU
+echo "Copying config for STM32 MCU..."
+cp ~/OpenNept4une/mcu-firmware/mcu.config ~/klipper/.config
 
 # Enable bootloader mode again
 echo "Enabling bootloader mode..."
@@ -82,6 +81,7 @@ sudo gpioset gpiochip1 14=0
 
 # Compile the firmware after exiting menuconfig
 echo "Compiling the firmware..."
+cd ~/klipper/
 make clean
 make
 # Flash the new firmware
