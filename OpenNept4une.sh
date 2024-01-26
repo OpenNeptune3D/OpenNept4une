@@ -52,7 +52,7 @@ update_repo() {
     echo "======================================"
     echo "Checking for updates..."
     echo "======================================"
-    repo_dir="$HOMEOpenNept4une"
+    repo_dir="$HOME/OpenNept4une"
     if [ -d "$repo_dir" ]; then
         cd "$repo_dir"
     else
