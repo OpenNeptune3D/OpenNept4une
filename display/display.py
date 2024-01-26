@@ -67,10 +67,17 @@ TRANSITION_PAGES = [
     PAGE_OVERLAY_LOADING
 ]
 
-MODEL_REGULAR = 'N4'
-MODEL_PRO = 'N4Pro'
-MODEL_PLUS = 'N4Plus'
-MODEL_MAX = 'N4Max'
+MODEL_N4_REGULAR = 'N4'
+MODEL_N4_PRO = 'N4Pro'
+MODEL_N4_PLUS = 'N4Plus'
+MODEL_N4_MAX = 'N4Max'
+
+SUPPORTED_PRINTERS = [
+    MODEL_N4_REGULAR,
+    MODEL_N4_PRO,
+    MODEL_N4_PLUS,
+    MODEL_N4_MAX
+]
 
 BACKGROUND_GRAY = 10665
 
@@ -105,15 +112,7 @@ class DisplayController:
         self.history = []
         self.current_state = "booting"
 
-        self.printer_model = self.get_printer_model_from_file()
-        if self.printer_model == MODEL_REGULAR:
-            self.mapper = Neptune4Mapper()
-        elif self.printer_model == MODEL_PRO:
-            self.mapper = Neptune4ProMapper()
-        elif self.printer_model == MODEL_PLUS:
-            self.mapper = Neptune4PlusMapper()
-        elif self.printer_model == MODEL_MAX:
-            self.mapper = Neptune4MaxMapper()
+        self.setup_printer()
 
         self.dir_contents = []
         self.current_dir = ""
@@ -217,11 +216,26 @@ class DisplayController:
         except Exception as e:
             logger.error(f"Error while monitoring Klipper log: {e}")
 
+    def setup_printer(self):
+        self.printer_model = self.get_printer_model_from_file()
+        if self.printer_model == MODEL_N4_REGULAR:
+            self.mapper = Neptune4Mapper()
+        elif self.printer_model == MODEL_N4_PRO:
+            self.mapper = Neptune4ProMapper()
+        elif self.printer_model == MODEL_N4_PLUS:
+            self.mapper = Neptune4PlusMapper()
+        elif self.printer_model == MODEL_N4_MAX:
+            self.mapper = Neptune4MaxMapper()
+        else:
+            logger.error("Unknown printer model, falling back to Neptune 4")
+            self.printer_model = MODEL_N4_REGULAR
+            self.mapper = Neptune4Mapper()
+
     def get_printer_model_from_file(self):
         try:
             with open('/boot/.OpenNept4une.txt', 'r') as file:
                 for line in file:
-                    if line.startswith(tuple([MODEL_REGULAR, MODEL_PRO, MODEL_PLUS, MODEL_MAX])):
+                    if line.startswith(tuple(SUPPORTED_PRINTERS)):
                         model_part = line.split('-')[0].strip()
                         logger.info(f"Extracted Model: {model_part}")
                         return model_part
@@ -233,23 +247,23 @@ class DisplayController:
 
     def get_device_name(self):
         model_map = {
-            MODEL_REGULAR: "Neptune 4",
-            MODEL_PRO: "Neptune 4 Pro",
-            MODEL_PLUS: "Neptune 4 Plus",
-            MODEL_MAX: "Neptune 4 Max",
+            MODEL_N4_REGULAR: "Neptune 4",
+            MODEL_N4_PRO: "Neptune 4 Pro",
+            MODEL_N4_PLUS: "Neptune 4 Plus",
+            MODEL_N4_MAX: "Neptune 4 Max",
         }
         return model_map[self.printer_model]
 
     def initialize_display(self):
         model_image_key = None
-        if self.printer_model == MODEL_REGULAR:
+        if self.printer_model == MODEL_N4_REGULAR:
             model_image_key = "213"
-        elif self.printer_model == MODEL_PRO:
+        elif self.printer_model == MODEL_N4_PRO:
             model_image_key = "214"
             self._write(f'p[{self._page_id(PAGE_MAIN)}].disp_q5.val=1') # N4Pro Outer Bed Symbol (Bottom Rig>
-        elif self.printer_model == MODEL_PLUS:
+        elif self.printer_model == MODEL_N4_PLUS:
             model_image_key = "313"
-        elif self.printer_model == MODEL_MAX:
+        elif self.printer_model == MODEL_N4_MAX:
             model_image_key = "314"
 
         if self.display_name_override is None:
@@ -284,7 +298,7 @@ class DisplayController:
             if self.display_name_line_color:
                 self._write('fill 13,47,24,4,' + str(self.display_name_line_color))
 
-            if self.printer_model == MODEL_PRO:
+            if self.printer_model == MODEL_N4_PRO:
                 self._write(f'vis out_bedtemp,1')
         elif current_page == PAGE_FILES:
             self.show_files_page()
@@ -467,7 +481,7 @@ class DisplayController:
                 f"SET_HEATER_TEMPERATURE HEATER=extruder TARGET={extruder}",
                 f"SET_HEATER_TEMPERATURE HEATER=heater_bed TARGET={heater_bed}"
             ]
-            if self.printer_model == MODEL_PRO:
+            if self.printer_model == MODEL_N4_PRO:
                 gcodes.append(f"SET_HEATER_TEMPERATURE HEATER=heater_bed_outer TARGET={heater_bed}")
             self._loop.create_task(self.send_gcodes_async(gcodes))
         elif action.startswith("set_extrude_amount"):
@@ -547,7 +561,7 @@ class DisplayController:
         self._go_back()
 
     def update_printing_heater_settings_ui(self):
-        if self.printer_model == MODEL_PRO:
+        if self.printer_model == MODEL_N4_PRO:
             self._write(f'p[{self._page_id(PAGE_PRINTING_FILAMENT)}].b0.picc=' + str(90 if self.printing_selected_heater == "extruder" else 89))
             self._write(f'p[{self._page_id(PAGE_PRINTING_FILAMENT)}].b1.picc=' + str(90 if self.printing_selected_heater == "heater_bed" else 89))
             self._write(f'p[{self._page_id(PAGE_PRINTING_FILAMENT)}].b2.picc=' + str(90 if self.printing_selected_heater == "heater_bed_outer" else 89))
