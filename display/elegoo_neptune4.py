@@ -126,7 +126,7 @@ class Neptune4MaxMapper(Neptune4Mapper):
 
 
 class Neptune4DisplayCommunicator(DisplayCommunicator):
-    supported_firmware_versions = ["1.2.13", "1.2.12"]
+    supported_firmware_versions = ["1.2.11", "1.2.12"]
     def __init__(self, logger: Logger, model: str, event_handler, port: str = "/dev/ttyS1", baudrate: int = 115200, timeout: int = 5) -> None:
         super().__init__(logger, port, event_handler, baudrate, timeout)
         self.model = model

@@ -1120,7 +1120,7 @@ try:
         controller.handle_config_change()
 
     def handle_sock_changes(notifier):
-        if notifier.src_path[-11:] == "klippy.sock" and notifier.event_type == EventType.CREATED:
+        if notifier.event_type == "created":
             controller.klipper_restart_event.set()
 
     config_patterns = ["display_connector.cfg"]
