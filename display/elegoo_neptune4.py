@@ -15,7 +15,9 @@ class Neptune4Mapper(Mapper):
         PAGE_SETTINGS_ABOUT: "35",
         PAGE_SETTINGS_ADVANCED: "42",
 
-        PAGE_LEVELING: "14",
+        PAGE_LEVELING: "3",
+        PAGE_LEVELING_SCREW_ADJUST: "94",
+        PAGE_LEVELING_Z_OFFSET_ADJUST: "137",
 
         PAGE_CONFIRM_PRINT: "18",
         PAGE_PRINTING: "19",
