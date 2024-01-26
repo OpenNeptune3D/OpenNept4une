@@ -52,7 +52,7 @@ sudo systemctl enable OpenNept4une.service
 sudo systemctl start OpenNept4une.service
 
 echo "Allowing Moonraker to control display service"
-grep -qxF 'display' $MOONRAKER_ASVC || echo 'OpenNept4une' >> $MOONRAKER_ASVC
+grep -qxF 'OpenNept4une' $MOONRAKER_ASVC || echo 'OpenNept4une' >> $MOONRAKER_ASVC
 
 # Define the lines to be inserted or updated
 new_lines="[update_manager OpenNept4une]
@@ -70,7 +70,7 @@ if grep -qF "[update_manager OpenNept4une]" "$config_file"; then
     sed -i "/[update_manager OpenNept4une]/,/^$/c$new_lines" "$config_file"
 else
     # Lines do not exist, append them to the end of the file
-    echo "$new_lines" >> "$config_file"
+    echo "\n$new_lines" >> "$config_file"
 fi
 
 echo "Service setup complete."
