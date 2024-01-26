@@ -37,38 +37,6 @@ else
     echo "Skipping backup."
 fi
 
-# Check if klipper.bin exists in the current directory
-KLIPPER_BIN=./klipper.bin
-if [ -f "$KLIPPER_BIN" ]; then
-    echo "klipper.bin file exists in the current directory. Do you want to flash it? (y/n)"
-    read -r flash_existing_bin
-    if [[ $flash_existing_bin == "y" ]]; then
-        # Flash the existing firmware
-	# Enable bootloader mode
-	echo "Enabling bootloader mode..."
-	sudo gpioset gpiochip1 15=0
-	sleep 0.5
-	sudo gpioset gpiochip1 14=1
-	sleep 0.5
-	sudo gpioset gpiochip1 15=1
-	sleep 0.5
-	sudo gpioset gpiochip1 14=0        
-
-	echo "Flashing existing firmware..."
-        stm32flash -w "$KLIPPER_BIN" -v  /dev/ttyS0
-        echo "Flashing complete"
-	gpioset gpiochip1 15=0; sleep 0.5; gpioset gpiochip1 15=1; sleep 1  
-        # Starting the Klipper service
-        echo "Starting the Klipper service..."
-        sudo service klipper start
-        exit 0
-    fi
-fi
-
-# Setup config for STM32 MCU
-echo "Copying config for STM32 MCU..."
-cp ~/OpenNept4une/mcu-firmware/mcu.config ~/klipper/.config
-
 # Enable bootloader mode again
 echo "Enabling bootloader mode..."
 sudo gpioset gpiochip1 15=0
@@ -79,13 +47,8 @@ sudo gpioset gpiochip1 15=1
 sleep 0.5
 sudo gpioset gpiochip1 14=0
 
-# Compile the firmware after exiting menuconfig
-echo "Compiling the firmware..."
-cd ~/klipper/
-make clean
-make
 # Flash the new firmware
-echo "Flashing new firmware to STM32F4..."
+echo "Flashing new firmware to STM32..."
 stm32flash -w ~/klipper/out/klipper.bin -v -S 0x08008000 -g 0x08000000 /dev/ttyS0
 
 echo "Flashing complete"

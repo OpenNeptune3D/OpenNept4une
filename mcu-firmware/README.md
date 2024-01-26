@@ -149,4 +149,7 @@
    - Type `sudo poweroff` (then power cycle after ~20s).
 
 
+## Notes
 
+The default settings for the MCU image through Klipper's `make menuconfig` are as follows:
+![Alt text](/pictures/flash.png)
