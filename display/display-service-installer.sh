@@ -4,7 +4,7 @@
 ~/OpenNept4une/display/display-env-install.sh
 
 # Define the service file path, script path, and log file path
-SERVICE_FILE="/etc/systemd/system/display.service"
+SERVICE_FILE="/etc/systemd/system/OpenNept4une.service"
 SCRIPT_PATH="$HOME/OpenNept4une/display/display.py"
 VENV_PATH="$HOME/OpenNept4une/display/venv"
 LOG_FILE="/var/log/display.log"
@@ -17,6 +17,8 @@ if [ ! -f "$SCRIPT_PATH" ]; then
 fi
 
 # Create the systemd service file
+sudo rm /etc/systemd/system/display.service
+
 echo "Creating systemd service file at $SERVICE_FILE..."
 cat <<EOF | sudo tee $SERVICE_FILE > /dev/null
 [Unit]
@@ -46,10 +48,10 @@ sudo systemctl daemon-reload
 
 # Enable and start the service
 echo "Enabling and starting the service..."
-sudo systemctl enable display.service
-sudo systemctl start display.service
+sudo systemctl enable OpenNept4une.service
+sudo systemctl start OpenNept4une.service
 
 echo "Allowing Moonraker to control display service"
-grep -qxF 'display' $MOONRAKER_ASVC || echo 'display' >> $MOONRAKER_ASVC
+grep -qxF 'display' $MOONRAKER_ASVC || echo 'OpenNept4une' >> $MOONRAKER_ASVC
 
 echo "Service setup complete."
