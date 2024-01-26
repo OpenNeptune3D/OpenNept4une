@@ -17,7 +17,7 @@ if [ ! -f "$SCRIPT_PATH" ]; then
 fi
 
 # Check if the old service exists and is running
-if service --status-all | grep -Fq 'display'; then
+if systemctl is-active --quiet display; then
     # Stop the service silently
     sudo service display stop >/dev/null 2>&1
     # Disable the service silently
