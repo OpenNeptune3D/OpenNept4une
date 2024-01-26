@@ -78,7 +78,7 @@ if grep -qF "[update_manager OpenNept4une]" "$config_file"; then
     sed -i "/[update_manager OpenNept4une]/,/^$/c$new_lines" "$config_file"
 else
     # Lines do not exist, append them to the end of the file
-    echo "\n$new_lines" >> "$config_file"
+    echo -e "\n$new_lines" >> "$config_file"
 fi
 
 echo "Service setup complete."
