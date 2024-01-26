@@ -16,6 +16,10 @@ response_actions = {
         10: "open_file_3",
         11: "open_file_4",
     },
+    3: {
+        7: "page " + PAGE_LEVELING_SCREW_ADJUST,
+        8: "page " + PAGE_LEVELING_Z_OFFSET_ADJUST,
+    },
     6: {
         1: "printer.send_gcode('SET_HEATER_TEMPERATURE HEATER=extruder')",
         2: "printer.send_gcode('SET_HEATER_TEMPERATURE HEATER=heater_bed')",
@@ -130,6 +134,9 @@ response_actions = {
         1: "toggle_part_light",
         2: "toggle_frame_light",
     },
+    94: {
+        5: 'retry_screw_leveling'
+    },
     95: {
         1: "printer.send_gcode('SET_HEATER_TEMPERATURE HEATER=extruder')",
         2: "printer.send_gcode('SET_HEATER_TEMPERATURE HEATER=heater_bed')",
@@ -163,6 +170,15 @@ response_actions = {
         7: 'speed_adjust_-',
         8: 'speed_adjust_+',
         9: 'speed_reset',
+    },
+    137: {
+        0: 'abort_zprobe',
+        1: 'zprobe_step_0.01',
+        2: 'zprobe_step_0.1',
+        3: 'zprobe_step_1',
+        5: 'zprobe_+',
+        6: 'zprobe_-',
+        7: 'save_zprobe',
     },
 }
 
