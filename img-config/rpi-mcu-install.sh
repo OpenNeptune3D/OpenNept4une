@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Path to other resources
+MCU_SWFLASH_ALT="${HOME}/OpenNept4une/mcu-firmware/alt-method/mcu-swflash-run.sh"
+
 # Prompt the user to select the MCU for updating
 echo ""
 echo "Choose the MCU(s) to update:"
@@ -18,43 +21,56 @@ cd ~/klipper/ && git pull origin master
 
 # Update procedure for STM32 MCU
 if [[ "$mcu_choice" == "STM32" ]] || [[ "$mcu_choice" == "Both" ]]; then
+    echo "Proceeding with STM32 MCU Update..."
     make clean
     cp ~/OpenNept4une/mcu-firmware/mcu.config ~/klipper/.config
     make
-    # Create the 'Firmware' directory if it doesn't exist
-    mkdir -p ~/printer_data/config/Firmware
 
-    # Remove old files in previous parent directory 
-    rm ~/printer_data/config/X_4.bin
-    rm ~/printer_data/config/elegoo_k1.bin
-    
-    cp ~/klipper/out/klipper.bin ~/printer_data/config/Firmware/X_4.bin
-    cp ~/klipper/out/klipper.bin ~/printer_data/config/Firmware/elegoo_k1.bin
-    
-    # Display instructions for downloading the firmware
-    ip_address=$(hostname -I | awk '{print $1}')
-    echo ""
-    echo -e "\nTo download firmware files:"
-    echo "1. Visit: http://$ip_address/#/configure"
-    echo "2. Click the Firmware folder in the left Config list"
-    echo "3. Right click and Download 'X_4.bin' and 'elegoo_k1.bin' to a FAT32 formatted microSD card."
-    echo ""
-    echo -e "\nTo complete the update:"
-    echo "1. After this script completes, power off the printer and insert the microSD card."
-    echo "2. Power on and check the MCU version in Fluidd's system tab."
-    echo "3. One of the '.bin' files on the microSD should be renamed to '.CUR' if the update was successful."
-    echo ""
-    echo -e "\nFor printers without external microSD slots:"
-    echo "1. Remove the front 4 hex screws and bottom access panel."
-    echo "2. Remove the 2 front panel mount screws from inside the PCB area."
-    echo "3. Consider cutting a slot in the front panel for future ease."
-    echo ""
-    echo -e "\nHave you downloaded the bin files and are ready to continue? (y/n)"
-    read continue_choice
-    if [[ "$continue_choice" != "y" ]]; then
+    # Check if the MCU boots using the alternative method
+    if grep -q "/usr/local/bin/gpio_set.sh" "/etc/rc.local"; then
+        echo "Detected MCU running the Alternative method! Running headless flash..."
+        if [ -f "$MCU_SWFLASH_ALT" ]; then
+            "$MCU_SWFLASH_ALT"
+        else
+            echo "Error: Alternate MCU flash script not found."
+        fi
+    else
+        # Regular update through microSD card
+        # Create the 'Firmware' directory if it doesn't exist
+        mkdir -p ~/printer_data/config/Firmware
+
+        # Remove old files in previous parent directory 
+        rm ~/printer_data/config/X_4.bin
+        rm ~/printer_data/config/elegoo_k1.bin
+        
+        cp ~/klipper/out/klipper.bin ~/printer_data/config/Firmware/X_4.bin
+        cp ~/klipper/out/klipper.bin ~/printer_data/config/Firmware/elegoo_k1.bin
+        
+        # Display instructions for downloading the firmware
+        ip_address=$(hostname -I | awk '{print $1}')
         echo ""
-        echo "Power-off the machine and insert the microSD card."
-        exit
+        echo -e "\nTo download firmware files:"
+        echo "1. Visit: http://$ip_address/#/configure"
+        echo "2. Click the Firmware folder in the left Config list"
+        echo "3. Right click and Download 'X_4.bin' and 'elegoo_k1.bin' to a FAT32 formatted microSD card."
+        echo ""
+        echo -e "\nTo complete the update:"
+        echo "1. After this script completes, power off the printer and insert the microSD card."
+        echo "2. Power on and check the MCU version in Fluidd's system tab."
+        echo "3. One of the '.bin' files on the microSD should be renamed to '.CUR' if the update was successful."
+        echo ""
+        echo -e "\nFor printers without external microSD slots:"
+        echo "1. Remove the front 4 hex screws and bottom access panel."
+        echo "2. Remove the 2 front panel mount screws from inside the PCB area."
+        echo "3. Consider cutting a slot in the front panel for future ease."
+        echo ""
+        echo -e "\nHave you downloaded the bin files and are ready to continue? (y/n)"
+        read continue_choice
+        if [[ "$continue_choice" != "y" ]]; then
+            echo ""
+            echo "Power-off the machine and insert the microSD card."
+            exit
+        fi
     fi
 
     if [[ "$mcu_choice" == "Both" ]]; then
