@@ -180,33 +180,6 @@ class DisplayController:
             self.extrude_amount = prepare.getint("extrude_amount", fallback=50)
             self.extrude_speed = prepare.getint("extrude_speed", fallback=5)
 
-    async def monitor_log(self):
-        log_file_path = os.path.expanduser("~/printer_data/logs/klippy.log")
-
-        try:
-            # Open the log file for reading in text mode
-            with open(log_file_path, 'r') as log_file:
-                # Move the file pointer to the end of the file
-                log_file.seek(0, os.SEEK_END)
-
-                while True:
-                    line = log_file.readline()
-                    if not line:
-                        await asyncio.sleep(0.1)  # Sleep briefly if no new data
-                        continue
-
-                    # Strip the line and check if it contains "Starting Klippy..."
-                    line = line.strip()
-                    if "Restarting printer" in line or "Starting Klippy..." in line:
-                        logger.info("Klipper is restarting.")
-                        self.klipper_restart_event.set()
-                        # Add your desired action here for Klipper restart detection
-
-        except FileNotFoundError:
-            logger.error(f"Klipper log file not found at {log_file_path}.")
-        except Exception as e:
-            logger.error(f"Error while monitoring Klipper log: {e}")
-
     def get_printer_model_from_file(self):
         try:
             with open('/boot/.OpenNept4une.txt', 'r') as file:
@@ -745,7 +718,6 @@ class DisplayController:
                 reader, writer = await asyncio.open_unix_connection(sockpath, limit=SOCKET_LIMIT)
                 self.writer = writer
                 self._loop.create_task(self._process_stream(reader))
-                asyncio.create_task(self.monitor_log())
                 self.connected = True
                 logger.info("Connected to Moonraker")
 
@@ -1148,7 +1120,8 @@ try:
         controller.handle_config_change()
 
     def handle_sock_changes(notifier):
-        print("Socket updated", notifier)
+        if notifier.src_path[-11:] == "klippy.sock" and notifier.event_type == EventType.CREATED:
+            controller.klipper_restart_event.set()
 
     config_patterns = ["display_connector.cfg"]
     config_event_handler = PatternMatchingEventHandler(config_patterns, None, True, True)
