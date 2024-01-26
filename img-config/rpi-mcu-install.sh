@@ -21,15 +21,23 @@ if [[ "$mcu_choice" == "STM32" ]] || [[ "$mcu_choice" == "Both" ]]; then
     make clean
     cp ~/OpenNept4une/mcu-firmware/mcu.config ~/klipper/.config
     make
-    cp ~/klipper/out/klipper.bin ~/printer_data/config/X_4.bin
-    cp ~/klipper/out/klipper.bin ~/printer_data/config/elegoo_k1.bin
+    # Create the 'Firmware' directory if it doesn't exist
+    mkdir -p ~/printer_data/config/Firmware
 
+    # Remove old files in previous parent directory 
+    rm ~/printer_data/config/X_4.bin
+    rm ~/printer_data/config/elegoo_k1.bin
+    
+    cp ~/klipper/out/klipper.bin ~/printer_data/config/Firmware/X_4.bin
+    cp ~/klipper/out/klipper.bin ~/printer_data/config/Firmware/elegoo_k1.bin
+    
     # Display instructions for downloading the firmware
     ip_address=$(hostname -I | awk '{print $1}')
     echo ""
     echo -e "\nTo download firmware files:"
     echo "1. Visit: http://$ip_address/#/configure"
-    echo "2. Right click and Download 'X_4.bin' and 'elegoo_k1.bin' to a FAT32 formatted microSD card."
+    echo "2. Click the Firmware folder in the left Config list"
+    echo "3. Right click and Download 'X_4.bin' and 'elegoo_k1.bin' to a FAT32 formatted microSD card."
     echo ""
     echo -e "\nTo complete the update:"
     echo "1. After this script completes, power off the printer and insert the microSD card."
