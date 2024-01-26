@@ -17,8 +17,8 @@ if [ ! -f "$SCRIPT_PATH" ]; then
 fi
 
 # Create the systemd service file
-sudo rm /etc/systemd/system/display.service
-
+sudo service display stop
+sudo service display disable 
 echo "Creating systemd service file at $SERVICE_FILE..."
 cat <<EOF | sudo tee $SERVICE_FILE > /dev/null
 [Unit]
