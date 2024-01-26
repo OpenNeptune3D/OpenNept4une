@@ -54,4 +54,25 @@ sudo systemctl start OpenNept4une.service
 echo "Allowing Moonraker to control display service"
 grep -qxF 'display' $MOONRAKER_ASVC || echo 'OpenNept4une' >> $MOONRAKER_ASVC
 
+# Define the lines to be inserted or updated
+new_lines="[update_manager OpenNept4une]
+type: git_repo
+primary_branch: main
+path: ~/OpenNept4une
+origin: https://github.com/halfmanbear/OpenNept4une.git"
+
+# Define the path to the moonraker.conf file
+config_file="$HOME/printer_data/config/moonraker.conf"
+
+# Check if the lines exist in the config file
+if grep -qF "[update_manager OpenNept4une]" "$config_file"; then
+    # Lines exist, update them
+    sed -i "/[update_manager OpenNept4une]/,/^$/c$new_lines" "$config_file"
+else
+    # Lines do not exist, append them to the end of the file
+    echo "$new_lines" >> "$config_file"
+fi
+
 echo "Service setup complete."
+
+sudo service moonraker restart 
