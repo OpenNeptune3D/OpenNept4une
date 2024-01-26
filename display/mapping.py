@@ -14,7 +14,6 @@ PAGE_SETTINGS_TEMPERATURE_SET = "settings_temperature_set"
 PAGE_SETTINGS_ABOUT = "settings_about"
 PAGE_SETTINGS_ADVANCED = "settings_advanced"
 
-PAGE_LEVELING = "leveling"
 
 PAGE_CONFIRM_PRINT = "confirm_print"
 PAGE_PRINTING = "printing"
@@ -25,6 +24,10 @@ PAGE_PRINTING_COMPLETE = "printing_complete"
 PAGE_PRINTING_FILAMENT = "printing_filament"
 PAGE_PRINTING_SPEED = "printing_speed"
 PAGE_PRINTING_ADJUST = "printing_adjust"
+
+PAGE_LEVELING = "leveling"
+PAGE_LEVELING_SCREW_ADJUST = "leveling_screw_adjust"
+PAGE_LEVELING_Z_OFFSET_ADJUST = "leveling_z_offset_adjust"
 
 PAGE_OVERLAY_LOADING = "overlay_loading"
 
