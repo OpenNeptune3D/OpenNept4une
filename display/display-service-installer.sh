@@ -16,9 +16,17 @@ if [ ! -f "$SCRIPT_PATH" ]; then
     exit 1
 fi
 
-# Create the systemd service file
-sudo service display stop
-sudo service display disable 
+# Check if the old service exists and is running
+if service --status-all | grep -Fq 'display'; then
+    # Stop the service silently
+    sudo service display stop >/dev/null 2>&1
+    # Disable the service silently
+    sudo service display disable >/dev/null 2>&1
+else
+    echo "Continuing..."
+fi
+
+# Create the systemd service file 
 echo "Creating systemd service file at $SERVICE_FILE..."
 cat <<EOF | sudo tee $SERVICE_FILE > /dev/null
 [Unit]
