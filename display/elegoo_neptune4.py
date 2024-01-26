@@ -1,5 +1,10 @@
 from mapping import *
 
+MODEL_N4_REGULAR = 'N4'
+MODEL_N4_PRO = 'N4Pro'
+MODEL_N4_PLUS = 'N4Plus'
+MODEL_N4_MAX = 'N4Max'
+
 class Neptune4Mapper(Mapper):
     page_mapping = {
         PAGE_MAIN: "1",

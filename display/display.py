@@ -18,7 +18,7 @@ from math import ceil
 
 from response_actions import response_actions, input_actions
 from lib_col_pic import parse_thumbnail
-from elegoo_neptune4 import Neptune4Mapper, Neptune4ProMapper, Neptune4PlusMapper, Neptune4MaxMapper
+from elegoo_neptune4 import *
 from mapping import *
 
 log_file = os.path.expanduser("~/printer_data/logs/display_connector.log")
@@ -66,11 +66,6 @@ TABBED_PAGES = [
 TRANSITION_PAGES = [
     PAGE_OVERLAY_LOADING
 ]
-
-MODEL_N4_REGULAR = 'N4'
-MODEL_N4_PRO = 'N4Pro'
-MODEL_N4_PLUS = 'N4Plus'
-MODEL_N4_MAX = 'N4Max'
 
 SUPPORTED_PRINTERS = [
     MODEL_N4_REGULAR,
@@ -165,7 +160,6 @@ class DisplayController:
 
     def _handle_config(self):
         logger.info("Loading config")
-
 
         if "LOGGING" in self.config:
             if "file_log_level" in  self.config["LOGGING"]:
