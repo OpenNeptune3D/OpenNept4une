@@ -20,6 +20,7 @@ from response_actions import response_actions, input_actions
 from lib_col_pic import parse_thumbnail
 from elegoo_neptune4 import *
 from mapping import *
+from colors import *
 
 log_file = os.path.expanduser("~/printer_data/logs/display_connector.log")
 logger = logging.getLogger(__name__)
@@ -74,8 +75,6 @@ SUPPORTED_PRINTERS = [
     MODEL_N4_PLUS,
     MODEL_N4_MAX
 ]
-
-BACKGROUND_GRAY = 10665
 
 SOCKET_LIMIT = 20 * 1024 * 1024
 class DisplayController:

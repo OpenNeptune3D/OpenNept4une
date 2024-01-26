@@ -1,4 +1,5 @@
 from logging import Logger
+from colors import BACKGROUND_GRAY, TEXT_WARNING
 from communicator import DisplayCommunicator
 from mapping import *
 
@@ -125,7 +126,7 @@ class Neptune4MaxMapper(Neptune4Mapper):
 
 
 class Neptune4DisplayCommunicator(DisplayCommunicator):
-    supported_firmware_versions = ["1.2.11", "1.2.12"]
+    supported_firmware_versions = ["1.2.13", "1.2.12"]
     def __init__(self, logger: Logger, model: str, event_handler, port: str = "/dev/ttyS1", baudrate: int = 115200, timeout: int = 5) -> None:
         super().__init__(logger, port, event_handler, baudrate, timeout)
         self.model = model
@@ -150,3 +151,8 @@ class Neptune4DisplayCommunicator(DisplayCommunicator):
     
     async def get_firmware_version(self) -> str:
         return await self.display.get("p[35].b[11].txt", self.timeout)
+    
+    async def check_valid_version(self):
+        is_valid = await super().check_valid_version()
+        if not is_valid:
+            await self.write(f'xstr 0,464,320,16,2,{TEXT_WARNING},{BACKGROUND_GRAY},1,1,1,"WARNING: Unsupported Display Firmware Version"')
