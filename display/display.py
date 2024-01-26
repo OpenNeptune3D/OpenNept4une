@@ -35,6 +35,7 @@ logger.addHandler(file_log)
 logger.setLevel(logging.DEBUG)
 
 config_file = os.path.expanduser("~/printer_data/config/display_connector.cfg")
+comms_directory = os.path.expanduser("~/printer_data/comms")
 
 TEMP_DEFAULTS = {
     "pla": [210, 60],
@@ -87,8 +88,7 @@ class DisplayController:
         self._handle_config()
         self.connected = False
 
-        self.display = TJCClient('/dev/ttyS1', 115200, self.display_event_handler)
-        self.display.encoding = 'utf-8'
+        self.display = Neptune4DisplayCommunicator(logger, self.get_printer_model_from_file(), event_handler=self.display_event_handler)
 
         self.part_light_state = False
         self.frame_light_state = False
@@ -106,8 +106,6 @@ class DisplayController:
         self.pending_reqs = {}
         self.history = []
         self.current_state = "booting"
-
-        self.setup_printer()
 
         self.dir_contents = []
         self.current_dir = ""
@@ -210,21 +208,6 @@ class DisplayController:
         except Exception as e:
             logger.error(f"Error while monitoring Klipper log: {e}")
 
-    def setup_printer(self):
-        self.printer_model = self.get_printer_model_from_file()
-        if self.printer_model == MODEL_N4_REGULAR:
-            self.mapper = Neptune4Mapper()
-        elif self.printer_model == MODEL_N4_PRO:
-            self.mapper = Neptune4ProMapper()
-        elif self.printer_model == MODEL_N4_PLUS:
-            self.mapper = Neptune4PlusMapper()
-        elif self.printer_model == MODEL_N4_MAX:
-            self.mapper = Neptune4MaxMapper()
-        else:
-            logger.error("Unknown printer model, falling back to Neptune 4")
-            self.printer_model = MODEL_N4_REGULAR
-            self.mapper = Neptune4Mapper()
-
     def get_printer_model_from_file(self):
         try:
             with open('/boot/.OpenNept4une.txt', 'r') as file:
@@ -246,18 +229,18 @@ class DisplayController:
             MODEL_N4_PLUS: "Neptune 4 Plus",
             MODEL_N4_MAX: "Neptune 4 Max",
         }
-        return model_map[self.printer_model]
+        return model_map[self.display.model]
 
     def initialize_display(self):
         model_image_key = None
-        if self.printer_model == MODEL_N4_REGULAR:
+        if self.display.model == MODEL_N4_REGULAR:
             model_image_key = "213"
-        elif self.printer_model == MODEL_N4_PRO:
+        elif self.display.model == MODEL_N4_PRO:
             model_image_key = "214"
             self._write(f'p[{self._page_id(PAGE_MAIN)}].disp_q5.val=1') # N4Pro Outer Bed Symbol (Bottom Rig>
-        elif self.printer_model == MODEL_N4_PLUS:
+        elif self.display.model == MODEL_N4_PLUS:
             model_image_key = "313"
-        elif self.printer_model == MODEL_N4_MAX:
+        elif self.display.model == MODEL_N4_MAX:
             model_image_key = "314"
 
         if self.display_name_override is None:
@@ -292,7 +275,7 @@ class DisplayController:
             if self.display_name_line_color:
                 self._write('fill 13,47,24,4,' + str(self.display_name_line_color))
 
-            if self.printer_model == MODEL_N4_PRO:
+            if self.display.model == MODEL_N4_PRO:
                 self._write(f'vis out_bedtemp,1')
         elif current_page == PAGE_FILES:
             self.show_files_page()
@@ -334,7 +317,7 @@ class DisplayController:
                 self.history[-1] = page
             else:
                 self.history.append(page)
-            self._write(f"page {self.mapper.map_page(page)}")
+            self._write(f"page {self.display.mapper.map_page(page)}")
             logger.debug(f"Navigating page {page}")
             self._loop.create_task(self.special_page_handling())
 
@@ -475,7 +458,7 @@ class DisplayController:
                 f"SET_HEATER_TEMPERATURE HEATER=extruder TARGET={extruder}",
                 f"SET_HEATER_TEMPERATURE HEATER=heater_bed TARGET={heater_bed}"
             ]
-            if self.printer_model == MODEL_N4_PRO:
+            if self.display.model == MODEL_N4_PRO:
                 gcodes.append(f"SET_HEATER_TEMPERATURE HEATER=heater_bed_outer TARGET={heater_bed}")
             self._loop.create_task(self.send_gcodes_async(gcodes))
         elif action.startswith("set_extrude_amount"):
@@ -535,7 +518,7 @@ class DisplayController:
     def _write(self, data, forced = False):
         if self.is_blocking_serial and not forced:
             return
-        self._loop.create_task(self.display.command(data, 1.0))
+        self._loop.create_task(self.display.write(data))
 
     def _set_light(self, light_name, new_state):
         gcode = f"{light_name}_{'ON' if new_state else 'OFF'}"
@@ -555,7 +538,7 @@ class DisplayController:
         self._go_back()
 
     def update_printing_heater_settings_ui(self):
-        if self.printer_model == MODEL_N4_PRO:
+        if self.display.model == MODEL_N4_PRO:
             self._write(f'p[{self._page_id(PAGE_PRINTING_FILAMENT)}].b0.picc=' + str(90 if self.printing_selected_heater == "extruder" else 89))
             self._write(f'p[{self._page_id(PAGE_PRINTING_FILAMENT)}].b1.picc=' + str(90 if self.printing_selected_heater == "heater_bed" else 89))
             self._write(f'p[{self._page_id(PAGE_PRINTING_FILAMENT)}].b2.picc=' + str(90 if self.printing_selected_heater == "heater_bed_outer" else 89))
@@ -662,7 +645,7 @@ class DisplayController:
         self.show_files_page()
 
     def _page_id(self, page):
-        return self.mapper.map_page(page)
+        return self.display.mapper.map_page(page)
 
     def show_files_page(self):
         page_size = 5
@@ -698,7 +681,7 @@ class DisplayController:
             while len(self.history) > 1 and self.history[-1] in TRANSITION_PAGES:
                 self.history.pop()
             back_page = self.history[-1]
-            self._write(f"page {self.mapper.map_page(back_page)}")
+            self._write(f"page {self.display.mapper.map_page(back_page)}")
             logger.debug(f"Navigating back to {back_page}")
             self._loop.create_task(self.special_page_handling())
         else:
@@ -709,6 +692,7 @@ class DisplayController:
 
     async def listen(self):
         await self.display.connect()
+        await self.display.check_valid_version()
         await self.connect_moonraker()
         ret = await self._send_moonraker_request("printer.objects.subscribe", {"objects": {
             "gcode_move": ["extrude_factor", "speed_factor", "homing_origin"],
@@ -769,8 +753,10 @@ class DisplayController:
                 try:
                     software_version_response = await self._send_moonraker_request("printer.info")
                     software_version = software_version_response["result"]["software_version"]
+                    software_version = "-".join(software_version.split("-")[:2]) # clean up version string
                     # Process the software_version...
                     logger.info(f"Software Version: {software_version}")
+                    self._write("p[" + self._page_id(PAGE_SETTINGS_ABOUT) + "].b[10].txt=\"" + software_version + "\"")
                     break
 
                 except KeyError:
@@ -796,9 +782,6 @@ class DisplayController:
         system = (await self._send_moonraker_request("machine.system_info"))["result"]["system_info"]
         self.ips = ", ".join(self._find_ips(system["network"]))
         self._write("p[" + self._page_id(PAGE_SETTINGS_ABOUT) +"].b[16].txt=\"" + self.ips + "\"")
-        #self._write("p[" + self._page_id(PAGE_PRINTING_ADJUST) + "].b[20].txt=\"" + self.ips + "\"")
-        software_version = (await self._send_moonraker_request("printer.info"))["result"]["software_version"]
-        self._write("p[" + self._page_id(PAGE_SETTINGS_ABOUT) + "].b[10].txt=\"" + software_version.split("-")[0] + "\"")
 
     def _make_rpc_msg(self, method: str, **kwargs):
         msg = {"jsonrpc": "2.0", "method": method}
@@ -938,7 +921,7 @@ class DisplayController:
 
     def handle_status_update(self, new_data, data_mapping=None):
         if data_mapping is None:
-            data_mapping = self.mapper.data_mapping
+            data_mapping = self.display.mapper.data_mapping
         if "print_stats" in new_data:
             if "filename" in new_data["print_stats"]:
                 filename = new_data["print_stats"]["filename"]
@@ -1165,11 +1148,22 @@ try:
     def handle_wd_callback(notifier):
         controller.handle_config_change()
 
-    patterns = ["display_connector.cfg"]
-    event_handler = PatternMatchingEventHandler(patterns, None, True, True)
-    event_handler.on_modified = handle_wd_callback
-    event_handler.on_created = handle_wd_callback
-    config_observer.schedule(event_handler, config_file, recursive=False)
+    def handle_sock_changes(notifier):
+        print("Socket updated", notifier)
+
+    config_patterns = ["display_connector.cfg"]
+    config_event_handler = PatternMatchingEventHandler(config_patterns, None, True, True)
+    config_event_handler.on_modified = handle_wd_callback
+    config_event_handler.on_created = handle_wd_callback
+
+    socket_patterns = ["klippy.sock", "moonraker.sock"]
+    socket_event_handler = PatternMatchingEventHandler(socket_patterns, None, True, True)
+    socket_event_handler.on_modified = handle_sock_changes
+    socket_event_handler.on_created = handle_sock_changes
+    socket_event_handler.on_deleted = handle_sock_changes
+
+    config_observer.schedule(config_event_handler, config_file, recursive=False)
+    config_observer.schedule(socket_event_handler, comms_directory, recursive=False)
     config_observer.start()
 
 
