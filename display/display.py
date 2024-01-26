@@ -784,6 +784,11 @@ class DisplayController:
             self.handle_response(data.page_id, data.component_id)
         elif type == EventType.NUMERIC_INPUT:
             self.handle_input(data.page_id, data.component_id, data.value)
+        elif type == EventType.RECONNECTED:
+            logger.info("Reconnected to Display")
+            self.history = []
+            self.initialize_display()
+            self._navigate_to_page(PAGE_MAIN)
         else:
             logger.info(f"Unhandled Event: {type} {data}")
 
