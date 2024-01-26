@@ -839,7 +839,7 @@ class DisplayController:
 
     async def _attempt_reconnect(self):
         logger.info("Attempting to reconnect to Moonraker...")
-        await asyncio.sleep(10)  # A delay before attempting to reconnect
+        await asyncio.sleep(1)  # A delay before attempting to reconnect
         self.start_listening()
 
     def _get_current_page(self):
@@ -1121,6 +1121,7 @@ try:
 
     def handle_sock_changes(notifier):
         if notifier.event_type == "created":
+            logger.info(f"{notifier.src_path.split('/')[-1]} created. Attempting to reconnect...")
             controller.klipper_restart_event.set()
 
     config_patterns = ["display_connector.cfg"]
