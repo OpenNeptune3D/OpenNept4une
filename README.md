@@ -2,23 +2,23 @@
 
 ## De-Elegoo-izing the Neptune 4 Series 3D Printers
 
-**NOTE: The Touch-Screen Display Service is in Beta (Most functions work and recieves frequent code updates). An alternative until the service is completed is the mobileraker phone app ** 
+**NOTE:** The Touch-Screen Display Service is in Beta (Most functions work and recieves frequent code updates). An alternative until the service is completed is the mobileraker phone app
 
 **LED’s, ADXL & WiFi Working on all Variants**
 
-**Credits:**
-- Community Members: SQUIRRELYMOOSE, DanDonut, Jaerax, SmartHome42/Printernbeer & Tom's Basement
+### Credits:
+- Community Members: SQUIRRELYMOOSE, DanDonut, Jaerax, SmartHome42/Printernbeer, Tom's Basement Phillip Thelen
 - Projects: 
-  - Armbian: [GitHub](https://github.com/armbian/build)
-  - (Fork) Armbian-ZNP-K1-build base image: [GitHub](https://github.com/halfmanbear/Armbian-ZNP-K1-build)
-  - KAMP (Klipper-Adaptive-Meshing-Purging): [GitHub](https://github.com/kyleisah/Klipper-Adaptive-Meshing-Purging)
-  - kiauh (Klipper Installation And Update Helper): [GitHub](https://github.com/dw-0/kiauh)
-  - Klipper: [GitHub](https://github.com/Klipper3d/klipper)
-  - moonraker: [GitHub](https://github.com/Arksine/moonraker)
-  - fluidd: [GitHub](https://github.com/fluidd-core/fluidd)
-  - mainsail: [GitHub](https://github.com/mainsail-crew/mainsail)
-  - crowsnest: [GitHub](https://github.com/mainsail-crew/crowsnest)
-  - mobileraker: [GitHub](https://github.com/Clon1998/mobileraker)
+  - [Armbian](https://github.com/armbian/build)
+  - [(Fork) Armbian-ZNP-K1-build base image](https://github.com/halfmanbear/Armbian-ZNP-K1-build)
+  - [KAMP (Klipper-Adaptive-Meshing-Purging)](https://github.com/kyleisah/Klipper-Adaptive-Meshing-Purging)
+  - [kiauh (Klipper Installation And Update Helper)](https://github.com/dw-0/kiauh)
+  - [Klipper](https://github.com/Klipper3d/klipper)
+  - [moonraker](https://github.com/Arksine/moonraker)
+  - [fluidd:](https://github.com/fluidd-core/fluidd)
+  - [mainsail](https://github.com/mainsail-crew/mainsail)
+  - [crowsnest](https://github.com/mainsail-crew/crowsnest)
+  - [mobileraker](https://github.com/Clon1998/mobileraker)
 
 ### Image Features
 
@@ -42,18 +42,20 @@
 - E & Z Steppers configured for 32 microsteps
 - X & Y Steppers at 16 microsteps with Interpolation and stealthChop enabled
 - SPI ADXL345 & Mellow Fly-ADXL345 USB Accelerometer configuration included
+- Support for the Toush-Screen Display
 
 ## Install Procedure - Re-flash eMMC with Latest OpenNept4une Release Image
 
-**Overview:**
+### Overview:
 
 1. Determine stepper motor current & PCB version (N4 & Pro Only)
 2. Flash eMMC with the latest OpenNept4une release image
-3. Update third-party modules in Kiauh / Fluidd or Mailsail
-4. Run the OpenNept4une script and select: 0ption 1) Install the latest OpenNept4une Printer.cfg (Select y for all prompts)
-5. After reboot re-run the OpenNept4une script and select: Option 4) Update MCU & (Virtual) MCU RPi Firmware (Select Both)
+3. Connect your printer to your network
+4. Update third-party modules in Kiauh / Fluidd or Mailsail
+5. Run the OpenNept4une script and select: 0ption 1) Install the latest OpenNept4une Printer.cfg (Select y for all prompts)
+6. After reboot re-run the OpenNept4une script and select: Option 4) Update MCU & (Virtual) MCU RPi Firmware (Select Both)
 
-**Preparation (N4 & N4 Pro Models Only: If Plus or Max skip to - Requirements for Flashing the Image):**
+### Preparation (N4 & N4 Pro Models Only: If Plus or Max skip to - [Requirements for Flashing the Image](#requirements-for-flashing-the-image)):
 
 The setup script will prompt you for two inputs: the stepper motor current, as well as the PCB version (N4 and N4 Pro only). ELEGOO has released the printers with two different types of steppers using different current and multiple board revisions. **Warning:** Choosing the wrong current might damage the stepper motors permanently, so it is better to double check, before picking a value.
 
@@ -81,45 +83,55 @@ The second value needed by the install script is the PCB version. When you remov
 
 ![version 1.0](pictures/pads-bridge-version10.jpg) ![version 1.1](pictures/version11.jpg)
 
-**Requirements for Flashing the Image:**
+### Requirements for Flashing the Image:
 
 - Makerbase MKS EMMC-ADAPTER V2 USB 3.0 Reader For MKS EMMC Module: [AliExpress](https://www.aliexpress.com/item/1005005614719377.html)
 - Alternatively, a spare eMMC & eMMC > microSD adapter: [AliExpress](https://www.aliexpress.com/item/1005005549477887.html)
 
-**Printer Terminal Access Options:**
 
-Terminal / Shell access via SSH (Requires ethernet connection) -\
-\
-ssh mks@printer ip\
-Password = makerbase\
-User: root can login via - root:makerbase\ (not advised)
-\
----\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\--\
-\
-PuTTY / Serial terminal access (Without Ethernet) -\
-\
-Connect N4P USB-C port to PC Then connect via Serial COM8 (yours
-will be different) set baudrate to 1500000\
-\
-User: mks\
-Pass: makerbase\
-\
----\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\---
-
-**Installation:**
+### Installation:
 
 - See the [Releases](https://github.com/halfmanbear/OpenNept4une/releases/) section for the latest pre-configured OpenNept4une eMMC Image. Flash with balenaEtcher or dd.
 - Recommended to Back-Up original eMMC beforehand.
 - Run the following startup scripts with Ethernet connected (as user mks)
   
-**Run Kiauh for the latest Updates**
+### Printer Terminal Access Options:
+
+#### Terminal / Shell access via SSH (Requires ethernet connection) -
+```
+ssh mks@printer_ip
+Password = makerbase
+```
+#### PuTTY / Serial terminal access (Without Ethernet) -
+
+Connect N4P USB-C port to PC Then connect via Serial COM8 (yours
+will be different) set baudrate to 1500000
+```
+User: mks
+Pass: makerbase
+```
+
+### Configure Wi-Fi (skip this if the printer is connected with an ethernet cable)
+
+1. **Access Network Manager:**
+Use the following command in the terminal to open the network manager:
+```bash
+~/OpenNept4une/OpenNept4une.sh
+```
+2. **Connect to Wi-Fi:**
+- In the network manager, navigate to `Activate a connection`.
+- Select your Wi-Fi network and enter the necessary credentials to connect.
+
+Remember to save your settings before exiting any configuration menus. 
+
+### Run Kiauh for the latest Updates
 ```bash
 ~/kiauh/kiauh.sh
 ```
 - In the Kiauh menu, select Option (2), type key (a), and press ENTER.
 - Once complete quit out of Kiauh.
 
-**Install latest OpenNept4une Printer.cfg & Update MCU & (Virtual) MCU RPi Firmware**
+### Install latest OpenNept4une Printer.cfg & Update MCU & (Virtual) MCU RPi Firmware
 
 ```bash
 cd ~/OpenNept4une/ && git fetch --all && git reset --hard origin/main && git clean -fd
@@ -143,7 +155,7 @@ Follow these steps to configure the basic settings on your Neptune 4 printer's c
 ## Configure Correct Timezone
 
 1. **Access Armbian Configuration:**
-   Open the terminal and enter the following command:
+Open the terminal and enter the following command:
 ```bash
 sudo armbian-config
 ```
@@ -152,21 +164,7 @@ sudo armbian-config
 - Then select `Timezone`.
 - Choose and set your correct timezone.
 
-## Configure Wi-Fi
-
-1. **Access Network Manager:**
-Use the following command in the terminal to open the network manager:
-```bash
-~/OpenNept4une/OpenNept4une.sh
-```
-Option (2): WiFi Config
-2. **Connect to Wi-Fi:**
-- In the network manager, navigate to `Activate a connection`.
-- Select your Wi-Fi network and enter the necessary credentials to connect.
-
-Remember to save your settings before exiting any configuration menus. 
-
-### OrcaSlicer Configs 
+## OrcaSlicer Configs 
 - Download the latest Official Release [OrcaSlicer](https://github.com/SoftFever/OrcaSlicer/releases/) 
 - Configure Orca defaults for your machines model before import.
 - Check/confirm Bambu Network Engine install
@@ -174,62 +172,56 @@ Remember to save your settings before exiting any configuration menus.
 - In OrcaSlicer click [File > Import > Import Configs...]
 
 
-## Fluidd / Klipper Calibration: -
+## Fluidd / Klipper Calibration:
 
-Config / Tuning Macros below (found pre-configured in Fluidd \|
+Config / Tuning Macros below (found pre-configured in Fluidd
 BedTune/Level macros will begin after heating- do Probe Z Offset
-cold):\
-\
-------------------------------------\
-\
-    BED_LEVEL_SCREWS_TUNE\
-    [[Klipper Docs](https://www.klipper3d.org/Manual_Level.html#adjusting-bed-leveling-screws-using-the-bed-probe)]
-    (Rerun macro after each round of corrections)\
-    \
-    CALIBRATE_PROBE_Z_OFFSET\
-    (Paper Thickness Test. When you determine a value, click Accept and
-    run a SAVE_CONFIG command after)\
-    \
-    AUTO_FULL_BED_LEVEL\
-    (Not required as using KAMP meshes before print, but useful
-    to see how level the whole bed is - Click Save Config & Restart
-    after)\
-    \
-    ---\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\--\
-    \
-    **(Note: Do each of these separately and from a low temp not whilst
-    hot if Non-Pro only do the inner bed PID macro after tuning
-    the extruder)**\
-    \
-    PID_TUNE_EXTRUDER\
-    PID_TUNE_INNER_BED\
-    PID_TUNE_OUTER_BED (N4Pro only)\
-    \
-    ---\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\-\--\
-    \
-    Pressure advance value will need your own data.\
-    [<https://www.klipper3d.org/Pressure_Advance.html>]\
-    \
-    Input shaping values will also need your own data\
-    [<https://www.klipper3d.org/Resonance_Compensation.html>]\
-    (SPI ADXL345 & Mellow Fly-ADXL345 Pre Configured for tuning)\
-    \
-    After editing configs or calibrating, save in the fluidd
-    interface, then in fluidd select the top right menu \> Host \>
-    reboot. Avoid direct power cycles; this ensures changes are saved from
-    RAM to eMMC.
+cold):
+
+`BED_LEVEL_SCREWS_TUNE`\
+[Klipper Docs](https://www.klipper3d.org/Manual_Level.html#adjusting-bed-leveling-screws-using-the-bed-probe)
+(Rerun macro after each round of corrections)
+
+`CALIBRATE_PROBE_Z_OFFSET`\
+(This test should be done cold. Paper Thickness Test. When you determine a value, click Accept and run a `SAVE_CONFIG` command after)
+
+`AUTO_FULL_BED_LEVEL`\
+(Not required as using KAMP meshes before print, but useful
+to see how level the whole bed is - Click Save Config & Restart
+after)
+
+**Note:** 
+
+`PID_TUNE_EXTRUDER`
+
+`PID_TUNE_INNER_BED`
+
+`PID_TUNE_OUTER_BED` (N4Pro only)
+
+[Pressure advance](https://www.klipper3d.org/Pressure_Advance.html) value will need your own data.
+
+[Input shaping](https://www.klipper3d.org/Resonance_Compensation.html) values will also need your own data.
+(SPI ADXL345 & Mellow Fly-ADXL345 Pre Configured for tuning)
+
+After editing configs or calibrating, save in the fluidd
+interface, then in fluidd select the top right menu \> Host \>
+reboot. Avoid direct power cycles; this ensures changes are saved from
+RAM to eMMC.
     
 ## Slicer Settings 
 (If using the provided OrcaSlicer profiles you can skip
     this)
+
+
+**Displaying Thumbnails on the Original Display**
+
+All Slicers that generate thumbnails that moonraker is capable of understanding should work. The display uses 160x160 pixels to display the thumbnail, so your generated thumbnails should be at least that size.
 
 ### Orcaslicer
 
 **START CODE**
 
 NOTE all text including PRINT_START and after must be on one line
-
-    
 
 ```
 ;Nozzle diameter = [nozzle_diameter]
@@ -245,12 +237,6 @@ PRINT_START BED_TEMP=[hot_plate_temp_initial_layer] EXTRUDER_TEMP=[nozzle_temper
 PRINT_END
 ```
 
-
-
-
-**Displaying Thumbnails on the Original Display**
-
-All Slicers that generate thumbnails that moonraker is capable of understanding should work. The display uses 160x160 pixels to display the thumbnail, so your generated thumbnails should be at least that size.
 
 ### Prusaslicer
 
