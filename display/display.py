@@ -1005,19 +1005,26 @@ class DisplayController:
         self._write("fill 0,110,320,290,10665")
         green = 26347
         red = 10665
-        self._write("xstr 12,320,90,20,1,65535,10665,1,1,1,\"front left\"")
-        self.draw_screw_level_info_at("12,340,90,20", self.screw_levels["front left"], green, red)
+        self._write("xstr 12,320,100,20,1,65535,10665,1,1,1,\"front left\"")
+        self.draw_screw_level_info_at("12,340,100,20", self.screw_levels["front left"], green, red)
 
-        self._write("xstr 170,320,90,20,1,65535,10665,1,1,1,\"front right\"")
-        self.draw_screw_level_info_at("170,340,90,20", self.screw_levels["front right"], green, red)
+        self._write("xstr 170,320,100,20,1,65535,10665,1,1,1,\"front right\"")
+        self.draw_screw_level_info_at("170,340,100,20", self.screw_levels["front right"], green, red)
 
-        self._write("xstr 170,120,90,20,1,65535,10665,1,1,1,\"rear right\"")
-        self.draw_screw_level_info_at("170,140,90,20", self.screw_levels["rear right"], green, red)
+        self._write("xstr 170,120,100,20,1,65535,10665,1,1,1,\"rear right\"")
+        self.draw_screw_level_info_at("170,140,100,20", self.screw_levels["rear right"], green, red)
 
-        self._write("xstr 12,120,90,20,1,65535,10665,1,1,1,\"rear left\"")
-        self.draw_screw_level_info_at("12,140,90,20", self.screw_levels["rear left"], green, red)
+        self._write("xstr 12,120,100,20,1,65535,10665,1,1,1,\"rear left\"")
+        self.draw_screw_level_info_at("12,140,100,20", self.screw_levels["rear left"], green, red)
 
-        self._write("xstr 96,215,90,50,1,65535,15319,1,1,1,\"Retry\"")
+        if 'center right' in self.screw_levels:
+            self._write("xstr 12,220,100,30,1,65535,10665,1,1,1,\"center\\rright\"")
+            self.draw_screw_level_info_at("170,240,100,20", self.screw_levels["center right"], green, red)
+        if 'center left' in self.screw_levels:
+            self._write("xstr 12,120,100,20,1,65535,10665,1,1,1,\"center\\rleft\"")
+            self.draw_screw_level_info_at("12,240,100,20", self.screw_levels["center left"], green, red)
+
+        self._write("xstr 96,215,100,50,1,65535,15319,1,1,1,\"Retry\"")
 
     def draw_screw_level_info_at(self, position, level, green, red):
         if level == "base":
