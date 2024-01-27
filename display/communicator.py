@@ -25,3 +25,5 @@ class DisplayCommunicator:
         version = await self.get_firmware_version()
         if version not in self.supported_firmware_versions:
             self.logger.error("Unsupported firmware version. Things may not work as expected. Consider updating to a supported version: " + ", ".join(self.supported_firmware_versions))
+            return False
+        return True
