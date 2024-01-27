@@ -14,7 +14,7 @@ from tjc import TJCClient, EventType
 from urllib.request import pathname2url
 from watchdog.observers import Observer
 from watchdog.events import PatternMatchingEventHandler
-from math import ceil
+from math import ceil, floor
 
 from response_actions import response_actions, input_actions
 from lib_col_pic import parse_thumbnail
@@ -142,6 +142,12 @@ class DisplayController:
         self.z_probe_distance = "0.0"
 
         self.current_filename = None
+
+        self.full_bed_leveling_counts = [0, 0]
+        self.bed_leveling_counts = [0, 0]
+        self.bed_leveling_probed_count = 0
+        self.bed_leveling_box_size = 0
+        self.bed_leveling_last_position = None
 
         self.klipper_restart_event = asyncio.Event()
 
@@ -281,6 +287,8 @@ class DisplayController:
         elif current_page == PAGE_LEVELING_Z_OFFSET_ADJUST:
             self.draw_initial_zprobe_leveling()
             self._loop.create_task(self.handle_zprobe_leveling())
+        elif current_page == PAGE_PRINTING_KAMP:
+            self.draw_kamp_page()
 
 
     def _navigate_to_page(self, page):
@@ -841,6 +849,11 @@ class DisplayController:
 
             if max_x > 0 and max_y > 0 and max_z > 0:
                 self._write(f'p[{self._page_id(PAGE_SETTINGS_ABOUT)}].b[9].txt="{max_x}x{max_y}x{max_z}"')
+            if "bed_mesh" in new_data["config"]:
+                if "probe_count" in new_data["config"]["bed_mesh"]:
+                    parts = new_data["config"]["bed_mesh"]["probe_count"].split(",")
+                    self.full_bed_leveling_counts = [int(parts[0]), int(parts[1])]
+                    self.bed_leveling_counts = self.full_bed_leveling_counts
 
     async def _attempt_reconnect(self):
         logger.info("Attempting to reconnect to Moonraker...")
@@ -1061,6 +1074,36 @@ class DisplayController:
         response = await self._send_moonraker_request("printer.gcode.script", {"script": "CALIBRATE_PROBE_Z_OFFSET"})
         self._go_back()
 
+    def draw_kamp_page(self):
+        self._write(f'fill 0,45,272,340,10665')
+        self._write('xstr 0,0,272,50,1,65535,10665,1,1,1,"Creating Bed Mesh"')
+        max_size = 264 # display width - 4px padding
+        x_probes = self.bed_leveling_counts[0]
+        y_probes = self.bed_leveling_counts[1]
+        spacing = 2
+        self.bed_leveling_box_size = min(40, int(min(max_size / x_probes, max_size / y_probes) - spacing))
+        total_width = (x_probes * (self.bed_leveling_box_size + spacing)) - spacing
+        total_height = (y_probes * (self.bed_leveling_box_size + spacing)) - spacing
+        self.bed_leveling_x_offset = 4 + (max_size - total_width) / 2
+        self.bed_leveling_y_offset = 45 + (max_size - total_height) / 2
+        for x in range(0, x_probes):
+         for y in range(0, y_probes):
+             self.draw_kamp_box(x, y, 17037)
+    
+    def draw_kamp_box_index(self, index, color):
+        if self.bed_leveling_counts[0] == 0:
+            return
+        row = (self.bed_leveling_counts[1]-1) - int(index / self.bed_leveling_counts[0])
+        col = index % self.bed_leveling_counts[0]
+        if row % 2 == 1:
+          col = self.bed_leveling_counts[1] - 1 - col
+        self.draw_kamp_box(col, row, color)
+
+    def draw_kamp_box(self, x, y, color):
+        box_size = self.bed_leveling_box_size
+        if box_size > 0:
+            self._write(f'fill {int(self.bed_leveling_x_offset+x*(box_size+2))},{47+y*(box_size+2)},{box_size},{box_size},{color}')
+
     def handle_gcode_response(self, response):
         if self.leveling_mode == "screw":
             if "probe at" in response:
@@ -1070,16 +1113,37 @@ class DisplayController:
                 self.screw_levels[response.split("screw")[0][3:].strip()] = "base"
             if "screw :" in response:
                 self.screw_levels[response.split("screw")[0][3:].strip()] = response.split("adjust")[1].strip()
-        if self.leveling_mode == "zprobe":
+        elif self.leveling_mode == "zprobe":
             if "Z position:" in response:
                 self.z_probe_distance = response.split("->")[1].split("<-")[0].strip()
                 self.update_zprobe_leveling_ui()
+        elif "Adapted probe count:" in response:
+            parts = response.split(":")[1].split(",")
+            x_count = int(parseparts[0].strip())
+            y_count = int(parts[1][:-1].strip())
+            self.bed_leveling_counts = [x_count, y_count]
+        elif response.startswith("// bed_mesh: generated points"):
+            if self._get_current_page() != PAGE_PRINTING_KAMP:
+                self._navigate_to_page(PAGE_PRINTING_KAMP)
+        elif response.startswith("// probe at "):
+            new_position = response.split(" ")[3]
+            if self.bed_leveling_last_position != new_position:
+                self.bed_leveling_last_position = new_position
+                if self.bed_leveling_probed_count > 0:
+                    self.draw_kamp_box_index(self.bed_leveling_probed_count - 1, BACKGROUND_SUCCESS)
+                self.bed_leveling_probed_count += 1
+                self.draw_kamp_box_index(self.bed_leveling_probed_count - 1, BACKGROUND_WARNING)
+                self._write(f'xstr 0,310,320,50,1,65535,10665,1,1,1,"Probing... ({self.bed_leveling_probed_count}/{self.bed_leveling_counts[0]*self.bed_leveling_counts[1]})"')
+        elif response.startswith("// Mesh Bed Leveling Complete"):
+            self.bed_leveling_probed_count = 0
+            self.bed_leveling_counts = self.full_bed_leveling_counts
+            if self._get_current_page() == PAGE_PRINTING_KAMP:
+                self._go_back()
 
 loop = asyncio.get_event_loop()
 config_observer = Observer()
 
 try:
-
     config = configparser.ConfigParser(allow_no_value=True)
     if not os.path.exists(config_file):
         logger.info("Creating config file")

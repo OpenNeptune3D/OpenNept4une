@@ -29,6 +29,7 @@ class Neptune4Mapper(Mapper):
 
         PAGE_CONFIRM_PRINT: "18",
         PAGE_PRINTING: "19",
+        PAGE_PRINTING_KAMP: "104",
         PAGE_PRINTING_PAUSE: "25",
         PAGE_PRINTING_STOP: "26",
         PAGE_PRINTING_EMERGENCY_STOP: "106",
@@ -36,6 +37,7 @@ class Neptune4Mapper(Mapper):
         PAGE_PRINTING_FILAMENT: "28",
         PAGE_PRINTING_SPEED: "135",
         PAGE_PRINTING_ADJUST: "127",
+        PAGE_PRINTING_FILAMENT_RUNOUT: "22",
 
         PAGE_OVERLAY_LOADING: "130",
         PAGE_LIGHTS: "84"
@@ -48,6 +50,7 @@ class Neptune4Mapper(Mapper):
                                              build_accessor(self.map_page(PAGE_PREPARE_TEMP), "nozzletemp"),
                                              build_accessor(self.map_page(PAGE_PREPARE_EXTRUDER), "nozzletemp"),
                                              build_accessor(self.map_page(PAGE_PRINTING), "nozzletemp"),
+                                             build_accessor(self.map_page(PAGE_PRINTING_KAMP), "b[3]"),
                                              build_accessor(self.map_page(PAGE_PRINTING_FILAMENT), "nozzletemp")], formatter=format_temp)],
                 "target": [MappingLeaf([build_accessor(self.map_page(PAGE_PREPARE_TEMP), 17)], formatter=lambda x: f"{x:.0f}")],
 
@@ -57,6 +60,7 @@ class Neptune4Mapper(Mapper):
                                              build_accessor(self.map_page(PAGE_PREPARE_TEMP), "bedtemp"),
                                              build_accessor(self.map_page(PAGE_PREPARE_EXTRUDER), "bedtemp"),
                                              build_accessor(self.map_page(PAGE_PRINTING), "bedtemp"),
+                                             build_accessor(self.map_page(PAGE_PRINTING_KAMP), "b[2]"),
                                              build_accessor(self.map_page(PAGE_PRINTING_FILAMENT), "bedtemp")], formatter=format_temp)],
                 "target": [MappingLeaf([build_accessor(self.map_page(PAGE_PREPARE_TEMP), 18)], formatter=lambda x: f"{x:.0f}")],
             },
