@@ -1,5 +1,7 @@
 from nextion import Nextion, EventType
 from nextion.protocol.nextion import NextionProtocol
+from nextion.exceptions import CommandFailed, CommandTimeout, ConnectionFailed
+
 from collections import namedtuple
 import struct
 import binascii
@@ -19,6 +21,7 @@ class EventType(IntEnum):
     AUTO_WAKE = 0x87  # Device automatically wake up
     STARTUP = 0x88  # System successful start up
     SD_CARD_UPGRADE = 0x89  # Start SD card upgrade
+    RECONNECTED = 0x666  # Device reconnected
 
 JUNK_DATA = b'Z\xa5\x06\x83\x10>\x01\x00'
 
@@ -111,6 +114,7 @@ class TJCProtocol(NextionProtocol):
         return message, False
 
 class TJCClient(Nextion):
+    is_reconnecting = False
 
     def _make_protocol(self):
         return TJCProtocol(event_message_handler=self.event_message_handler)
@@ -136,3 +140,26 @@ class TJCClient(Nextion):
             )
             return
         super.event_message_handler(message)
+
+    async def reconnect(self):
+        await self._connection.close()
+        self.is_reconnecting = True
+        await self.connect()
+
+    async def connect(self) -> None:
+        try:
+            result = await self._try_connect_on_different_baudrates()
+
+            try:
+                await self._command("bkcmd=3", attempts=1)
+            except CommandTimeout as e:
+                pass  # it is fine
+
+            await self._update_sleep_status()
+            if self.is_reconnecting:
+                self.is_reconnecting = False
+                self._schedule_event_message_handler(EventType.RECONNECTED, None)
+        except ConnectionFailed:
+            raise
+        except:
+            raise

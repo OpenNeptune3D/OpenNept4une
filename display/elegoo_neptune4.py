@@ -1,4 +1,12 @@
+from logging import Logger
+from colors import BACKGROUND_GRAY, TEXT_WARNING
+from communicator import DisplayCommunicator
 from mapping import *
+
+MODEL_N4_REGULAR = 'N4'
+MODEL_N4_PRO = 'N4Pro'
+MODEL_N4_PLUS = 'N4Plus'
+MODEL_N4_MAX = 'N4Max'
 
 class Neptune4Mapper(Mapper):
     page_mapping = {
@@ -115,3 +123,36 @@ class Neptune4MaxMapper(Neptune4Mapper):
 
     def __init__(self) -> None:
         super().__init__()
+
+
+class Neptune4DisplayCommunicator(DisplayCommunicator):
+    supported_firmware_versions = ["1.2.11", "1.2.12"]
+    def __init__(self, logger: Logger, model: str, event_handler, port: str = "/dev/ttyS1", baudrate: int = 115200, timeout: int = 5) -> None:
+        super().__init__(logger, port, event_handler, baudrate, timeout)
+        self.model = model
+        self.mapper = self.get_mapper(model)
+
+    def get_mapper(self, model: str) -> Neptune4Mapper:
+        if model == MODEL_N4_REGULAR:
+            return Neptune4Mapper()
+        elif model == MODEL_N4_PRO:
+            return Neptune4ProMapper()
+        elif model == MODEL_N4_PLUS:
+            return Neptune4PlusMapper()
+        elif model == MODEL_N4_MAX:
+            return Neptune4MaxMapper()
+        else:
+            self.logger.error(f"Unknown printer model {model}, falling back to Neptune 4")
+            self.display.model = MODEL_N4_REGULAR
+            self.mapper = Neptune4Mapper()
+
+    def get_model(self) -> str:
+        return self.model
+    
+    async def get_firmware_version(self) -> str:
+        return await self.display.get("p[35].b[11].txt", self.timeout)
+    
+    async def check_valid_version(self):
+        is_valid = await super().check_valid_version()
+        if not is_valid:
+            await self.write(f'xstr 0,464,320,16,2,{TEXT_WARNING},{BACKGROUND_GRAY},1,1,1,"WARNING: Unsupported Display Firmware Version"')
