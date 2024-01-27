@@ -7,7 +7,7 @@
 **LED’s, ADXL & WiFi Working on all Variants**
 
 ### Credits:
-- Community Members: SQUIRRELYMOOSE, DanDonut, Jaerax, SmartHome42/Printernbeer, Tom's Basement Phillip Thelen
+- Community Members: SQUIRRELYMOOSE, DanDonut, Jaerax, SmartHome42/Printernbeer, Tom's Basement & Phillip Thelen
 - Projects: 
   - [Armbian](https://github.com/armbian/build)
   - [(Fork) Armbian-ZNP-K1-build base image](https://github.com/halfmanbear/Armbian-ZNP-K1-build)
