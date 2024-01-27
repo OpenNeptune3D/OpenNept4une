@@ -38,6 +38,9 @@ class Neptune4Mapper(Mapper):
         PAGE_PRINTING_SPEED: "135",
         PAGE_PRINTING_ADJUST: "127",
         PAGE_PRINTING_FILAMENT_RUNOUT: "22",
+        PAGE_PRINTING_DIALOG_SPEED: "86",
+        PAGE_PRINTING_DIALOG_FAN: "87",
+        PAGE_PRINTING_DIALOG_FLOW: "85",
 
         PAGE_OVERLAY_LOADING: "130",
         PAGE_LIGHTS: "84"
@@ -79,8 +82,10 @@ class Neptune4Mapper(Mapper):
                 "filename": [MappingLeaf([build_accessor(self.map_page(PAGE_PRINTING), "t0")], formatter=lambda x: x.replace(".gcode", ""))],
             },
             "gcode_move": {
-                "extrude_factor": [MappingLeaf([build_accessor(self.map_page(PAGE_PRINTING), "flow_speed")], formatter=format_percent)],
-                "speed_factor": [MappingLeaf([build_accessor(self.map_page(PAGE_PRINTING), "printspeed")], formatter=format_percent)],
+                "extrude_factor": [MappingLeaf([build_accessor(self.map_page(PAGE_PRINTING), "flow_speed")], formatter=format_percent),
+                                 MappingLeaf([build_accessor(self.map_page(PAGE_PRINTING_DIALOG_FLOW), "b[3]"), build_accessor(self.map_page(PAGE_PRINTING_DIALOG_FLOW), "b[6]")], field_type="val", formatter=lambda x: f"{x * 100:.0f}")],
+                "speed_factor": [MappingLeaf([build_accessor(self.map_page(PAGE_PRINTING), "printspeed")], formatter=format_percent),
+                                 MappingLeaf([build_accessor(self.map_page(PAGE_PRINTING_DIALOG_SPEED), "b[3]"), build_accessor(self.map_page(PAGE_PRINTING_DIALOG_SPEED), "b[6]")], field_type="val", formatter=lambda x: f"{x * 100:.0f}")],
                 "homing_origin": {
                     2: [MappingLeaf([build_accessor(self.map_page(PAGE_PRINTING_ADJUST), "15")], formatter=lambda x: f"{x:.3f}")],
                 }

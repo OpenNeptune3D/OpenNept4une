@@ -16,7 +16,7 @@ from watchdog.observers import Observer
 from watchdog.events import PatternMatchingEventHandler
 from math import ceil, floor
 
-from response_actions import response_actions, input_actions
+from response_actions import response_actions, input_actions, custom_touch_actions
 from lib_col_pic import parse_thumbnail
 from elegoo_neptune4 import *
 from mapping import *
@@ -210,6 +210,7 @@ class DisplayController:
         return model_map[self.display.model]
 
     def initialize_display(self):
+        self._write("sendxy=1")
         model_image_key = None
         if self.display.model == MODEL_N4_REGULAR:
             model_image_key = "213"
@@ -289,7 +290,10 @@ class DisplayController:
             self._loop.create_task(self.handle_zprobe_leveling())
         elif current_page == PAGE_PRINTING_KAMP:
             self.draw_kamp_page()
-
+        elif current_page == PAGE_PRINTING_DIALOG_SPEED:
+            self._write("b[3].maxval=200")
+        elif current_page == PAGE_PRINTING_DIALOG_FLOW:
+            self._write("b[3].maxval=200")
 
     def _navigate_to_page(self, page):
         if len(self.history) == 0 or self.history[-1] != page:
@@ -494,6 +498,14 @@ class DisplayController:
             self.send_gcode("ACCEPT")
             self.send_gcode("SAVE_CONFIG")
             self._go_back()
+        elif action.startswith("set_speed_"):
+            parts = action.split('_')
+            speed = int(parts[2])
+            self.send_speed_update("print", speed)
+        elif action.startswith("set_flow_"):
+            parts = action.split('_')
+            speed = int(parts[2])
+            self.send_speed_update("flow", speed)
 
     def _write(self, data, forced = False):
         if self.is_blocking_serial and not forced:
@@ -786,10 +798,19 @@ class DisplayController:
             if component in input_actions[page]:
                 self.execute_action(input_actions[page][component].replace("$", str(value)))
                 return
+            
+    def handle_custom_touch(self, x, y):
+        if self._get_current_page() in custom_touch_actions:
+            pass
 
     async def display_event_handler(self, type, data):
         if type == EventType.TOUCH:
             self.handle_response(data.page_id, data.component_id)
+        elif type == EventType.TOUCH_COORDINATE:
+            if data.touch_event == 0:
+                self.handle_custom_touch(data.x, data.y)
+        elif type == EventType.SLIDER_INPUT:
+            self.handle_input(data.page_id, data.component_id, data.value)
         elif type == EventType.NUMERIC_INPUT:
             self.handle_input(data.page_id, data.component_id, data.value)
         elif type == EventType.RECONNECTED:
