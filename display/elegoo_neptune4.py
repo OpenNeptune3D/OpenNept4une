@@ -147,8 +147,8 @@ class Neptune4DisplayCommunicator(DisplayCommunicator):
             return Neptune4MaxMapper()
         else:
             self.logger.error(f"Unknown printer model {model}, falling back to Neptune 4")
-            self.display.model = MODEL_N4_REGULAR
-            self.mapper = Neptune4Mapper()
+            self.model = MODEL_N4_REGULAR
+            return Neptune4Mapper()
 
     def get_model(self) -> str:
         return self.model
