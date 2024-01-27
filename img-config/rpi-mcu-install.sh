@@ -7,11 +7,12 @@ MCU_SWFLASH_ALT="${HOME}/OpenNept4une/mcu-firmware/alt-method/mcu-swflash-run.sh
 echo ""
 echo "Choose the MCU(s) to update:"
 echo ""
-select mcu_choice in "STM32" "Virtual RPi" "Both" "Cancel"; do
+select mcu_choice in "STM32" "Virtual RPi" "Pico-based USB Accelerometer" "All" "Cancel"; do
     case $mcu_choice in
         STM32 ) echo "Updating STM32 MCU..."; break;;
         Virtual\ RPi ) echo "Updating Virtual RPi MCU..."; break;;
-        Both ) echo "Starting update process for both STM32 and Virtual RPi MCUs..."; break;;
+        Pico-based\ USB\ Accelerometer ) echo "Updating Pico-based USB Accelerometer..."; break;;
+        All ) echo "Starting update process for STM32, Virtual RPi MCU and Pico-based USB Accelerometer..."; break;;
         Cancel ) echo "Update canceled."; exit;;
     esac
 done
@@ -20,7 +21,7 @@ done
 cd ~/klipper/ && git pull origin master
 
 # Update procedure for STM32 MCU
-if [[ "$mcu_choice" == "STM32" ]] || [[ "$mcu_choice" == "Both" ]]; then
+if [[ "$mcu_choice" == "STM32" ]] || [[ "$mcu_choice" == "All" ]]; then
     echo "Proceeding with STM32 MCU Update..."
     make clean
     cp ~/OpenNept4une/mcu-firmware/mcu.config ~/klipper/.config
@@ -39,13 +40,13 @@ if [[ "$mcu_choice" == "STM32" ]] || [[ "$mcu_choice" == "Both" ]]; then
         # Create the 'Firmware' directory if it doesn't exist
         mkdir -p ~/printer_data/config/Firmware
 
-        # Remove old files in previous parent directory 
+        # Remove old files in previous parent directory
         rm ~/printer_data/config/X_4.bin
         rm ~/printer_data/config/elegoo_k1.bin
-        
+
         cp ~/klipper/out/klipper.bin ~/printer_data/config/Firmware/X_4.bin
         cp ~/klipper/out/klipper.bin ~/printer_data/config/Firmware/elegoo_k1.bin
-        
+
         # Display instructions for downloading the firmware
         ip_address=$(hostname -I | awk '{print $1}')
         echo ""
@@ -72,16 +73,47 @@ if [[ "$mcu_choice" == "STM32" ]] || [[ "$mcu_choice" == "Both" ]]; then
             exit
         fi
     fi
+fi
 
-    if [[ "$mcu_choice" == "Both" ]]; then
+# Update procedure for Pico-based Accelerometer
+pico_skipped=false
+if [[ "$mcu_choice" == "Pico-based USB Accelerometer" ]] || [[ "$mcu_choice" == "All" ]]; then
+    echo "Proceeding with Pico-based USB Accelerometer Update..."
+
+    # check if there is any pico connected, and identify if it is in bootloader mode or not
+    while true; do
+        pico_bootloader=$(lsusb | grep '2e8a:0003' 2>/dev/null)
+        if [[ -z "$pico_bootloader" ]]; then
+            read -n 1 -p "Please put your Pico in bootloader mode and press any key to continue or S to skip... " key
+            if [[ $key = s ]] || [[ $key = S ]]; then
+                pico_skipped=true
+                break
+            fi
+        else
+            echo "Pico detected in bootloader mode. Proceeding..."
+            break
+        fi
+    done
+
+    if [[ "$pico_skipped" == false ]]; then
+        sudo apt install -y python3-numpy python3-matplotlib libatlas-base-dev
+        ~/klippy-env/bin/pip install -v numpy
+
+        make clean
+        cp ~/OpenNept4une/mcu-firmware/pico_usb.config ~/klipper/.config
+        make
+
+        make flash FLASH_DEVICE=2e8a:0003
         echo ""
-        echo "Proceeding with Virtual MCU RPi Update..."
+        echo "Pico-based Accelerometer update completed."
         echo ""
     fi
 fi
 
 # Update procedure for Virtual RPi MCU
-if [[ "$mcu_choice" == "Virtual RPi" ]] || [[ "$mcu_choice" == "Both" ]]; then
+if [[ "$mcu_choice" == "Virtual RPi" ]] || [[ "$mcu_choice" == "All" ]]; then
+    echo "Proceeding with Virtual MCU RPi Update..."
+
     sudo apt install -y python3-numpy python3-matplotlib libatlas-base-dev
     ~/klippy-env/bin/pip install -v numpy
     sudo cp ./scripts/klipper-mcu.service /etc/systemd/system/
@@ -101,7 +133,7 @@ if [[ "$mcu_choice" == "Virtual RPi" ]] || [[ "$mcu_choice" == "Both" ]]; then
     while [ $countdown -gt 0 ]; do
         echo "$countdown..."
         sleep 1
-        countdown=$((countdown-1))
+        countdown=$((countdown - 1))
     done
     sudo reboot
 fi
