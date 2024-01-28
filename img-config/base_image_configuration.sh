@@ -84,17 +84,7 @@ sudo cp ~/OpenNept4une/img-config/spidev-fix/rockchip-spi-spidev.dtbo /boot/dtb/
 
 sudo cp ~/OpenNept4une/img-config/spidev-fix/99-spidev.rules /etc/udev/rules.d/
 
-sudo sh -c 'echo "$(date)" > /boot/.OpenNept4une.txt'
-
-# Add extraargs to armbianEnv.txt if not exists - makes net interface naming start from 0
-FILE_PATH="/boot/armbianEnv.txt"
-LINE_TO_ADD="extraargs=net.ifnames=0"
-if grep -q "$LINE_TO_ADD" "$FILE_PATH"; then
-    echo "The line '$LINE_TO_ADD' already exists in $FILE_PATH."
-else
-    echo "$LINE_TO_ADD" | sudo tee -a "$FILE_PATH" > /dev/null
-    echo "Added '$LINE_TO_ADD' to $FILE_PATH."
-fi
+sudo sh -c 'echo "$(date +"%Y-%m-%d") - OpenNept4une-v0.1.x-ZNP-K1" > /boot/.OpenNept4une.txt'
 
 # Add sync command to crontab if not exists
 CRON_ENTRY="*/10 * * * * /bin/sync"
