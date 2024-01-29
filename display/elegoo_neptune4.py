@@ -73,7 +73,7 @@ class Neptune4Mapper(Mapper):
                         MappingLeaf([build_accessor(self.map_page(PAGE_PRINTING), "x_pos")], formatter=lambda x: f"X[{x:3.2f}]")],
                     1: [MappingLeaf([build_accessor(self.map_page(PAGE_MAIN), "y_pos")]),
                         MappingLeaf([build_accessor(self.map_page(PAGE_PRINTING), "y_pos")], formatter=lambda y: f"Y[{y:3.2f}]")],
-                    2: [MappingLeaf([build_accessor(self.map_page(PAGE_MAIN), "z_pos"), build_accessor(self.map_page(PAGE_PRINTING), "zvalue")])],
+                    2: [MappingLeaf([build_accessor(self.map_page(PAGE_MAIN), "z_pos")])],
                 },
                 "live_velocity": [MappingLeaf([build_accessor(self.map_page(PAGE_PRINTING), "pressure_val")], formatter=lambda x: f"{x:3.2f}mm/s")],
             },
@@ -101,6 +101,13 @@ class Neptune4Mapper(Mapper):
             "filament_switch_sensor fila": {"enabled": [MappingLeaf([build_accessor(self.map_page(PAGE_SETTINGS), "11"),
                                                                      build_accessor(self.map_page(PAGE_PRINTING_ADJUST), "16")], field_type="pic", formatter= lambda x: "77" if int(x) == 1 else "76")]}
         }
+
+    def set_z_display(self, value):
+        if value == "mm":
+            self.data_mapping["motion_report"]["live_position"][2] = [MappingLeaf([build_accessor(self.map_page(PAGE_MAIN), "z_pos"), build_accessor(self.map_page(PAGE_PRINTING), "zvalue")])]
+        elif value == "layer":
+            self.data_mapping["print_stats"]["info"] = {"current_layer": [MappingLeaf([build_accessor(self.map_page(PAGE_PRINTING), "zvalue")])] }
+
 
 class Neptune4ProMapper(Neptune4Mapper):
 

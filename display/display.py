@@ -84,10 +84,13 @@ class DisplayController:
         self.config = config
         self.display_name_override = None
         self.display_name_line_color = None
+        self.z_display = "mm"
         self._handle_config()
         self.connected = False
 
+
         self.display = Neptune4DisplayCommunicator(logger, self.get_printer_model_from_file(), event_handler=self.display_event_handler)
+        self.display.mapper.set_z_display(self.z_display)
 
         self.part_light_state = False
         self.frame_light_state = False
@@ -174,6 +177,10 @@ class DisplayController:
                 self.display_name_override = self.config["main_screen"]["display_name"]
             if "display_name_line_color" in self.config["main_screen"]:
                 self.display_name_line_color = self.config["main_screen"]["display_name_line_color"]
+
+        if "print_screen" in self.config:
+            if "z_display" in self.config["print_screen"]:
+                self.z_display = self.config["print_screen"]["z_display"]
 
         if "prepare" in self.config:
             prepare = self.config["prepare"]
@@ -694,7 +701,7 @@ class DisplayController:
             "extruder": ["temperature", "target"],
             "heater_generic heater_bed_outer": ["temperature", "target"],
             "display_status": ["progress"],
-            "print_stats": ["state", "print_duration", "filename", "total_duration"],
+            "print_stats": ["state", "print_duration", "filename", "total_duration", "info"],
             "output_pin Part_Light": ["value"],
             "output_pin Frame_Light": ["value"],
             "configfile": ["config"],
@@ -1181,6 +1188,9 @@ try:
         config.set('main_screen', 'display_name', 'MODEL_NAME')
         config.set('main_screen', '; color for the line below the model name. As RGB565 value.')
         config.set('main_screen', 'display_name_line_color', '1725')
+
+        config.add_section('print_screen')
+        config.set('z_display', 'mm')
 
         config.add_section('thumbnails')
         config.set('main_screen', '; Background color for thumbnails. As RGB Hex value. Remove for default background color.')
