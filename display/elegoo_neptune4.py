@@ -94,7 +94,7 @@ class Neptune4Mapper(Mapper):
                 "speed": [MappingLeaf([build_accessor(self.map_page(PAGE_PRINTING), "fanspeed")], formatter=format_percent), MappingLeaf([build_accessor(self.map_page(PAGE_SETTINGS), "12")], field_type="pic", formatter=lambda x: "77" if int(x) == 1 else "76")]
             },
             "display_status": {
-                "progress": [MappingLeaf([build_accessor(self.map_page(PAGE_PRINTING), "printvalue")], formatter=lambda x: f"{x * 100:2.1f}"), MappingLeaf([build_accessor(self.map_page(PAGE_PRINTING), "printprocess")], field_type="val", formatter=lambda x: f"{x * 100:.0f}")]
+                "progress": [MappingLeaf([build_accessor(self.map_page(PAGE_PRINTING), "printvalue")], formatter=lambda x: f"{x * 100:2.0f}%"), MappingLeaf([build_accessor(self.map_page(PAGE_PRINTING), "printprocess")], field_type="val", formatter=lambda x: f"{x * 100:.0f}")]
             },
             "output_pin Part_Light": {"value": [MappingLeaf([build_accessor(self.map_page(PAGE_LIGHTS), "led1")], field_type="pic", formatter=lambda x: "77" if int(x) == 1 else "76")]},
             "output_pin Frame_Light": {"value": [MappingLeaf([build_accessor(self.map_page(PAGE_LIGHTS), "led2")], field_type="pic", formatter= lambda x: "77" if int(x) == 1 else "76")]},

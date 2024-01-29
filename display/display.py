@@ -275,6 +275,10 @@ class DisplayController:
             self._write('fill 0,400,320,60,' + str(BACKGROUND_GRAY))
             self._write('xstr 0,400,320,30,1,65535,' + str(BACKGROUND_GRAY) + ',1,1,1,"OpenNept4une"')
             self._write('xstr 0,430,320,30,2,GRAY,' + str(BACKGROUND_GRAY) + ',1,1,1,"github.com/halfmanbear/OpenNept4une"')
+        elif current_page == PAGE_PRINTING:
+            self._write("printvalue.xcen=0")
+            self._write("move printvalue,13,267,13,267,0,10")
+            self._write("vis b[16],0")
         elif current_page == PAGE_PRINTING_FILAMENT:
             self.update_printing_heater_settings_ui()
             self.update_printing_temperature_increment_ui()
@@ -1121,7 +1125,7 @@ class DisplayController:
     def draw_kamp_box_index(self, index, color):
         if self.bed_leveling_counts[0] == 0:
             return
-        row = (self.bed_leveling_counts[1]-1) - int(index / self.bed_leveling_counts[0])
+        row = (self.bed_leveling_counts[0]-1) - int(index / self.bed_leveling_counts[0])
         col = index % self.bed_leveling_counts[0]
         if row % 2 == 1:
           col = self.bed_leveling_counts[1] - 1 - col
@@ -1147,7 +1151,7 @@ class DisplayController:
                 self.update_zprobe_leveling_ui()
         elif "Adapted probe count:" in response:
             parts = response.split(":")[1].split(",")
-            x_count = int(parseparts[0].strip())
+            x_count = int(parts[0].strip())
             y_count = int(parts[1][:-1].strip())
             self.bed_leveling_counts = [x_count, y_count]
         elif response.startswith("// bed_mesh: generated points"):
