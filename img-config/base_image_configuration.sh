@@ -16,11 +16,6 @@ if [ ! -d "$HOME/kiauh" ]; then
     cd ~/ && git clone https://github.com/dw-0/kiauh.git
 fi
 
-# Clone OpenNept4une git repository if not exists
-if [ ! -d "$HOME/Klipper" ]; then
-    cd ~/ && git clone https://github.com/Klipper3d/klipper.git
-fi
-
 # Add extraargs to armbianEnv.txt if not exists
 FILE_PATH="/boot/armbianEnv.txt"
 LINE_TO_ADD="extraargs=net.ifnames=0"
