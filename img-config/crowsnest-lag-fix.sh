@@ -7,8 +7,8 @@ ln -sfn /usr/bin/ustreamer ~/crowsnest/bin/ustreamer/ustreamer
 ln -sfn /usr/bin/ustreamer-dump ~/crowsnest/bin/ustreamer/ustreamer-dump
 
 # Path to the log and configuration files
-LOG_FILE="${HOME}/printer_data/logs/crowsnets.log"
-CONF_FILE="${HOME}/printer_data/config/crowsnets.conf"
+LOG_FILE="${HOME}/printer_data/logs/crowsnet.log"
+CONF_FILE="${HOME}/printer_data/config/crowsnet.conf"
 
 # Search for the video device in the log file
 # The grep command looks for lines that map the camera to a video device, capturing the last part that starts with '/dev/video'
