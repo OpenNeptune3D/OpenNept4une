@@ -35,8 +35,7 @@
 - No need for Elegoo Firmware Updates (Updated in Fluidd GUI or Kiauh)
 - Crowsnest Current (Main) w/ ustreamer
 - Orca Slicer Profiles Provided
-- Simplified printer.cfg (Credit: Modified SmartHome42/Printernbeer & Tom's Basement Neptune 4 Config)
-- Renamed variables for readability
+- Simplified printer.cfg 
 - Corrected instructions for Flashing v0.12 Klipper MCU Firmware
 - Firmware Retraction configured
 - E & Z Steppers configured for 32 microsteps
@@ -48,40 +47,38 @@
 
 ### Overview:
 
-1. Determine stepper motor current & PCB version (N4 & Pro Only)
-2. Flash eMMC with the latest OpenNept4une release image
-3. Connect your printer to your network
+1. Determine the stepper motor current and identify the PCB version (applicable only to N4 & Pro models)
+2. Flash your eMMC with the latest OpenNept4une release image
+3. Connect your printer to your network (ethernet)
 4. Update third-party modules in Kiauh / Fluidd or Mailsail
 5. Run the OpenNept4une script and select: 0ption 1) Install the latest OpenNept4une Printer.cfg (Select y for all prompts)
-6. After reboot re-run the OpenNept4une script and select: Option 4) Update MCU & (Virtual) MCU RPi Firmware (Select Both)
+6. After reboot re-run the OpenNept4une script and select: Option 4) Update MCU & (Virtual) MCU RPi Firmware (Select All but skip Pico for now)
 
 ### Preparation (N4 & N4 Pro Models Only: If Plus or Max skip to - [Requirements for Flashing the Image](#requirements-for-flashing-the-image)):
 
-The setup script will prompt you for two inputs: the stepper motor current, as well as the PCB version (N4 and N4 Pro only). ELEGOO has released the printers with two different types of steppers using different current and multiple board revisions. **Warning:** Choosing the wrong current might damage the stepper motors permanently, so it is better to double check, before picking a value.
+During the setup, you'll be asked for two key details: the current for the stepper motors and the PCB version, specific to N4 and N4 Pro models only. Be aware that these two models come with various stepper motors and PCB versions. **Caution:** Incorrectly setting the motor current can cause irreversible damage, so verify your selections carefully.
 
 *Determining Stepper Motor Current:*
-There are multiple ways to determine which current the steppers are running at, you may chose either of them to determine which current your servos use:
+Choose one of these methods to determine your motor's current:
 
-1. Checking the serial number (as suggested by ELEGOO):
-   In the official firmware upgrade guide ELEGOO suggests to use the serial number that is printed onto the bar code of your printer, to determine which servo is used:
+1. Serial Number:
+Refer to the barcode on your printer. Models before July 2023 (Neptune 4) or June 2023 (Neptune 4 Pro) use 0.8A steppers; later models use 1.2A steppers.
 
-   ![serial number composition](pictures/serial-number.png)
+![Serial Number Info](pictures/serial-number.png)
 
-   For **Neptune 4**: Before July 2023, it is using the 0.8A steppers, in and after July 2023 the 1.2A ones.
+2. Printer.cfg File:
+Look in the "TMC UART configuration" section of the printer.cfg file that came with your printer. The run_current for stepper_x and stepper_y will show "0.8" or "1.0 to 1.2".
 
-   For **Neptune 4 Pro**: Before June 2023, it is using the 0.8A steppers, in and after June 2023 the 1.2A ones.
+3. Stepper Inscription:
+Check the inscription on the X/Y stepper motors. "BJ42D15-26V77" indicates 0.8A, and "BJ42D22-53V04" indicates 1.2A.
 
-2. Checking the stock `printer.cfg` that shipped with your printer:
-   If you still have access to your printers files, you can check the `printer.cfg` for the current value. In the "TMC UART configuration" section, you will find the `tmc2209` stepper configuration. The `run_current` value of the `stepper_x` and `stepper_y` will either say "0.8" or "1.2", that is your printers stepper motor current to input into the install script.
-
-3. (Most safe) checking the inscription on the steppers themselves:
-   Check the side of the X/Y stepper motors, they should either say "BJ42**D15-26V77**" which is the 0.8A or "BJ42**D22-53V04**" which is the 1.2A current variant. See [this image](pictures/stepper-current.png) for a comparison.
+![Stepper Model No](pictures/stepper-current.png)
 
 *Determining the PCB Version:*
 
-The second value needed by the install script is the PCB version. When you remove the eMMC for flashing make sure you keep an eye on the silkscreening on the PCB, it should either state V1.0 or V1.1, that is the input value when prompted in the script (see the yellow squares in these images for reference):
+When you access the eMMC, note the PCB / Main-board's version number, which will be either V1.0 or V1.1.
 
-![version 1.0](pictures/pads-bridge-version10.jpg) ![version 1.1](pictures/version11.jpg)
+![Version 1.1](pictures/version11.jpg)
 
 ### Requirements for Flashing the Image:
 
@@ -146,7 +143,7 @@ cd ~/OpenNept4une/ && git fetch --all && git reset --hard origin/main && git cle
 ```bash
 ~/OpenNept4une/OpenNept4une.sh
 ```
-- Then Perform Option (4): Update MCU & (Virtual) MCU RPi Firmware (Select Both)
+- Then Perform Option (4): Update MCU & (Virtual) MCU RPi Firmware (Select All but Skip Pico for now)
 
 # General Configuration Instructions
 
@@ -174,9 +171,8 @@ sudo armbian-config
 
 ## Fluidd / Klipper Calibration:
 
-Config / Tuning Macros below (found pre-configured in Fluidd
-BedTune/Level macros will begin after heating- do Probe Z Offset
-cold):
+Config / Tuning Macros below (pre-configured in Fluidd
+BedTune/Level macros will begin after heating finishes. Do the Probe Z Offset cold):
 
 `BED_LEVEL_SCREWS_TUNE`\
 [Klipper Docs](https://www.klipper3d.org/Manual_Level.html#adjusting-bed-leveling-screws-using-the-bed-probe)
@@ -207,6 +203,9 @@ After editing configs or calibrating, save in the fluidd
 interface, then in fluidd select the top right menu \> Host \>
 reboot. Avoid direct power cycles; this ensures changes are saved from
 RAM to eMMC.
+
+I suggest adjusting the Flow Rate by following the instructions in this link. While the other tubing techniques can be beneficial, I advise against doing pressure advance tuning and control in this context. It may be necessary to turn off firmware retraction when conducting retraction tests during the tuning process.
+[OrcaSlicer Fine Tuning](https://github.com/SoftFever/OrcaSlicer/wiki/Calibration#Flow-rate)
     
 ## Slicer Settings 
 (If using the provided OrcaSlicer profiles you can skip
