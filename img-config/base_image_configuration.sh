@@ -18,12 +18,7 @@ fi
 
 # Clone OpenNept4une git repository if not exists
 if [ ! -d "$HOME/Klipper" ]; then
-    cd ~/ && git https://github.com/Klipper3d/klipper.git
-fi
-
-# Clone OpenNept4une git repository if not exists
-if [ ! -d "$HOME/OpenNept4une" ]; then
-    cd ~/ && git https://github.com/halfmanbear/OpenNept4une.git
+    cd ~/ && git clone https://github.com/Klipper3d/klipper.git
 fi
 
 # Add extraargs to armbianEnv.txt if not exists
