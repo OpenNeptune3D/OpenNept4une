@@ -308,57 +308,46 @@ copy_file() {
 apply_configuration() {
     if [[ -f "$PRINTER_CFG_FILE" ]]; then
         cp "$PRINTER_CFG_FILE" "$BACKUP_PRINTER_CFG_FILE"
-        echo "Backup of 'printer.cfg' created as 'backup-printer.cfg.bak'."
+        echo -e "\nBackup of 'printer.cfg' created as 'backup-printer.cfg.bak'.\n"
         sleep 5
     fi
-    
+
     if [[ -n "$PRINTER_CFG_SOURCE" ]]; then
         copy_file "$PRINTER_CFG_SOURCE" "$PRINTER_CFG_DEST/printer.cfg" false
     else
-        echo "Error: Invalid printer configuration file."
+        echo -e "\nError: Invalid printer configuration file.\n"
         return 1
     fi
-    
+
     if [[ -n "$DTB_SOURCE" ]]; then
+        echo -e "\nDo you wish to update the DTB file? First Run on Git Image MUST select Yes, others skip (y/n)\n"
+        read -r -n 1 REPLY
         echo ""
-        read -p "Do you wish to update the DTB file? First Run on Git Image MUST select Yes, others skip (y/n) " -n 1 -r
-        echo ""
-      
 
         if [[ $REPLY =~ ^[Yy]$ ]]; then
-            # New check for the string "mks" in /boot/.OpenNept4une.txt
             if grep -q "mks" /boot/.OpenNept4une.txt; then
-                echo "Skipping"
-                sleep 5 
+                echo -e "\nSkipping\n"
+                sleep 5
             else
                 copy_file "$DTB_SOURCE" "$DTB_DEST" true
             fi
         else
-            echo ""
-            echo "Skipping DTB file update."
-            echo ""
+            echo -e "\nSkipping DTB file update.\n"
         fi
     else
-        echo "Error: Invalid DTB file selection."
+        echo -e "\nError: Invalid DTB file selection.\n"
         return 1
     fi
-    
-    # User prompt for installing KAMP/moonraker and fluidd GUI configuration
-    echo ""
-    echo "Do you wish to install the latest KAMP/moonraker/fluiddGUI configurations? (y/n)"
-    echo ""
-    read -p "If this is a first-time install, it is recommended. If just updating printer.cfg & you have custom KAMP configurations, it is best to skip: " user_choice
-    echo ""
-    
-    if [[ "$user_choice" == "y" ]]; then
-        # Commands to install the latest configurations
-        echo "Installing latest configurations..."
-        echo ""
+
+    echo -e "\nDo you wish to install the latest KAMP/moonraker/fluiddGUI configurations? (y/n)\n"
+    read -r REPLY
+
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        echo -e "\nInstalling latest configurations...\n"
         cp -r ~/OpenNept4une/img-config/printer-data/* ~/printer_data/config/
         mv ~/printer_data/config/data.mdb ~/printer_data/database/data.mdb
     else
-        echo "Skipping the installation of latest configurations."
-        echo ""
+        echo -e "\nSkipping the installation of latest configurations.\n"
     fi
 }
     
