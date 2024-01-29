@@ -321,7 +321,7 @@ apply_configuration() {
 
     if [[ -n "$DTB_SOURCE" ]]; then
         echo -e "\nDo you wish to update the DTB file? First Run on Git Image MUST select Yes, others skip (y/n)\n"
-        read -r -n 1 REPLY
+        read -r REPLY
         echo ""
 
         if [[ $REPLY =~ ^[Yy]$ ]]; then
