@@ -16,6 +16,16 @@ if [ ! -d "$HOME/kiauh" ]; then
     cd ~/ && git clone https://github.com/dw-0/kiauh.git
 fi
 
+# Clone OpenNept4une git repository if not exists
+if [ ! -d "$HOME/Klipper" ]; then
+    cd ~/ && git https://github.com/Klipper3d/klipper.git
+fi
+
+# Clone OpenNept4une git repository if not exists
+if [ ! -d "$HOME/OpenNept4une" ]; then
+    cd ~/ && git https://github.com/halfmanbear/OpenNept4une.git
+fi
+
 # Add extraargs to armbianEnv.txt if not exists
 FILE_PATH="/boot/armbianEnv.txt"
 LINE_TO_ADD="extraargs=net.ifnames=0"
@@ -94,6 +104,11 @@ if ! (crontab -l 2>/dev/null | grep -q "/bin/sync"); then
 else
     echo "The sync command is already in the crontab."
 fi
+
+~/OpenNept4une/img-config/usb-storage-automount.sh
+~/OpenNept4une/img-config/adb-automount.sh
+~/OpenNept4une/img-config/rpi-mcu-install.sh
+~/OpenNept4une/display/display-service-installer.sh
 
 # Immediate sync execution
 sync
