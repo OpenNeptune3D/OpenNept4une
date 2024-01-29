@@ -102,7 +102,6 @@ fi
 
 ~/OpenNept4une/img-config/usb-storage-automount.sh
 ~/OpenNept4une/img-config/adb-automount.sh
-~/OpenNept4une/img-config/rpi-mcu-install.sh
 ~/OpenNept4une/display/display-service-installer.sh
 
 # Immediate sync execution
