@@ -75,7 +75,8 @@ response_actions = {
         2: "page " + PAGE_PRINTING_STOP,
         3: "page " + PAGE_LIGHTS,
         4: "page " + PAGE_PRINTING_EMERGENCY_STOP,
-
+        5: "page " + PAGE_PRINTING_DIALOG_FLOW,
+        6: "page " + PAGE_PRINTING_DIALOG_SPEED,
     },
     24: {
         0: 'confirm_complete',
@@ -133,6 +134,9 @@ response_actions = {
     84: {
         1: "toggle_part_light",
         2: "toggle_frame_light",
+    },
+    86: {
+        1: '',
     },
     94: {
         5: 'retry_screw_leveling'
@@ -192,8 +196,20 @@ input_actions = {
         2: "set_extrude_amount_$",
         3: "set_extrude_speed_$",
     },
+    85: {
+        1: "set_flow_$",
+    },
+    86: {
+        1: "set_speed_$",
+    },
     95: {
         0: "set_temp_extruder_$",
         1: "set_temp_heater_bed_$",
     },
+}
+
+custom_touch_actions = {
+    19: {
+
+    }
 }

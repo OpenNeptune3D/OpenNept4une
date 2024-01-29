@@ -29,6 +29,7 @@ class Neptune4Mapper(Mapper):
 
         PAGE_CONFIRM_PRINT: "18",
         PAGE_PRINTING: "19",
+        PAGE_PRINTING_KAMP: "104",
         PAGE_PRINTING_PAUSE: "25",
         PAGE_PRINTING_STOP: "26",
         PAGE_PRINTING_EMERGENCY_STOP: "106",
@@ -36,6 +37,10 @@ class Neptune4Mapper(Mapper):
         PAGE_PRINTING_FILAMENT: "28",
         PAGE_PRINTING_SPEED: "135",
         PAGE_PRINTING_ADJUST: "127",
+        PAGE_PRINTING_FILAMENT_RUNOUT: "22",
+        PAGE_PRINTING_DIALOG_SPEED: "86",
+        PAGE_PRINTING_DIALOG_FAN: "87",
+        PAGE_PRINTING_DIALOG_FLOW: "85",
 
         PAGE_OVERLAY_LOADING: "130",
         PAGE_LIGHTS: "84"
@@ -48,6 +53,7 @@ class Neptune4Mapper(Mapper):
                                              build_accessor(self.map_page(PAGE_PREPARE_TEMP), "nozzletemp"),
                                              build_accessor(self.map_page(PAGE_PREPARE_EXTRUDER), "nozzletemp"),
                                              build_accessor(self.map_page(PAGE_PRINTING), "nozzletemp"),
+                                             build_accessor(self.map_page(PAGE_PRINTING_KAMP), "b[3]"),
                                              build_accessor(self.map_page(PAGE_PRINTING_FILAMENT), "nozzletemp")], formatter=format_temp)],
                 "target": [MappingLeaf([build_accessor(self.map_page(PAGE_PREPARE_TEMP), 17)], formatter=lambda x: f"{x:.0f}")],
 
@@ -57,6 +63,7 @@ class Neptune4Mapper(Mapper):
                                              build_accessor(self.map_page(PAGE_PREPARE_TEMP), "bedtemp"),
                                              build_accessor(self.map_page(PAGE_PREPARE_EXTRUDER), "bedtemp"),
                                              build_accessor(self.map_page(PAGE_PRINTING), "bedtemp"),
+                                             build_accessor(self.map_page(PAGE_PRINTING_KAMP), "b[2]"),
                                              build_accessor(self.map_page(PAGE_PRINTING_FILAMENT), "bedtemp")], formatter=format_temp)],
                 "target": [MappingLeaf([build_accessor(self.map_page(PAGE_PREPARE_TEMP), 18)], formatter=lambda x: f"{x:.0f}")],
             },
@@ -66,7 +73,7 @@ class Neptune4Mapper(Mapper):
                         MappingLeaf([build_accessor(self.map_page(PAGE_PRINTING), "x_pos")], formatter=lambda x: f"X[{x:3.2f}]")],
                     1: [MappingLeaf([build_accessor(self.map_page(PAGE_MAIN), "y_pos")]),
                         MappingLeaf([build_accessor(self.map_page(PAGE_PRINTING), "y_pos")], formatter=lambda y: f"Y[{y:3.2f}]")],
-                    2: [MappingLeaf([build_accessor(self.map_page(PAGE_MAIN), "z_pos"), build_accessor(self.map_page(PAGE_PRINTING), "zvalue")])],
+                    2: [MappingLeaf([build_accessor(self.map_page(PAGE_MAIN), "z_pos")])],
                 },
                 "live_velocity": [MappingLeaf([build_accessor(self.map_page(PAGE_PRINTING), "pressure_val")], formatter=lambda x: f"{x:3.2f}mm/s")],
             },
@@ -75,8 +82,10 @@ class Neptune4Mapper(Mapper):
                 "filename": [MappingLeaf([build_accessor(self.map_page(PAGE_PRINTING), "t0")], formatter=lambda x: x.replace(".gcode", ""))],
             },
             "gcode_move": {
-                "extrude_factor": [MappingLeaf([build_accessor(self.map_page(PAGE_PRINTING), "flow_speed")], formatter=format_percent)],
-                "speed_factor": [MappingLeaf([build_accessor(self.map_page(PAGE_PRINTING), "printspeed")], formatter=format_percent)],
+                "extrude_factor": [MappingLeaf([build_accessor(self.map_page(PAGE_PRINTING), "flow_speed")], formatter=format_percent),
+                                 MappingLeaf([build_accessor(self.map_page(PAGE_PRINTING_DIALOG_FLOW), "b[3]"), build_accessor(self.map_page(PAGE_PRINTING_DIALOG_FLOW), "b[6]")], field_type="val", formatter=lambda x: f"{x * 100:.0f}")],
+                "speed_factor": [MappingLeaf([build_accessor(self.map_page(PAGE_PRINTING), "printspeed")], formatter=format_percent),
+                                 MappingLeaf([build_accessor(self.map_page(PAGE_PRINTING_DIALOG_SPEED), "b[3]"), build_accessor(self.map_page(PAGE_PRINTING_DIALOG_SPEED), "b[6]")], field_type="val", formatter=lambda x: f"{x * 100:.0f}")],
                 "homing_origin": {
                     2: [MappingLeaf([build_accessor(self.map_page(PAGE_PRINTING_ADJUST), "15")], formatter=lambda x: f"{x:.3f}")],
                 }
@@ -85,13 +94,20 @@ class Neptune4Mapper(Mapper):
                 "speed": [MappingLeaf([build_accessor(self.map_page(PAGE_PRINTING), "fanspeed")], formatter=format_percent), MappingLeaf([build_accessor(self.map_page(PAGE_SETTINGS), "12")], field_type="pic", formatter=lambda x: "77" if int(x) == 1 else "76")]
             },
             "display_status": {
-                "progress": [MappingLeaf([build_accessor(self.map_page(PAGE_PRINTING), "printvalue")], formatter=lambda x: f"{x * 100:2.1f}"), MappingLeaf([build_accessor(self.map_page(PAGE_PRINTING), "printprocess")], field_type="val", formatter=lambda x: f"{x * 100:.0f}")]
+                "progress": [MappingLeaf([build_accessor(self.map_page(PAGE_PRINTING), "printvalue")], formatter=lambda x: f"{x * 100:2.0f}%"), MappingLeaf([build_accessor(self.map_page(PAGE_PRINTING), "printprocess")], field_type="val", formatter=lambda x: f"{x * 100:.0f}")]
             },
             "output_pin Part_Light": {"value": [MappingLeaf([build_accessor(self.map_page(PAGE_LIGHTS), "led1")], field_type="pic", formatter=lambda x: "77" if int(x) == 1 else "76")]},
             "output_pin Frame_Light": {"value": [MappingLeaf([build_accessor(self.map_page(PAGE_LIGHTS), "led2")], field_type="pic", formatter= lambda x: "77" if int(x) == 1 else "76")]},
             "filament_switch_sensor fila": {"enabled": [MappingLeaf([build_accessor(self.map_page(PAGE_SETTINGS), "11"),
                                                                      build_accessor(self.map_page(PAGE_PRINTING_ADJUST), "16")], field_type="pic", formatter= lambda x: "77" if int(x) == 1 else "76")]}
         }
+
+    def set_z_display(self, value):
+        if value == "mm":
+            self.data_mapping["motion_report"]["live_position"][2] = [MappingLeaf([build_accessor(self.map_page(PAGE_MAIN), "z_pos"), build_accessor(self.map_page(PAGE_PRINTING), "zvalue")])]
+        elif value == "layer":
+            self.data_mapping["print_stats"]["info"] = {"current_layer": [MappingLeaf([build_accessor(self.map_page(PAGE_PRINTING), "zvalue")])] }
+
 
 class Neptune4ProMapper(Neptune4Mapper):
 
@@ -143,8 +159,8 @@ class Neptune4DisplayCommunicator(DisplayCommunicator):
             return Neptune4MaxMapper()
         else:
             self.logger.error(f"Unknown printer model {model}, falling back to Neptune 4")
-            self.display.model = MODEL_N4_REGULAR
-            self.mapper = Neptune4Mapper()
+            self.model = MODEL_N4_REGULAR
+            return Neptune4Mapper()
 
     def get_model(self) -> str:
         return self.model

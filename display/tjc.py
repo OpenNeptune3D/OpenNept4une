@@ -15,8 +15,8 @@ class EventType(IntEnum):
     TOUCH = 0x65  # Touch event
     TOUCH_COORDINATE = 0x67  # Touch coordinate
     TOUCH_IN_SLEEP = 0x68  # Touch event in sleep mode
-    STRING_INPUT = 0x70  # String input
-    NUMERIC_INPUT = 0x71  # Numeric input
+    SLIDER_INPUT = 0x69
+    NUMERIC_INPUT = 0x72  # Numeric input
     AUTO_SLEEP = 0x86  # Device automatically enters into sleep mode
     AUTO_WAKE = 0x87  # Device automatically wake up
     STARTUP = 0x88  # System successful start up
@@ -33,6 +33,7 @@ class TJCProtocol(NextionProtocol):
         0x66: 5,  # Current Page Number
         0x67: 9,  # Touch Coordinate(awake)
         0x68: 9,  # Touch Coordinate(sleep)
+        0x69: 8,  # Slider Value
         0x71: 5,  # Numeric Data Enclosed
         0x86: 4,  # Auto Entered Sleep Mode
         0x87: 4,  # Auto Wake from Sleep
@@ -41,7 +42,10 @@ class TJCProtocol(NextionProtocol):
         0xFD: 4,  # Transparent Data Finished
         0xFE: 4,  # Transparent Data Ready
     }
-        
+    
+    def is_event(self, message):
+        return len(message) > 0 and message[0] in EventType.__members__.values()
+    
     def data_received(self, data):
         self.buffer += data
 
@@ -76,9 +80,10 @@ class TJCProtocol(NextionProtocol):
 
         full_message = self.buffer[:expected_packet_length]
 
-        if full_message[0] == 0x71:
+        if full_message[0] == 0x71 and not full_message.endswith(self.EOL):
             # Keyboard input does not result in correct packet length
             full_message += self.EOL
+            full_message = b'0x72' + full_message[1:]
             was_keyboard_input = True
 
         if  not full_message.endswith(self.EOL):
@@ -127,19 +132,19 @@ class TJCClient(Nextion):
                 TJCTouchDataPayload._make(struct.unpack("BB", message[1:])),
             )
             return
-        elif typ == EventType.STRING_INPUT:
-            self._schedule_event_message_handler(
-                EventType(typ),
-                TJCStringInputPayload._make(struct.unpack("BBp", message[1:])),
-            )
-            return
         elif typ == EventType.NUMERIC_INPUT:
             self._schedule_event_message_handler(
                 EventType(typ),
                 TJCNumericInputPayload._make(struct.unpack("BBH", message[1:])),
             )
             return
-        super.event_message_handler(message)
+        elif typ == EventType.SLIDER_INPUT:
+            self._schedule_event_message_handler(
+                EventType(typ),
+                TJCNumericInputPayload._make(struct.unpack("BBH", message[1:])),
+            )
+            return
+        super().event_message_handler(message)
 
     async def reconnect(self):
         await self._connection.close()
