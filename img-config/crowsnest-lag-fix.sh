@@ -12,7 +12,7 @@ CONF_FILE="${HOME}/printer_data/config/crowsnest.conf"
 
 # Search for the video device in the log file
 # The grep command looks for lines that map the camera to a video device, capturing the last part that starts with '/dev/video'
-DEVICE_PATH=$(grep -o '/dev/video[0-9]\+' "$LOG_FILE" | tail -1) # Using 'tail -1' to get the last match, if multiple
+DEVICE_PATH=$(grep -o ' -> /dev/video[0-9]\+' "$LOG_FILE" | tail -1) # Using 'tail -1' to get the last match, if multiple
 
 # Check if a device path was found
 if [ -z "$DEVICE_PATH" ]; then
