@@ -1,5 +1,7 @@
 #!/bin/bash
 
+sudo rm -rf ~/OpenNept4une/display/venv
+rm -rf ~/OpenNept4une/display/__pycache__
 # Run the first script
 ~/OpenNept4une/display/display-env-install.sh
 
