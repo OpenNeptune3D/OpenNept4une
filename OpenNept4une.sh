@@ -32,6 +32,11 @@ run_fixes() {
     if ! sudo grep -qF "$SYSTEM_INFO" "$FLAG_FILE"; then
         echo "$SYSTEM_INFO" | sudo tee -a "$FLAG_FILE" > /dev/null
     fi
+
+    # Check if symlink for this file exists
+    if [ ! -f "/usr/local/bin/opennept4une" ]; then
+        sudo ln -s "$SCRIPT" /usr/local/bin/opennept4une
+    fi
 }
 
 # ASCII art for OpenNept4une 
