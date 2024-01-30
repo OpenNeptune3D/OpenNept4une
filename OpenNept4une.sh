@@ -579,6 +579,27 @@ print_menu() {
     echo "======================================"
 }
 
+TEMP=$(getopt -o yh --long yes,help,printer_model:,motor_current:,pcb_version: \
+            -n 'OpenNept4une.sh' -- "$@")
+if [ $? != 0 ] ; then exit 1 ; fi
+eval set -- "$TEMP"
+
+while true; do
+    case "$1" in
+        --printer_model ) PRINTER_MODEL="$2"; shift 2 ;;
+        --motor_current ) MOTOR_CURRENT="$2"; shift 2 ;;
+        --pcb_version ) PCB_VERSION="$2"; shift 2 ;;
+        -y|--yes ) SAY_YES=true; shift ;;
+        -h|--help ) print_help; exit 0 ;;
+        * ) break ;;
+    esac
+done
+
+# inserted by getopt, we don't want it
+if [[ $1 = "--" ]]; then
+    shift
+fi
+
 if [ -z "$1" ];
 then
     run_fixes
@@ -619,22 +640,6 @@ then
         esac
     done
 else
-    TEMP=$(getopt -o yh --long yes,help,printer_model:,motor_current:,pcb_version: \
-                -n 'OpenNept4une.sh' -- "$@")
-    if [ $? != 0 ] ; then exit 1 ; fi
-    eval set -- "$TEMP"
-
-    while true; do
-        case "$1" in
-            --printer_model ) PRINTER_MODEL="$2"; shift 2 ;;
-            --motor_current ) MOTOR_CURRENT="$2"; shift 2 ;;
-            --pcb_version ) PCB_VERSION="$2"; shift 2 ;;
-            -y|--yes ) SAY_YES=true; shift ;;
-            -h|--help ) print_help; exit 0 ;;
-            * ) break ;;
-        esac
-    done
-
     run_fixes
 
     COMMAND=$1;
