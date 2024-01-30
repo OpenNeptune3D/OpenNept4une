@@ -352,7 +352,7 @@ apply_configuration() {
         read -r REPLY
         echo ""
 
-        if [[ $REPLY =~ ^[Yy]$ ]]; then
+        if [[ $REPLY =~ ^[Yy]$ || $SAY_YES = true  ]]; then
             if grep -q "mks" /boot/.OpenNept4une.txt; then
                 echo -e "\nSkipping\n"
                 sleep 5
