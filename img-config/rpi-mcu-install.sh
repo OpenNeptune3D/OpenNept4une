@@ -3,19 +3,24 @@
 # Path to other resources
 MCU_SWFLASH_ALT="${HOME}/OpenNept4une/mcu-firmware/alt-method/mcu-swflash-run.sh"
 
-# Prompt the user to select the MCU for updating
-echo ""
-echo "Choose the MCU(s) to update:"
-echo ""
-select mcu_choice in "STM32" "Virtual RPi" "Pico-based USB Accelerometer" "All" "Cancel"; do
+if [[ -z $1 ]]; then
+    # Prompt the user to select the MCU for updating
+    echo ""
+    echo "Choose the MCU(s) to update:"
+    echo ""
+    select mcu_choice in "STM32" "Virtual RPi" "Pico-based USB Accelerometer" "All" "Cancel"; do
     case $mcu_choice in
         STM32 ) echo "Updating STM32 MCU..."; break;;
         Virtual\ RPi ) echo "Updating Virtual RPi MCU..."; break;;
         Pico-based\ USB\ Accelerometer ) echo "Updating Pico-based USB Accelerometer..."; break;;
         All ) echo "Starting update process for STM32, Virtual RPi MCU and Pico-based USB Accelerometer..."; break;;
-        Cancel ) echo "Update canceled."; exit;;
-    esac
-done
+            Cancel ) echo "Update canceled."; exit;;
+        esac
+    done
+else
+    # Use the first argument as the MCU choice
+    mcu_choice=$1
+fi
 
 # Update Klipper repository
 cd ~/klipper/ && git pull origin master
@@ -67,7 +72,7 @@ if [[ "$mcu_choice" == "STM32" ]] || [[ "$mcu_choice" == "All" ]]; then
         echo ""
         echo -e "\nHave you downloaded the bin files and are ready to continue? (y/n)"
         read continue_choice
-        if [[ "$continue_choice" != "y" ]]; then
+        if [[ "$continue_choice" =~ ^[Yy]$ ]]; then
             echo ""
             echo "Power-off the machine and insert the microSD card."
             exit
