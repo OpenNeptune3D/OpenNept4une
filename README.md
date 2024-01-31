@@ -182,7 +182,7 @@ BedTune/Level macros will begin after heating finishes. Do the Probe Z Offset co
 (This test should be done cold. Paper Thickness Test. When you determine a value, click Accept and run a `SAVE_CONFIG` command after)
 
 `AUTO_FULL_BED_LEVEL`\
-(Not required as using KAMP meshes before print, but useful
+(Not required as using dynamic meshes before print, but useful
 to see how level the whole bed is - Click Save Config & Restart
 after)
 
