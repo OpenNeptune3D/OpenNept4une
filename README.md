@@ -1,4 +1,7 @@
-# OpenNept4une
+<p align="center">
+  <img src="pictures/OpenNept4une.png" alt="OpenNept4une Logo">
+  <h1 align="center">OpenNept4une</h1>
+</p>
 
 ## De-Elegoo-izing the Neptune 4 Series 3D Printers
 
