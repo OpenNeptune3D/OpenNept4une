@@ -113,7 +113,7 @@ Pass: makerbase
 1. **Access Network Manager:**
 Use the following command in the terminal to open the network manager:
 ```bash
-~/OpenNept4une/OpenNept4une.sh
+sudo nmtui
 ```
 2. **Connect to Wi-Fi:**
 - In the network manager, navigate to `Activate a connection`.
