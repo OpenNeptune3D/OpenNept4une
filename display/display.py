@@ -1194,7 +1194,7 @@ try:
         config.set('main_screen', 'display_name_line_color', '1725')
 
         config.add_section('print_screen')
-        config.set('z_display', 'mm')
+        config.set('print_screen', 'z_display', 'mm')
 
         config.add_section('thumbnails')
         config.set('main_screen', '; Background color for thumbnails. As RGB Hex value. Remove for default background color.')
