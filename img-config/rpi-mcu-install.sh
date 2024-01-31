@@ -75,7 +75,10 @@ if [[ "$mcu_choice" == "STM32" ]] || [[ "$mcu_choice" == "All" ]]; then
         if [[ "$continue_choice" =~ ^[Yy]$ ]]; then
             echo ""
             echo "Power-off the machine and insert the microSD card."
-            exit
+            if [[ "$mcu_choice" == "STM32" ]]; then
+                # Exit only if the selected choice was specifically STM32, not "All"
+                exit
+            fi
         fi
     fi
 fi
