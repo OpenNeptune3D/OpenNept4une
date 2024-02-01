@@ -161,12 +161,56 @@ update_repo() {
     echo "======================================"
 }
 
+toggle_branch() {
+    main_repo_dir="${HOME}/OpenNept4une"
+    display_repo_dir="${HOME}/display_connector"
+    target_branch=""
+    current_branch_main=""
+
+    # Check the current branch of the main repository
+    if [ -d "$main_repo_dir" ]; then
+        current_branch_main=$(git -C "$main_repo_dir" branch --show-current 2>/dev/null)
+        if [ "$current_branch_main" = "main" ]; then
+            target_branch="dev"
+        else
+            target_branch="main"
+        fi
+    fi
+
+    # If a current branch was determined, use it in the confirmation prompt
+    if [ -n "$current_branch_main" ]; then
+        echo "You are currently on the '$current_branch_main' branch."
+        read -p "Would you like to switch to the '$target_branch' branch? (y/n): " -r user_response
+        if [[ $user_response =~ ^[Yy]$ ]]; then
+            # Attempt to switch branches in the main repo, if it exists
+            if [ -d "$main_repo_dir" ]; then
+                git -C "$main_repo_dir" reset --hard >/dev/null 2>&1
+                git -C "$main_repo_dir" clean -fd >/dev/null 2>&1
+                git -C "$main_repo_dir" checkout $target_branch >/dev/null 2>&1 && echo "Switched $main_repo_dir from $current_branch_main to $target_branch."
+            fi
+
+            # Attempt to switch branches in the display repo, if it exists
+            if [ -d "$display_repo_dir" ]; then
+                git -C "$main_repo_dir" reset --hard >/dev/null 2>&1
+                git -C "$main_repo_dir" clean -fd >/dev/null 2>&1
+                git -C "$main_repo_dir" checkout $target_branch >/dev/null 2>&1 && echo "Switched $main_repo_dir from $current_branch_main to $target_branch."
+            fi
+
+            echo "Branch switch operation completed."
+        else
+            echo "Branch switch operation aborted."
+        fi
+    else
+        echo "Could not determine the current branch. Make sure the main repository exists and is accessible."
+    fi
+}
+
 advanced_more() {
     while true; do
         clear_screen
         echo -e "\033[0;94m$OPENNEPT4UNE_ART${NC}"
         echo "======================================"
-        echo "Welcome to OpenNept4une - Advanced Options"
+        echo "OpenNept4une - Advanced Options"
         echo "======================================"
         echo ""
         echo "1) Install Android ADB rules (klipperscreen)"
@@ -179,7 +223,9 @@ advanced_more() {
         echo ""
         echo "5) Resize Active Armbian Partition - for eMMC > 8GB."
         echo ""
-        echo "6) Return to Main Menu"
+        echo "6) Switch Git repo between main/dev"
+        echo ""
+        echo "7) Return to Main Menu"
         echo "======================================"
 
         read -p "Enter your choice: " choice
@@ -190,7 +236,8 @@ advanced_more() {
             3) base_image_config;;
             4) de_elegoo_image_cleanser;;
             5) armbian_resize;;
-            6) return;;  # Return to the main menu
+            6) toggle_branch;;
+            7) return;;  # Return to the main menu
             *) echo "Invalid choice, please try again.";;
         esac
 
@@ -233,7 +280,6 @@ install_feature() {
     else
         echo "Installation skipped."
     fi
-
     echo "======================================"
 }
 
