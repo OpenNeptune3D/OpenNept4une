@@ -2,7 +2,7 @@
 
 # Path to the script and other resources
 SCRIPT="${HOME}/OpenNept4une/OpenNept4une.sh"
-DISPLAY_SERVICE_INSTALLER="${HOME}/OpenNept4une/display/display-service-installer.sh"
+DISPLAY_SERVICE_INSTALLER="${HOME}/display_connector/display-service-installer.sh"
 MCU_RPI_INSTALLER="${HOME}/OpenNept4une/img-config/rpi-mcu-install.sh"
 USB_STORAGE_AUTOMOUNT="${HOME}/OpenNept4une/img-config/usb-storage-automount.sh"
 ANDROID_RULE_INSTALLER="${HOME}/OpenNept4une/img-config/adb-automount.sh"
@@ -10,6 +10,10 @@ CROWSNEST_FIX_INSTALLER="${HOME}/OpenNept4une/img-config/crowsnest-lag-fix.sh"
 BASE_IMAGE_INSTALLER="${HOME}/OpenNept4une/img-config/base_image_configuration.sh"
 DE_ELEGOO_IMAGE_CLEANSER="${HOME}/OpenNept4une/img-config/de_elegoo_cleanser.sh"
 FLAG_FILE="/boot/.OpenNept4une.txt"
+
+OPENNEPT4UNE_REPO="https://github.com/OpenNeptune3D/OpenNept4une.git"
+DISPLAY_CONNECTOR_REPO="https://github.com/OpenNeptune3D/display_connector.git"
+DISPLAY_CONNECTOR_DIR="${HOME}/display_connector"
 
 # Command line arguments
 model_key=""
@@ -29,6 +33,9 @@ OPENNEPT4UNE_ART=$(cat <<'EOF'
 
 EOF
 )
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+NC='\033[0m' # No Color
 
 clear_screen() {
     # Clear the screen and move the cursor to the top left
@@ -61,15 +68,33 @@ run_fixes() {
     fi
 }
 
-# Function to update the repository
-update_repo() {
-    clear_screen
-    echo -e "\033[0;94m$OPENNEPT4UNE_ART\033[0m"
-    echo "======================================"
-    echo "Checking for updates..."
-    echo "======================================"
-    repo_dir="$HOME/OpenNept4une"
+insert_update_manager() {
+    config_file="$HOME/printer_data/config/moonraker.conf"
+    # Define the lines to be inserted or updated
+    new_lines="[update_manager OpenNept4une]\n\
+type: git_repo\n\
+primary_branch: main\n\
+path: ~/OpenNept4une\n\
+is_system_service: False\n\
+origin: https://github.com/OpenNeptune3D/OpenNept4une.git"
 
+    # Define the path to the moonraker.conf file
+    config_file="$HOME/printer_data/config/moonraker.conf"
+
+    # Check if the lines exist in the config file
+    if grep -qF "[update_manager OpenNept4une]" "$config_file"; then
+        # Lines exist, update them
+        perl -pi.bak -e "BEGIN{undef $/;} s|\[update_manager OpenNept4une\].*?((?:\r*\n){2}\|$)|$new_lines\$1|gs" "$config_file"
+    else
+        # Lines do not exist, append them to the end of the file
+        echo -e "\n$new_lines" >> "$config_file"
+    fi
+}
+
+# Function to update the repository
+process_repo_update() {
+    repo_dir=$1
+    name=$2
     if [ ! -d "$repo_dir" ]; then
         echo "Repository directory not found at $repo_dir!"
         return 1
@@ -87,26 +112,51 @@ update_repo() {
     if [ "$LOCAL" != "$REMOTE" ]; then
         echo "Updates are available for the repository."
         if [ "$auto_yes" != "true" ]; then
-             read -p "Would you like to update the repository? (y/n): " -r
+             read -p "Would you like to update ${name}? (y/n): " -r
         fi
 
         if [[ $REPLY =~ ^[Yy]$ || $auto_yes = "true" ]]; then
-            echo "Updating repository..."
+            echo "Updating..."
             git -C "$repo_dir" reset --hard && \
             git -C "$repo_dir" clean -fd && \
             git -C "$repo_dir" pull origin main --force || {
-                echo "Failed to update the repository."
+                echo "Failed to update ${name}."
                 return 1
             }
 
-            echo "Repository updated successfully."
+            echo "${name} updated successfully."
             exec "$SCRIPT"
             exit 0
         else
             echo "Update skipped."
         fi
     else
-        echo "Your repository is already up-to-date."
+        echo "${name} is already up-to-date."
+    fi
+    echo "======================================"
+}
+
+update_repo() {
+    clear_screen
+    echo -e "\033[0;94m$OPENNEPT4UNE_ART${NC}"
+    echo "======================================"
+    echo "Checking for updates..."
+    echo "======================================"
+    process_repo_update "$HOME/OpenNept4une" "OpenNept4une"
+    insert_update_manager
+    if [ -d "${HOME}/OpenNept4une/display/venv" ]; then
+        read -p "The Touch-Screen Display Service was moved to a different directory. Do you want to run the automatic migration? (Y/n): " -r user_input
+        if [[ $user_input =~ ^[Yy]$ ]]; then
+            initialize_display_connector
+            eval "$DISPLAY_SERVICE_INSTALLER"
+            rm -r "${HOME}/OpenNept4une/display"
+        else
+            echo "Skipping migration. ${RED}The Display Service will not work until the migration is completed.${NC}"
+        fi
+    else
+        if [ -d "$DISPLAY_CONNECTOR_DIR" ]; then
+            process_repo_update "$DISPLAY_CONNECTOR_DIR" "Display Connector"
+        fi
     fi
     echo "======================================"
 }
@@ -114,7 +164,7 @@ update_repo() {
 advanced_more() {
     while true; do
         clear_screen
-        echo -e "\033[0;94m$OPENNEPT4UNE_ART\033[0m"
+        echo -e "\033[0;94m$OPENNEPT4UNE_ART${NC}"
         echo "======================================"
         echo "Welcome to OpenNept4une - Advanced Options"
         echo "======================================"
@@ -156,7 +206,7 @@ install_feature() {
     local prompt_message="$3"
 
     clear_screen
-    echo -e "\033[0;94m$OPENNEPT4UNE_ART\033[0m"
+    echo -e "\033[0;94m$OPENNEPT4UNE_ART${NC}"
     echo "======================================"
     echo "$feature_name Installation"
     echo "======================================"
@@ -225,8 +275,20 @@ update_mcu_rpi_fw() {
     install_feature "MCU Updater" "$MCU_RPI_INSTALLER" "Do you want to update the MCU's?"
 }
 
+initialize_display_connector() {
+    if [ ! -d "${HOME}/display_connector" ]; then
+        git clone "${DISPLAY_CONNECTOR_REPO}" "${DISPLAY_CONNECTOR_DIR}"
+        echo "Initialized repository for Touch-Screen Display Service."
+    fi
+}
+
+run_install_screen_service_with_setup() {
+    initialize_display_connector
+    eval "$DISPLAY_SERVICE_INSTALLER"
+}
+
 install_screen_service() {
-    install_feature "Touch-Screen Display Service" "$DISPLAY_SERVICE_INSTALLER" "Do you want to install the Touch-Screen Display Service?"
+    install_feature "Touch-Screen Display Service" run_install_screen_service_with_setup "Do you want to install the Touch-Screen Display Service?"
 }
 
 select_option() {
@@ -237,7 +299,6 @@ select_option() {
         break
     done
 }
-
 
 install_printer_cfg() {
     # Headless operation checks
@@ -252,7 +313,7 @@ install_printer_cfg() {
     else
         # Interactive mode for model selection
         clear_screen
-        echo -e "\033[0;94m$OPENNEPT4UNE_ART\033[0m"
+        echo -e "\033[0;94m$OPENNEPT4UNE_ART${NC}"
         echo "Please select your printer model:"
         select _ in "Neptune4" "Neptune4 Pro" "Neptune4 Plus" "Neptune4 Max"; do
             case $REPLY in
@@ -381,7 +442,7 @@ apply_configuration() {
 
 reboot_system() {
     clear_screen
-    echo -e "\033[0;94m$OPENNEPT4UNE_ART\033[0m"
+    echo -e "\033[0;94m$OPENNEPT4UNE_ART${NC}"
     if [ $auto_yes = false ]; then
         echo "The system needs to be rebooted to continue. Reboot now? (y/n)"
         read -p "Enter your choice (highly advised): " REBOOT_CHOICE
@@ -425,7 +486,7 @@ EOF
 # Function to Print the Main Menu
 print_menu() {
     clear_screen
-    echo -e "\033[0;94m$OPENNEPT4UNE_ART\033[0m"
+    echo -e "\033[0;94m$OPENNEPT4UNE_ART${NC}"
     echo "======================================"
     echo "              Main Menu               "
     echo "======================================"
