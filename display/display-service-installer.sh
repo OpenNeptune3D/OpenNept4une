@@ -69,7 +69,7 @@ new_lines="[update_manager OpenNept4une]
 type: git_repo
 primary_branch: main
 path: ~/OpenNept4une
-origin: https://github.com/halfmanbear/OpenNept4une.git"
+origin: https://github.com/OpenNeptune3D/OpenNept4une.git"
 
 # Define the path to the moonraker.conf file
 config_file="$HOME/printer_data/config/moonraker.conf"

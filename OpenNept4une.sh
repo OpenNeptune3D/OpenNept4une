@@ -64,7 +64,7 @@ run_fixes() {
 # Function to update the repository
 update_repo() {
     clear_screen
-    echo -e "\033[0;33m$OPENNEPT4UNE_ART\033[0m"
+    echo -e "\033[0;94m$OPENNEPT4UNE_ART\033[0m"
     echo "======================================"
     echo "Checking for updates..."
     echo "======================================"
@@ -114,7 +114,7 @@ update_repo() {
 advanced_more() {
     while true; do
         clear_screen
-        echo -e "\033[0;33m$OPENNEPT4UNE_ART\033[0m"
+        echo -e "\033[0;94m$OPENNEPT4UNE_ART\033[0m"
         echo "======================================"
         echo "Welcome to OpenNept4une - Advanced Options"
         echo "======================================"
@@ -156,7 +156,7 @@ install_feature() {
     local prompt_message="$3"
 
     clear_screen
-    echo -e "\033[0;33m$OPENNEPT4UNE_ART\033[0m"
+    echo -e "\033[0;94m$OPENNEPT4UNE_ART\033[0m"
     echo "======================================"
     echo "$feature_name Installation"
     echo "======================================"
@@ -252,7 +252,7 @@ install_printer_cfg() {
     else
         # Interactive mode for model selection
         clear_screen
-        echo -e "\033[0;33m$OPENNEPT4UNE_ART\033[0m"
+        echo -e "\033[0;94m$OPENNEPT4UNE_ART\033[0m"
         echo "Please select your printer model:"
         select _ in "Neptune4" "Neptune4 Pro" "Neptune4 Plus" "Neptune4 Max"; do
             case $REPLY in
@@ -381,7 +381,7 @@ apply_configuration() {
 
 reboot_system() {
     clear_screen
-    echo -e "\033[0;33m$OPENNEPT4UNE_ART\033[0m"
+    echo -e "\033[0;94m$OPENNEPT4UNE_ART\033[0m"
     if [ $auto_yes = false ]; then
         echo "The system needs to be rebooted to continue. Reboot now? (y/n)"
         read -p "Enter your choice (highly advised): " REBOOT_CHOICE
@@ -425,7 +425,7 @@ EOF
 # Function to Print the Main Menu
 print_menu() {
     clear_screen
-    echo -e "\033[0;33m$OPENNEPT4UNE_ART\033[0m"
+    echo -e "\033[0;94m$OPENNEPT4UNE_ART\033[0m"
     echo "======================================"
     echo "              Main Menu               "
     echo "======================================"
