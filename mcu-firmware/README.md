@@ -17,7 +17,7 @@
   
 2. **MicroSD Preparation:**
    - Format a MicroSD card to FAT32
-   - Download this firmware file [X_4.bin](https://github.com/halfmanbear/OpenNept4une/raw/main/mcu-firmware/X_4.bin). Alternatively, compile the latest (INFO further down #Compile Latest klipper.bin)
+   - Download this firmware file [X_4.bin](https://github.com/OpenNeptune3D/OpenNept4une/raw/main/mcu-firmware/X_4.bin). Alternatively, compile the latest (INFO further down #Compile Latest klipper.bin)
    - Copy the file to the root of the MicroSD
    - Models manufactured after ~20-7-2023 (23720 on the barcode) may require X_4.bin to be re-named to elegoo_k1.bin
    - Safely Eject the MicroSD
