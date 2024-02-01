@@ -197,6 +197,7 @@ toggle_branch() {
             fi
 
             echo "Branch switch operation completed."
+            insert_update_manager
         else
             echo "Branch switch operation aborted."
         fi
