@@ -70,10 +70,11 @@ run_fixes() {
 
 insert_update_manager() {
     config_file="$HOME/printer_data/config/moonraker.conf"
+    current_branch=$(git -C "$HOME/OpenNept4une" branch --show-current 2>/dev/null)
     # Define the lines to be inserted or updated
     new_lines="[update_manager OpenNept4une]\n\
 type: git_repo\n\
-primary_branch: main\n\
+primary_branch: $current_branch\n\
 path: ~/OpenNept4une\n\
 is_system_service: False\n\
 origin: https://github.com/OpenNeptune3D/OpenNept4une.git"
@@ -100,15 +101,16 @@ process_repo_update() {
         return 1
     fi
 
+    current_branch=$(git -C "$HOME/OpenNept4une" branch --show-current 2>/dev/null)
     # Fetch updates from the remote repository
-    if ! git -C "$repo_dir" fetch origin main --quiet; then
+    if ! git -C "$repo_dir" fetch origin "$current_branch" --quiet; then
         echo "Failed to fetch updates from the repository."
         return 1
     fi
 
     LOCAL=$(git -C "$repo_dir" rev-parse '@')
     REMOTE=$(git -C "$repo_dir" rev-parse '@{u}')
-
+    
     if [ "$LOCAL" != "$REMOTE" ]; then
         echo "Updates are available for the repository."
         if [ "$auto_yes" != "true" ]; then
@@ -119,7 +121,7 @@ process_repo_update() {
             echo "Updating..."
             git -C "$repo_dir" reset --hard && \
             git -C "$repo_dir" clean -fd && \
-            git -C "$repo_dir" pull origin main --force || {
+            git -C "$repo_dir" pull origin "$current_branch" --force || {
                 echo "Failed to update ${name}."
                 return 1
             }
