@@ -274,7 +274,7 @@ class DisplayController:
         elif current_page == PAGE_SETTINGS_ABOUT:
             self._write('fill 0,400,320,60,' + str(BACKGROUND_GRAY))
             self._write('xstr 0,400,320,30,1,65535,' + str(BACKGROUND_GRAY) + ',1,1,1,"OpenNept4une"')
-            self._write('xstr 0,430,320,30,2,GRAY,' + str(BACKGROUND_GRAY) + ',1,1,1,"github.com/halfmanbear/OpenNept4une"')
+            self._write('xstr 0,430,320,30,2,GRAY,' + str(BACKGROUND_GRAY) + ',1,1,1,"github.com/OpenNeptune3D/OpenNept4une"')
         elif current_page == PAGE_PRINTING:
             self._write("printvalue.xcen=0")
             self._write("move printvalue,13,267,13,267,0,10")

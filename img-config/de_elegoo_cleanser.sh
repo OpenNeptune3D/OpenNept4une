@@ -56,11 +56,11 @@ fi
 
 # Hardcoded list of GitHub raw links paired with filenames
 declare -A LINKS_AND_NAMES=(
-    ["https://raw.githubusercontent.com/halfmanbear/OpenNept4une/main/img-config/printer-data/printer.cfg"]="printer.cfg"
-    ["https://raw.githubusercontent.com/halfmanbear/OpenNept4une/main/img-config/printer-data/moonraker.conf"]="moonraker.conf"
-    ["https://raw.githubusercontent.com/halfmanbear/OpenNept4une/main/img-config/printer-data/KAMP_Settings.cfg"]="KAMP_Settings.cfg"
-    ["https://raw.githubusercontent.com/halfmanbear/OpenNept4une/main/img-config/printer-data/adxl.cfg"]="adxl.cfg"  
-    ["https://raw.githubusercontent.com/halfmanbear/OpenNept4une/main/img-config/printer-data/crowsnest.conf"]="crowsnest.conf"
+    ["https://raw.githubusercontent.com/OpenNeptune3D/OpenNept4une/main/img-config/printer-data/printer.cfg"]="printer.cfg"
+    ["https://raw.githubusercontent.com/OpenNeptune3D/OpenNept4une/main/img-config/printer-data/moonraker.conf"]="moonraker.conf"
+    ["https://raw.githubusercontent.com/OpenNeptune3D/OpenNept4une/main/img-config/printer-data/KAMP_Settings.cfg"]="KAMP_Settings.cfg"
+    ["https://raw.githubusercontent.com/OpenNeptune3D/OpenNept4une/main/img-config/printer-data/adxl.cfg"]="adxl.cfg"  
+    ["https://raw.githubusercontent.com/OpenNeptune3D/OpenNept4une/main/img-config/printer-data/crowsnest.conf"]="crowsnest.conf"
 )
 
 # Destination directory
@@ -78,7 +78,7 @@ for link in "${!LINKS_AND_NAMES[@]}"; do
 done
 
 # Fluidd DB transfer
-SHARE_LINK="https://raw.githubusercontent.com/halfmanbear/OpenNept4une/main/img-config/printer-data/data.mdb"
+SHARE_LINK="https://raw.githubusercontent.com/OpenNeptune3D/OpenNept4une/main/img-config/printer-data/data.mdb"
 
 DESTINATION_DIR="$HOME/printer_data/database"
 DESTINATION_FILE="${DESTINATION_DIR}/data.mdb"
