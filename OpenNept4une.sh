@@ -12,6 +12,8 @@ DE_ELEGOO_IMAGE_CLEANSER="${HOME}/OpenNept4une/img-config/de_elegoo_cleanser.sh"
 FLAG_FILE="/boot/.OpenNept4une.txt"
 
 OPENNEPT4UNE_REPO="https://github.com/OpenNeptune3D/OpenNept4une.git"
+OPENNEPT4UNE_DIR="${HOME}/OpenNept4une"
+
 DISPLAY_CONNECTOR_REPO="https://github.com/OpenNeptune3D/display_connector.git"
 DISPLAY_CONNECTOR_DIR="${HOME}/display_connector"
 
@@ -68,31 +70,34 @@ run_fixes() {
     fi
 }
 
-insert_update_manager() {
-    config_file="$HOME/printer_data/config/moonraker.conf"
-    current_branch=$(git -C "$HOME/OpenNept4une" branch --show-current 2>/dev/null)
-    # Define the lines to be inserted or updated
-    new_lines="[update_manager OpenNept4une]\n\
-type: git_repo\n\
-primary_branch: $current_branch\n\
-path: ~/OpenNept4une\n\
-is_system_service: False\n\
-origin: https://github.com/OpenNeptune3D/OpenNept4une.git"
-
-    # Define the path to the moonraker.conf file
-    config_file="$HOME/printer_data/config/moonraker.conf"
-
-    # Check if the lines exist in the config file
-    if grep -qF "[update_manager OpenNept4une]" "$config_file"; then
-        # Lines exist, update them
-        perl -pi.bak -e "BEGIN{undef $/;} s|\[update_manager OpenNept4une\].*?((?:\r*\n){2}\|$)|$new_lines\$1|gs" "$config_file"
+update_repo() {
+    clear_screen
+    echo -e "\033[0;94m$OPENNEPT4UNE_ART${NC}"
+    echo ""
+    echo "======================================"
+    echo "Checking for updates..."
+    echo "======================================"
+    echo ""
+    process_repo_update "$OPENNEPT4UNE_DIR" "OpenNept4une"
+    moonraker_update_manager "OpenNept4une"
+    if [ -d "${HOME}/OpenNept4une/display/venv" ]; then
+        read -p "The Touch-Screen Display Service was moved to a different directory. Do you want to run the automatic migration? (Y/n): " -r user_input
+        if [[ $user_input =~ ^[Yy]$ ]]; then
+            initialize_display_connector
+            eval "$DISPLAY_SERVICE_INSTALLER"
+            rm -r "${HOME}/OpenNept4une/display"
+        else
+            echo "Skipping migration. ${RED}The Display Service will not work until the migration is completed.${NC}"
+        fi
     else
-        # Lines do not exist, append them to the end of the file
-        echo -e "\n$new_lines" >> "$config_file"
+        if [ -d "$DISPLAY_CONNECTOR_DIR" ]; then
+            process_repo_update "$DISPLAY_CONNECTOR_DIR" "Display Connector"
+            moonraker_update_manager "display"
+        fi
     fi
+    echo "======================================"
 }
 
-# Function to update the repository
 process_repo_update() {
     repo_dir=$1
     name=$2
@@ -101,7 +106,7 @@ process_repo_update() {
         return 1
     fi
 
-    current_branch=$(git -C "$HOME/OpenNept4une" branch --show-current 2>/dev/null)
+    current_branch=$(git -C "$OPENNEPT4UNE_DIR" branch --show-current 2>/dev/null)
     # Fetch updates from the remote repository
     if ! git -C "$repo_dir" fetch origin "$current_branch" --quiet; then
         echo "Failed to fetch updates from the repository."
@@ -138,73 +143,45 @@ process_repo_update() {
     echo "======================================"
 }
 
-update_repo() {
-    clear_screen
-    echo -e "\033[0;94m$OPENNEPT4UNE_ART${NC}"
-    echo "======================================"
-    echo "Checking for updates..."
-    echo "======================================"
-    process_repo_update "$HOME/OpenNept4une" "OpenNept4une"
-    insert_update_manager
-    if [ -d "${HOME}/OpenNept4une/display/venv" ]; then
-        read -p "The Touch-Screen Display Service was moved to a different directory. Do you want to run the automatic migration? (Y/n): " -r user_input
-        if [[ $user_input =~ ^[Yy]$ ]]; then
-            initialize_display_connector
-            eval "$DISPLAY_SERVICE_INSTALLER"
-            rm -r "${HOME}/OpenNept4une/display"
-        else
-            echo "Skipping migration. ${RED}The Display Service will not work until the migration is completed.${NC}"
-        fi
+moonraker_update_manager() {
+    
+    update_selection="$1"
+    
+    config_file="$HOME/printer_data/config/moonraker.conf"
+
+    if [ "$update_selection" = "OpenNept4une" ]; then
+        current_branch=$(git -C "$OPENNEPT4UNE_DIR" branch --show-current 2>/dev/null)
+
+        new_lines="[update_manager $update_selection]\n\
+type: git_repo\n\
+primary_branch: $current_branch\n\
+path: $OPENNEPT4UNE_DIR\n\
+is_system_service: False\n\
+origin: $OPENNEPT4UNE_REPO"
+
+    elif [ "$update_selection" = "display" ]; then
+        current_branch=$(git -C "$DISPLAY_CONNECTOR_DIR" branch --show-current 2>/dev/null)
+
+        new_lines="[update_manager $update_selection]\n\
+type: git_repo\n\
+primary_branch: $current_branch\n\
+path: $DISPLAY_CONNECTOR_DIR\n\
+virtualenv: $DISPLAY_CONNECTOR_DIR/venv\n\
+requirements: requirements.txt\n\
+origin: $DISPLAY_CONNECTOR_REPO"
+
     else
-        if [ -d "$DISPLAY_CONNECTOR_DIR" ]; then
-            process_repo_update "$DISPLAY_CONNECTOR_DIR" "Display Connector"
-        fi
-    fi
-    echo "======================================"
-}
-
-toggle_branch() {
-    main_repo_dir="${HOME}/OpenNept4une"
-    display_repo_dir="${HOME}/display_connector"
-    target_branch=""
-    current_branch_main=""
-
-    # Check the current branch of the main repository
-    if [ -d "$main_repo_dir" ]; then
-        current_branch_main=$(git -C "$main_repo_dir" branch --show-current 2>/dev/null)
-        if [ "$current_branch_main" = "main" ]; then
-            target_branch="dev"
-        else
-            target_branch="main"
-        fi
+        echo "Invalid argument. Please specify either 'OpenNept4une' or 'display_connector'."
+        return 1
     fi
 
-    # If a current branch was determined, use it in the confirmation prompt
-    if [ -n "$current_branch_main" ]; then
-        echo "You are currently on the '$current_branch_main' branch."
-        read -p "Would you like to switch to the '$target_branch' branch? (y/n): " -r user_response
-        if [[ $user_response =~ ^[Yy]$ ]]; then
-            # Attempt to switch branches in the main repo, if it exists
-            if [ -d "$main_repo_dir" ]; then
-                git -C "$main_repo_dir" reset --hard >/dev/null 2>&1
-                git -C "$main_repo_dir" clean -fd >/dev/null 2>&1
-                git -C "$main_repo_dir" checkout $target_branch >/dev/null 2>&1 && echo "Switched $main_repo_dir from $current_branch_main to $target_branch."
-            fi
-
-            # Attempt to switch branches in the display repo, if it exists
-            if [ -d "$display_repo_dir" ]; then
-                git -C "$main_repo_dir" reset --hard >/dev/null 2>&1
-                git -C "$main_repo_dir" clean -fd >/dev/null 2>&1
-                git -C "$main_repo_dir" checkout $target_branch >/dev/null 2>&1 && echo "Switched $main_repo_dir from $current_branch_main to $target_branch."
-            fi
-
-            echo "Branch switch operation completed."
-            insert_update_manager
-        else
-            echo "Branch switch operation aborted."
-        fi
+    # Check if the lines exist in the config file
+    if grep -qF "[update_manager $update_selection]" "$config_file"; then
+        # Lines exist, update them
+        perl -pi.bak -e "BEGIN{undef $/;} s|\[update_manager $update_selection\].*?((?:\r*\n){2}\|$)|$new_lines\$1|gs" "$config_file"
     else
-        echo "Could not determine the current branch. Make sure the main repository exists and is accessible."
+        # Lines do not exist, append them to the end of the file
+        echo -e "\n$new_lines" >> "$config_file"
     fi
 }
 
@@ -310,46 +287,43 @@ armbian_resize() {
     install_feature "Armbian Resize" "$resize_commands" "Reboot then resize Armbian filesystem?"
 }
 
-### MAIN PAGE INSTALLERS ###
+toggle_branch() {
+    # Function to switch branches in a repository
+    switch_branch() {
+        local repo_dir="$1"
+        if [ -d "$repo_dir" ]; then
+            git -C "$repo_dir" reset --hard >/dev/null 2>&1
+            git -C "$repo_dir" clean -fd >/dev/null 2>&1
+            git -C "$repo_dir" checkout "$1" >/dev/null 2>&1 && echo "Switched $repo_dir to $1."
+        fi
+    }
+    if [ -d "$OPENNEPT4UNE_DIR" ]; then
+        current_branch_openneptune=$(git -C "$OPENNEPT4UNE_DIR" branch --show-current 2>/dev/null)
 
-wifi_config() {
-sudo nmtui
-}
-
-usb_auto_mount() {
-    install_feature "USB Auto Mount" "$USB_STORAGE_AUTOMOUNT" "Do you want to auto mount USB drives?"
-}
-
-update_mcu_rpi_fw() {
-    install_feature "MCU Updater" "$MCU_RPI_INSTALLER" "Do you want to update the MCU's?"
-}
-
-initialize_display_connector() {
-    if [ ! -d "${HOME}/display_connector" ]; then
-        current_branch_main=$(git -C "${HOME}/OpenNept4une" branch --show-current 2>/dev/null)
-        git clone -b "$current_branch_main" "${DISPLAY_CONNECTOR_REPO}" "${DISPLAY_CONNECTOR_DIR}"
-        echo "Initialized repository for Touch-Screen Display Service."
+        if [ -n "$current_branch_openneptune" ]; then
+            echo "You are currently on the '$current_branch_openneptune' branch."
+            if [ "$current_branch_openneptune" = "main" ]; then
+                target_branch="dev"
+            else
+                target_branch="main"
+            fi
+            read -p "Would you like to switch to the '$target_branch' branch? (y/n): " -r user_response
+            if [[ $user_response =~ ^[Yy]$ ]]; then
+                switch_branch "$target_branch" "$OPENNEPT4UNE_DIR"
+                switch_branch "$target_branch" "$DISPLAY_CONNECTOR_DIR"
+                echo "Branch switch operation completed."
+                moonraker_update_manager "OpenNept4une"
+                moonraker_update_manager "display"
+                return
+            else
+                echo "Branch switch operation aborted."
+            fi
+        fi
     fi
+    echo "Could not determine the current branch. Make sure the current_branch_openneptune repository exists and is accessible."
 }
 
-run_install_screen_service_with_setup() {
-    initialize_display_connector
-    eval "$DISPLAY_SERVICE_INSTALLER"
-}
-
-install_screen_service() {
-    install_feature "Touch-Screen Display Service" run_install_screen_service_with_setup "Do you want to install the Touch-Screen Display Service?"
-}
-
-select_option() {
-    local -n ref=$1
-    echo "$2"
-    select opt in "${@:3}"; do
-        ref=$opt
-        break
-    done
-}
-
+### MAIN PAGE INSTALLERS ###
 
 install_printer_cfg() {
     # Headless operation checks
@@ -423,6 +397,14 @@ install_printer_cfg() {
     reboot_system
 }
 
+select_option() {
+    local -n ref=$1
+    echo "$2"
+    select opt in "${@:3}"; do
+        ref=$opt
+        break
+    done
+}
 
 apply_configuration() {
 
@@ -502,6 +484,34 @@ apply_configuration() {
     fi
 }
 
+wifi_config() {
+sudo nmtui
+}
+
+usb_auto_mount() {
+    install_feature "USB Auto Mount" "$USB_STORAGE_AUTOMOUNT" "Do you want to auto mount USB drives?"
+}
+
+update_mcu_rpi_fw() {
+    install_feature "MCU Updater" "$MCU_RPI_INSTALLER" "Do you want to update the MCU's?"
+}
+
+install_screen_service() {
+    install_feature "Touch-Screen Display Service" run_install_screen_service_with_setup "Do you want to install the Touch-Screen Display Service?"
+}
+
+run_install_screen_service_with_setup() {
+    initialize_display_connector
+    eval "$DISPLAY_SERVICE_INSTALLER"
+}
+
+initialize_display_connector() {
+    if [ ! -d "${HOME}/display_connector" ]; then
+        current_branch_main=$(git -C "OPENNEPT4UNE_REPO" branch --show-current 2>/dev/null)
+        git clone -b "$current_branch_main" "${DISPLAY_CONNECTOR_REPO}" "${DISPLAY_CONNECTOR_DIR}"
+        echo "Initialized repository for Touch-Screen Display Service."
+    fi
+}
 
 reboot_system() {
     clear_screen
