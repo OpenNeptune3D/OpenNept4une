@@ -139,6 +139,7 @@ process_repo_update() {
     else
         echo "${name} is already up-to-date."
     fi
+    sync
     echo "======================================"
 }
 
@@ -181,6 +182,7 @@ origin: $DISPLAY_CONNECTOR_REPO"
     else
         # Lines do not exist, append them to the end of the file
         echo -e "\n$new_lines" >> "$config_file"
+        sync
     fi
 }
 
