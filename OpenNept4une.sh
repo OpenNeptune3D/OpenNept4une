@@ -313,7 +313,6 @@ toggle_branch() {
                 switch_branch "$target_branch" "$OPENNEPT4UNE_DIR"
                 switch_branch "$target_branch" "$DISPLAY_CONNECTOR_DIR"
                 echo "Branch switch operation completed."
-                Call to moonraker_update_manager function for each repository, if needed
                 moonraker_update_manager "OpenNept4une"
                 moonraker_update_manager "display"
                 return
