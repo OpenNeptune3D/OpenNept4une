@@ -83,8 +83,7 @@ update_repo() {
     if [ -d "${HOME}/OpenNept4une/display/venv" ]; then
         read -p "The Touch-Screen Display Service was moved to a different directory. Do you want to run the automatic migration? (Y/n): " -r user_input
         if [[ $user_input =~ ^[Yy]$ ]]; then
-            initialize_display_connector
-            eval "$DISPLAY_SERVICE_INSTALLER"
+            initialize_display_connector && eval "$DISPLAY_SERVICE_INSTALLER"
             rm -r "${HOME}/OpenNept4une/display"
         else
             echo "Skipping migration. ${RED}The Display Service will not work until the migration is completed.${NC}"
@@ -501,14 +500,13 @@ install_screen_service() {
 }
 
 run_install_screen_service_with_setup() {
-    initialize_display_connector
-    eval "$DISPLAY_SERVICE_INSTALLER"
+    initialize_display_connector && eval "$DISPLAY_SERVICE_INSTALLER"
 }
 
 initialize_display_connector() {
     if [ ! -d "${HOME}/display_connector" ]; then
-        current_branch_main=$(git -C "OPENNEPT4UNE_REPO" branch --show-current 2>/dev/null)
-        git clone -b "$current_branch_main" "${DISPLAY_CONNECTOR_REPO}" "${DISPLAY_CONNECTOR_DIR}"
+        current_branch_openneptune=$(git -C "$OPENNEPT4UNE_DIR" branch --show-current 2>/dev/null)
+        git clone -b "$current_branch_openneptune" "${DISPLAY_CONNECTOR_REPO}" "${DISPLAY_CONNECTOR_DIR}"
         echo "Initialized repository for Touch-Screen Display Service."
     fi
 }
