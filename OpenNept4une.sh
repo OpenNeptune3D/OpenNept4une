@@ -326,7 +326,8 @@ update_mcu_rpi_fw() {
 
 initialize_display_connector() {
     if [ ! -d "${HOME}/display_connector" ]; then
-        git clone "${DISPLAY_CONNECTOR_REPO}" "${DISPLAY_CONNECTOR_DIR}"
+        current_branch_main=$(git -C "${HOME}/OpenNept4une" branch --show-current 2>/dev/null)
+        git clone -b "$current_branch_main" "${DISPLAY_CONNECTOR_REPO}" "${DISPLAY_CONNECTOR_DIR}"
         echo "Initialized repository for Touch-Screen Display Service."
     fi
 }
