@@ -349,6 +349,7 @@ select_option() {
     done
 }
 
+
 install_printer_cfg() {
     # Headless operation checks
     if [ "$auto_yes" = "true" ]; then
@@ -363,7 +364,9 @@ install_printer_cfg() {
         # Interactive mode for model selection
         clear_screen
         echo -e "\033[0;94m$OPENNEPT4UNE_ART${NC}"
-        echo "Please select your printer model:"
+        echo ""
+        printf "WARNING - Your Printer.cfg will be backed up as (backup-printer.cfg.bak) then overwritten.\n\n"
+        printf "Please select your printer model:\n"
         select _ in "Neptune4" "Neptune4 Pro" "Neptune4 Plus" "Neptune4 Max"; do
             case $REPLY in
                 1) model_key="n4";;
@@ -387,7 +390,6 @@ install_printer_cfg() {
     DTB_DEST="/boot/dtb/rockchip/rk3328-roc-cc.dtb"
     DATABASE_DEST="${HOME}/printer_data/database"
     PRINTER_CFG_FILE="$PRINTER_CFG_DEST/printer.cfg"
-    BACKUP_PRINTER_CFG_FILE="$PRINTER_CFG_DEST/backup-printer.cfg.bak"
 
     # Build configuration paths based on selections
     if [[ $model_key == "n4" || $model_key == "n4pro" ]]; then
@@ -423,21 +425,30 @@ install_printer_cfg() {
 
 apply_configuration() {
 
+    BACKUP_PRINTER_CFG_FILE="$PRINTER_CFG_DEST/backup-printer.cfg.bak$backup_count"
+    backup_count=0
+
+    while [[ -f "$BACKUP_PRINTER_CFG_FILE" ]]; do
+        ((backup_count++))
+        BACKUP_PRINTER_CFG_FILE="$PRINTER_CFG_DEST/backup-printer.cfg.bak$backup_count"
+    done
+
     # Backup existing printer configuration if it exists
     if [[ -f "$PRINTER_CFG_FILE" ]]; then
         cp "$PRINTER_CFG_FILE" "$BACKUP_PRINTER_CFG_FILE" && \
-        echo "Backup of 'printer.cfg' created as '$BACKUP_PRINTER_CFG_FILE'." || \
-        echo "Error: Failed to create backup of 'printer.cfg'."
+        printf "BACKUP of 'printer.cfg' created as '$BACKUP_PRINTER_CFG_FILE'.\n\n" && \
+        sleep 1 || \
+        printf "Error: Failed to create backup of 'printer.cfg'.\n"
     fi
 
     # Copy new printer configuration
     if [[ -n "$PRINTER_CFG_SOURCE" && -f "$PRINTER_CFG_SOURCE" ]]; then
         cp "$PRINTER_CFG_SOURCE" "$PRINTER_CFG_FILE" && \
-        echo "Printer configuration updated from '$PRINTER_CFG_SOURCE'." || \
-        echo "Error: Failed to update printer configuration from '$PRINTER_CFG_SOURCE'."
+        printf "Printer configuration updated from '$PRINTER_CFG_SOURCE'.\n\n" && \
+        sleep 1 || \
+        printf "Error: Failed to update printer configuration from '$PRINTER_CFG_SOURCE'.\n"
     else
-        echo "Error: Invalid printer configuration file '$PRINTER_CFG_SOURCE'."
-        sleep 2
+        printf "Error: Invalid printer configuration file '$PRINTER_CFG_SOURCE'.\n"
         return 1
     fi
 
@@ -453,38 +464,40 @@ apply_configuration() {
 
         if $update_dtb && ! grep -q "mks" /boot/.OpenNept4une.txt; then
             sudo cp "$DTB_SOURCE" "$DTB_DEST" && \
-            echo "DTB file updated from '$DTB_SOURCE'." || \
-            echo "Error: Failed to update DTB file from '$DTB_SOURCE'."
+            printf "DTB file updated from '$DTB_SOURCE'.\n\n" && \
+            sleep 1 || \
+            printf "Error: Failed to update DTB file from '$DTB_SOURCE'.\n" && \
+            sleep 1
         elif grep -q "mks" /boot/.OpenNept4une.txt; then
-            echo -e "\nSkipping DTB update based on system check.\n"
+            printf "Skipping DTB update based on system check.\n"
             sleep 2
         fi
     elif [[ -n "$DTB_SOURCE" ]]; then
-        echo "Error: DTB file '$DTB_SOURCE' not found."
+        printf "Error: DTB file '$DTB_SOURCE' not found.\n"
         sleep 2
         return 1
     fi
 
     local install_configs="$auto_yes"  # Defaults to the value of auto_yes
     if [ "$auto_yes" != "true" ]; then
-        echo "The latest KAMP/moonraker/fluiddGUI configurations include updated settings and features for your printer."
-        echo "It's recommended for first-time installs or if you want to reset to the default configurations."
+        printf "The latest KAMP/moonraker/fluiddGUI configurations include updated settings and features for your printer.\n"
+        printf "It's recommended for first-time installs or if you want to RESET to the default configurations.\n\n"
         read -p "Install latest configurations? (y/N): " -r choice
         [[ $choice =~ ^[Yy]$ ]] && install_configs="true"
     fi
 
     # Install the configurations if confirmed
     if [ "$install_configs" = "true" ]; then
-        echo "Installing latest configurations..."
+        printf "Installing latest configurations...\n\n"
         if cp -r ~/OpenNept4une/img-config/printer-data/* ~/printer_data/config/ && \
            mv ~/printer_data/config/data.mdb ~/printer_data/database/data.mdb; then
-            echo "Configurations installed successfully."
+           printf "Configurations installed successfully.\n\n"
         else
             echo "Error: Failed to install latest configurations."
             return 1
         fi
     else
-        echo "Installation of latest configurations skipped."
+        printf "Installation of latest configurations skipped.\n"
     fi
 }
 
@@ -493,14 +506,14 @@ reboot_system() {
     clear_screen
     echo -e "\033[0;94m$OPENNEPT4UNE_ART${NC}"
     if [ $auto_yes = false ]; then
-        echo "The system needs to be rebooted to continue. Reboot now? (y/n)"
+        printf "The system needs to be rebooted to continue. Reboot now? (y/n).\n\n"
         read -p "Enter your choice (highly advised): " REBOOT_CHOICE
     fi
     if [[ "$REBOOT_CHOICE" =~ ^[Yy]$ || $auto_yes = true ]]; then
-        echo "System will reboot now."
+        printf "System will reboot now.\n"
         sudo reboot
     else
-        echo "Reboot canceled."
+        printf "Reboot canceled.\n"
     fi
 }
 
