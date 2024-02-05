@@ -9,11 +9,15 @@ ANDROID_RULE_INSTALLER="${HOME}/OpenNept4une/img-config/adb-automount.sh"
 CROWSNEST_FIX_INSTALLER="${HOME}/OpenNept4une/img-config/crowsnest-lag-fix.sh"
 BASE_IMAGE_INSTALLER="${HOME}/OpenNept4une/img-config/base_image_configuration.sh"
 DE_ELEGOO_IMAGE_CLEANSER="${HOME}/OpenNept4une/img-config/de_elegoo_cleanser.sh"
+
 FLAG_FILE="/boot/.OpenNept4une.txt"
+MODEL_FROM_FLAG=$(grep '^N4' "$FLAG_FILE")
+KERNEL_FROM_FLAG=$(grep 'Linux' "$FLAG_FILE" | awk '{split($3,a,"-"); print a[1]}')
+
+current_branch=$(git -C "$OPENNEPT4UNE_DIR" branch --show-current 2>/dev/null)
 
 OPENNEPT4UNE_REPO="https://github.com/OpenNeptune3D/OpenNept4une.git"
 OPENNEPT4UNE_DIR="${HOME}/OpenNept4une"
-
 DISPLAY_CONNECTOR_REPO="https://github.com/OpenNeptune3D/display_connector.git"
 DISPLAY_CONNECTOR_DIR="${HOME}/display_connector"
 
@@ -23,7 +27,7 @@ motor_current=""
 pcb_version=""
 auto_yes=false
 
-# ASCII art for OpenNept4une 
+# ASCII art for OpenNept4une
 OPENNEPT4UNE_ART=$(cat <<'EOF'
 
   ____                _  __         __  ____              
@@ -114,7 +118,7 @@ process_repo_update() {
 
     LOCAL=$(git -C "$repo_dir" rev-parse '@')
     REMOTE=$(git -C "$repo_dir" rev-parse '@{u}')
-    
+
     if [ "$LOCAL" != "$REMOTE" ]; then
         echo "Updates are available for the repository."
         if [ "$auto_yes" != "true" ]; then
@@ -144,9 +148,9 @@ process_repo_update() {
 }
 
 moonraker_update_manager() {
-    
+
     update_selection="$1"
-    
+
     config_file="$HOME/printer_data/config/moonraker.conf"
 
     if [ "$update_selection" = "OpenNept4une" ]; then
@@ -301,11 +305,11 @@ toggle_branch() {
     }
 
     if [ -d "$OPENNEPT4UNE_DIR" ]; then
-        current_branch_openneptune=$(git -C "$OPENNEPT4UNE_DIR" branch --show-current 2>/dev/null)
+        current_branch=$(git -C "$OPENNEPT4UNE_DIR" branch --show-current 2>/dev/null)
 
-        if [ -n "$current_branch_openneptune" ]; then
-            echo "You are currently on the '$current_branch_openneptune' branch."
-            if [ "$current_branch_openneptune" = "main" ]; then
+        if [ -n "$current_branch" ]; then
+            echo "You are currently on the '$current_branch' branch."
+            if [ "$current_branch" = "main" ]; then
                 target_branch="dev"
             else
                 target_branch="main"
@@ -327,6 +331,7 @@ toggle_branch() {
     else
         echo "$OPENNEPT4UNE_DIR does not exist or is not accessible."
     fi
+    exit 0
 }
 
 
@@ -513,8 +518,8 @@ run_install_screen_service_with_setup() {
 
 initialize_display_connector() {
     if [ ! -d "${HOME}/display_connector" ]; then
-        current_branch_openneptune=$(git -C "$OPENNEPT4UNE_DIR" branch --show-current 2>/dev/null)
-        git clone -b "$current_branch_openneptune" "${DISPLAY_CONNECTOR_REPO}" "${DISPLAY_CONNECTOR_DIR}"
+        current_branch=$(git -C "$OPENNEPT4UNE_DIR" branch --show-current 2>/dev/null)
+        git clone -b "$current_branch" "${DISPLAY_CONNECTOR_REPO}" "${DISPLAY_CONNECTOR_DIR}"
         echo "Initialized repository for Touch-Screen Display Service."
     fi
 }
@@ -566,6 +571,7 @@ EOF
 print_menu() {
     clear_screen
     echo -e "\033[0;94m$OPENNEPT4UNE_ART${NC}"
+    printf "Branch:$current_branch | Model:$MODEL_FROM_FLAG | Kernel:$KERNEL_FROM_FLAG\n\n"
     echo "======================================"
     echo "              Main Menu               "
     echo "======================================"
