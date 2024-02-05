@@ -289,13 +289,15 @@ armbian_resize() {
 toggle_branch() {
     # Function to switch branches in a repository
     switch_branch() {
-        local repo_dir="$1"
+        local branch_name="$1"
+        local repo_dir="$2"
         if [ -d "$repo_dir" ]; then
             git -C "$repo_dir" reset --hard >/dev/null 2>&1
             git -C "$repo_dir" clean -fd >/dev/null 2>&1
-            git -C "$repo_dir" checkout "$1" >/dev/null 2>&1 && echo "Switched $repo_dir to $1."
+            git -C "$repo_dir" checkout "$branch_name" >/dev/null 2>&1 && echo "Switched $repo_dir to $branch_name."
         fi
     }
+
     if [ -d "$OPENNEPT4UNE_DIR" ]; then
         current_branch_openneptune=$(git -C "$OPENNEPT4UNE_DIR" branch --show-current 2>/dev/null)
 
@@ -311,16 +313,21 @@ toggle_branch() {
                 switch_branch "$target_branch" "$OPENNEPT4UNE_DIR"
                 switch_branch "$target_branch" "$DISPLAY_CONNECTOR_DIR"
                 echo "Branch switch operation completed."
+                Call to moonraker_update_manager function for each repository, if needed
                 moonraker_update_manager "OpenNept4une"
                 moonraker_update_manager "display"
                 return
             else
                 echo "Branch switch operation aborted."
             fi
+        else
+            echo "Could not determine the current branch for $OPENNEPT4UNE_DIR."
         fi
+    else
+        echo "$OPENNEPT4UNE_DIR does not exist or is not accessible."
     fi
-    echo "Could not determine the current branch. Make sure the current_branch_openneptune repository exists and is accessible."
 }
+
 
 ### MAIN PAGE INSTALLERS ###
 
