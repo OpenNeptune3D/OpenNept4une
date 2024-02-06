@@ -141,21 +141,21 @@ sudo nmtui
 
 clear
 
-echo "When Kiauh opens after these instructions, go to the uninstall page FIRST and remove each one for final clean-up.\n"
-echo "even if they don't look installed... (klipper, moonraker, fluidd, fluid-config, klipper-screen, crowsnest)\n\n"
+echo -e "When Kiauh opens after these instructions, go to the uninstall page FIRST and remove each one for final clean-up.\n"
+echo -e "even if they don't look installed... (klipper, moonraker, fluidd, fluid-config, klipper-screen, crowsnest)\n\n"
 sleep 20
 
-echo "Then Install the following, in this ORDER.\n"
-echo "Klipper, Moonraker, Fluidd, Mainsail (on port 81) then Mobileraker.\n\n"
-echo "After, on the main kiauh menu select Update then all with (a)\n"
-echo "then exit kiauh\n\n"
+echo -e "Then Install the following, in this ORDER.\n"
+echo -e "Klipper, Moonraker, Fluidd, Mainsail (on port 81) then Mobileraker.\n\n"
+echo -e "After, on the main kiauh menu select Update then all with (a)\n"
+echo -e "then exit kiauh\n\n"
 sleep 20
 
-echo "You should then run ~/OpenNept4une/OpenNept4une.sh\n\n"
-echo "The main requirement here is to Install the latest OpenNept4une configurations (Option 1)\n" 
-echo "Select No (n) when asked to reboot then select - Update MCU & (Virtual) MCU rpi Firmware.\n\n"
-echo "Copy / screenshot the text above for reference as it will disappear.\n\n"
-echo "Press Enter when you are ready to continue..."
+echo -e "You should then run ~/OpenNept4une/OpenNept4une.sh\n\n"
+echo -e "The main requirement here is to Install the latest OpenNept4une configurations (Option 1)\n" 
+echo -e "Select No (n) when asked to reboot then select - Update MCU & (Virtual) MCU rpi Firmware.\n\n"
+echo -e "Copy / screenshot the text above for reference as it will disappear.\n\n"
+echo -e "Press Enter when you are ready to continue..."
 read -r
 
 sync 
