@@ -127,7 +127,7 @@ process_repo_update() {
     if [ "$LOCAL" != "$REMOTE" ]; then
         echo -e "${Y}Updates are available for the repository.${NC}"
         if [ "$auto_yes" != "true" ]; then
-            read -r -p "Would you like to update ${G}●${name}?${NC} (y/n): " -r
+            read -r -p "Would you like to update ${G}● ${name}?${NC} (y/n): " -r
         fi
         if [[ $REPLY =~ ^[Yy]$ || $auto_yes = "true" ]]; then
             echo "Updating..."
