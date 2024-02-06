@@ -44,7 +44,7 @@ sudo cp ~/OpenNept4une/img-config/led-v1.1+fix/99-gpio.rules /etc/udev/rules.d/
 ~/moonraker/scripts/uninstall-moonraker.sh
 ~/crowsnest/tools/uninstall.sh
 
-sudo find ~/ -mindepth 1 ! -path '~/OpenNept4une*' -exec rm -rf {} +
+sudo find /home/mks/ -mindepth 1 ! -path '/home/mks/OpenNept4une*' -exec rm -rf {} +
 sudo rm -rf /root/*
 
 sudo apt remove nginx -y
@@ -63,7 +63,7 @@ sudo apt-mark hold linux-dtb-edge-rockchip64 linux-image-edge-rockchip64 linux-l
 # Install Bookworm packages and perform a full upgrade
 sudo apt update -y
 # Release Armbian update sources after full-upgrade
-sudo apt full-upgrade -y
+sudo apt upgrade -y
 ##sed -i 's/^#deb/deb/' /etc/apt/sources.list.d/armbian.list
 
 sudo apt autoremove -y
@@ -94,7 +94,11 @@ cp -r ~/OpenNept4une/img-config/printer-data/* ~/printer_data/config/ && \
 mv ~/printer_data/config/data.mdb ~/printer_data/database/data.mdb
 
 # Pick Legacy Crowsnest
-git clone --branch legacy/v3 https://github.com/mainsail-crew/crowsnest.git
+cd ~/ && git clone --branch legacy/v3 https://github.com/mainsail-crew/crowsnest.git
+cd ~/crowsnest && sudo make install >/dev/null 2>&1 &
+echo -e "installing crowsnest"
+sleep 60
+
 FILE="$HOME/printer_data/config/moonraker.conf"
 
 perl -i -pe 'if (/^\[update_manager crowsnest\]/ ... /^$/) {
@@ -132,19 +136,18 @@ sudo nmtui
 clear
 
 echo -e "When Kiauh opens after these instructions, go to the uninstall page FIRST and remove the following for final clean-up.\n"
-echo -e "even if they don't look installed... (Klipper, Moonraker, fluidd, fluid-config & klipper-screen)\n\n"
-sleep 15
-
+echo -e "even if they don't look installed... (Klipper, Moonraker, fluidd, fluid-config & klipper-screen)\n"
+echo ""
 echo -e "Then Install the following, in this ORDER.\n"
-echo -e "Klipper, Moonraker, Fluidd, Mainsail (on port 81) then Mobileraker (No others for now).\n\n"
+echo -e "Klipper, Moonraker, Fluidd, Mainsail (on port 81) then Mobileraker (No others for now).\n"
 echo -e "After, on the main kiauh menu select Update then all with (a)\n"
-echo -e "then exit kiauh\n\n"
-sleep 20
-
-echo -e "You should then run ~/OpenNept4une/OpenNept4une.sh\n\n"
+echo -e "then exit kiauh\n"
+echo ""
+echo -e "You should then run ~/OpenNept4une/OpenNept4une.sh\n"
 echo -e "The main requirement here is to Install the latest OpenNept4une configurations (Option 1)\n" 
-echo -e "Select No (n) when asked to reboot then select - Update MCU & (Virtual) MCU rpi Firmware.\n\n"
-echo -e "Copy / screenshot the text above for reference as it will disappear.\n\n"
+echo -e "Select No (n) when asked to reboot then select - Update MCU & (Virtual) MCU rpi Firmware.\n"
+echo -e "Copy / screenshot the text above for reference as it will disappear.\n"
+echo ""
 echo -e "Press Enter when you are ready to continue..."
 read -r
 
