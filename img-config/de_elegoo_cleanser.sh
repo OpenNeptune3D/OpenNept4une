@@ -44,7 +44,8 @@ sudo cp ~/OpenNept4une/img-config/led-v1.1+fix/99-gpio.rules /etc/udev/rules.d/
 ~/moonraker/scripts/uninstall-moonraker.sh
 ~/crowsnest/tools/uninstall.sh
 
-sudo find /home/mks/ -mindepth 1 ! -path '/home/mks/OpenNept4une*' -exec rm -rf {} +
+sudo find /home/mks/ -mindepth 1 -path '/home/mks/OpenNept4une' -prune -o -exec rm -rf {} +
+
 sudo rm -rf /root/*
 
 sudo apt remove nginx -y
