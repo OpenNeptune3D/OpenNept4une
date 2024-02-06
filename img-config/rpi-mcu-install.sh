@@ -129,7 +129,14 @@ if [[ "$mcu_choice" == "Virtual RPi" ]] || [[ "$mcu_choice" == "All" ]]; then
     make clean
     cp ~/OpenNept4une/mcu-firmware/virtualmcu.config ~/klipper/.config
     sudo service klipper stop
-    echo "kernel.sched_rt_runtime_us = -1" | sudo tee -a /etc/sysctl.d/10-disable-rt-group-limit.conf
+
+    if grep -iq "mks" /boot/.OpenNept4une.txt; then
+        printf "Skipping Kernel patch based on system check.\n"
+        sleep 2
+    elif grep -iq "dec 11" /boot/.OpenNept4une.txt; then 
+        echo "kernel.sched_rt_runtime_us = -1" | sudo tee -a /etc/sysctl.d/10-disable-rt-group-limit.conf
+    fi
+
     make flash
     echo ""
     echo "Virtual MCU update completed."
