@@ -209,7 +209,7 @@ advanced_more() {
         echo ""
         echo -e "5) Switch Git repo between main/dev"
         echo ""
-        echo -e "6) Base ZNP-K1 Compiled Image Config (NOT for OpenNept4un)"
+        echo -e "6) Base ZNP-K1 Compiled Image Config (NOT for OpenNept4une)"
         echo ""
         echo -e "7) Elegoo Image Cleanser Script (NOT for OpenNept4une)"
         echo -e "----------------------------------------------------------${NC}"
