@@ -134,7 +134,8 @@ else
     echo "The sync command is already in the crontab."
 fi
 
-#sudo rm /etc/udev/rules.d/50-usb* 
+sudo rm /usr/lib/udev/rules.d/60-usbmount.rules
+sudo rm /usr/lib/udev/rules.d/99-makerbase-automount.rules
 
 sudo nmtui
 
