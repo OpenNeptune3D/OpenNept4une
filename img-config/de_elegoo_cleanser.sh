@@ -89,10 +89,6 @@ if [ ! -d "$HOME/kiauh" ]; then
     cd ~/ && git clone https://github.com/dw-0/kiauh.git
 fi
 
-# Copy Configurations
-cp -r ~/OpenNept4une/img-config/printer-data/* ~/printer_data/config/ && \
-mv ~/printer_data/config/data.mdb ~/printer_data/database/data.mdb
-
 # Pick Legacy Crowsnest
 cd ~/ && git clone --branch legacy/v3 https://github.com/mainsail-crew/crowsnest.git
 cd ~/crowsnest && sudo make install >/dev/null 2>&1 &
@@ -127,6 +123,10 @@ if ! (crontab -l 2>/dev/null | grep "/bin/sync"); then
 else
     echo "The sync command is already in the crontab."
 fi
+
+# Copy Configurations
+cp -r ~/OpenNept4une/img-config/printer-data/* ~/printer_data/config/ && \
+mv ~/printer_data/config/data.mdb ~/printer_data/database/data.mdb
 
 sudo rm /usr/lib/udev/rules.d/60-usbmount.rules
 sudo rm /usr/lib/udev/rules.d/99-makerbase-automount.rules
