@@ -132,8 +132,8 @@ sudo nmtui
 clear
 
 echo -e "When Kiauh opens after these instructions, go to the uninstall page FIRST and remove the following for final clean-up.\n"
-echo -e "even if they don't look installed... (fluidd, fluid-config & klipper-screen)\n\n"
-sleep 20
+echo -e "even if they don't look installed... (Klipper, Moonraker, fluidd, fluid-config & klipper-screen)\n\n"
+sleep 15
 
 echo -e "Then Install the following, in this ORDER.\n"
 echo -e "Klipper, Moonraker, Fluidd, Mainsail (on port 81) then Mobileraker (No others for now).\n\n"
