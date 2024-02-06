@@ -63,7 +63,7 @@ sed -i 's/^deb/#deb/' /etc/apt/sources.list.d/armbian.list
 # Update Buster sources to Bookworm
 sudo sed -i 's/buster/bookworm/g' /etc/apt/sources.list
 sudo sed -i 's/buster/bookworm/g' /etc/apt/sources.list.d/armbian.list
-echo "deb http://security.debian.org/ bookworm-security main contrib non-free" | sudo tee -a /etc/apt/sources.list
+echo "deb http://security.debian.org/debian-security bookworm/updates main contrib non-free" | sudo tee -a /etc/apt/sources.list
 
 # Install Bookworm packages and perform a full upgrade
 sudo apt update -y
