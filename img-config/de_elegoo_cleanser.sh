@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # User prompt for warning and confirmation
-echo "WARNING: This script will significantly change your system's package sources and installed packages.\n\n"
-echo "This can potentially BRICK this Armbian install.\n\n"
-echo "Please ensure you understand the risks.\n"
-echo "An eMMC reader will be required if it goes wrong. So consider just flashing the OpenNept4une Image"
+echo -e "WARNING: This script will significantly change your system's package sources and installed packages.\n\n"
+echo -e "This can potentially BRICK this Armbian install.\n\n"
+echo -e "Please ensure you understand the risks.\n"
+echo -e "An eMMC reader will be required if it goes wrong. So consider just flashing the OpenNept4une Image"
 
 echo "Do you wish to continue? (yes/no)"
 
