@@ -77,7 +77,7 @@ run_fixes() {
 }
 
 set_current_branch() {
-    current_branch=$(git -C "$OPENNEPT4UNE_DIR" branch --show-current 2>/dev/null)
+    current_branch=$(git -C "$OPENNEPT4UNE_DIR" symbolic-ref --short HEAD 2>/dev/null)
 }
 
 update_repo() {
@@ -165,7 +165,7 @@ is_system_service: False\n\
 origin: $OPENNEPT4UNE_REPO"
 
     elif [ "$update_selection" = "display" ]; then
-        current_display_branch=$(git -C "$DISPLAY_CONNECTOR_DIR" branch --show-current 2>/dev/null)
+        current_display_branch=$(git -C "$DISPLAY_CONNECTOR_DIR" symbolic-ref --short HEAD 2>/dev/null)
         new_lines="[update_manager $update_selection]\n\
 type: git_repo\n\
 primary_branch: $current_display_branch\n\
@@ -620,7 +620,7 @@ if [ -z "$1" ]; then
     run_fixes
     set_current_branch
     update_repo
-
+    
     while true; do
         print_menu
         echo -e "${G}Enter your choice:${NC}"
