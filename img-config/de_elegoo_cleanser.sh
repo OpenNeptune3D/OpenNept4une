@@ -6,14 +6,14 @@ echo -e "This can potentially BRICK this Armbian install.\n\n"
 echo -e "Please ensure you understand the risks.\n"
 echo -e "An eMMC reader will be required if it goes wrong. So consider just flashing the OpenNept4une Image"
 
-echo "Do you wish to continue? (yes/no)"
+echo -e "Do you wish to continue? (yes/no)"
 
 # Read user input
 read -r response
 
 # Check if the user wants to proceed
 if [[ "$response" != "yes" ]]; then
-    echo "Operation aborted by the user."
+    echo -e "Operation aborted by the user."
     exit 1
 fi
 
@@ -50,32 +50,25 @@ sudo rm -rf /root/*
 sudo apt remove nginx -y
 
 # TESTING Risky Bookworm Upgrade
-
 # Hold DTB, u-boot, kernel & firmware packages
 sudo apt-mark hold linux-dtb-edge-rockchip64 linux-image-edge-rockchip64 linux-libc-dev:arm64 linux-u-boot-mkspi-edge armbian-bsp-cli-mkspi armbian-firmware
-
 # Update Buster packages
-sudo apt update -y && sudo apt upgrade -y && sudo apt autoremove -y
-
+##sudo apt update -y && sudo apt upgrade -y && sudo apt autoremove -y
 # Hold Armbian update sources before full-upgrade
-sed -i 's/^deb/#deb/' /etc/apt/sources.list.d/armbian.list
-
 # Update Buster sources to Bookworm
-sudo sed -i 's/buster/bookworm/g' /etc/apt/sources.list
-sudo sed -i 's/buster/bookworm/g' /etc/apt/sources.list.d/armbian.list
-echo "deb http://security.debian.org/debian-security bookworm/updates main contrib non-free" | sudo tee -a /etc/apt/sources.list
-
+##sed -i 's/^deb/#deb/' /etc/apt/sources.list.d/armbian.list
+##sudo sed -i 's/buster/bookworm/g' /etc/apt/sources.list
+##sudo sed -i 's/buster/bookworm/g' /etc/apt/sources.list.d/armbian.list
+##echo "deb http://security.debian.org/debian-security bookworm/updates main contrib non-free" | sudo tee -a /etc/apt/sources.list
 # Install Bookworm packages and perform a full upgrade
 sudo apt update -y
-sudo apt full-upgrade -y
-
 # Release Armbian update sources after full-upgrade
-sed -i 's/^#deb/deb/' /etc/apt/sources.list.d/armbian.list
+sudo apt full-upgrade -y
+##sed -i 's/^#deb/deb/' /etc/apt/sources.list.d/armbian.list
 
 sudo apt autoremove -y
 sync
-echo "Upgrade to Bookworm completed."
-
+#echo "Upgrade to Bookworm completed."
 
 # Create the config directory structure if not exists
 [ ! -d "$HOME/printer_data/config/" ] && mkdir -p ~/printer_data/config/
@@ -100,6 +93,20 @@ fi
 cp -r ~/OpenNept4une/img-config/printer-data/* ~/printer_data/config/ && \
 mv ~/printer_data/config/data.mdb ~/printer_data/database/data.mdb
 
+# Pick Legacy Crowsnest
+git clone --branch legacy/v3 https://github.com/mainsail-crew/crowsnest.git
+FILE="$HOME/printer_data/config/moonraker.conf"
+
+perl -i -pe 'if (/^\[update_manager crowsnest\]/ ... /^$/) {
+    if (/origin: https:\/\/github\.com\/mainsail-crew\/crowsnest\.git/) {
+        print;
+        print "primary_branch: legacy/v3\n";
+    } else {
+        print;
+    }
+}' "$FILE"
+echo "File updated successfully."
+
 sudo apt install network-manager -y 
 sudo apt install ustreamer -y 
 sudo apt install python3-venv -y 
@@ -108,23 +115,6 @@ sudo apt autoclean -y
 sudo apt autoremove -y
 sudo rm -rf /var/log/*
 sudo rm -rf /usr/share/man/*
-
-#git clone --branch legacy/v3 https://github.com/mainsail-crew/crowsnest.git
-
-# Define the file path
-#FILE="$HOME/printer_data/config/moonraker.conf"
-
-#perl -i -pe 'if (/^\[update_manager crowsnest\]/ ... /^$/) {
-#    if (/origin: https:\/\/github\.com\/mainsail-crew\/crowsnest\.git/) {
-#        print;
-#        print "primary_branch: legacy/v3\n";
-#    } else {
-#        print;
-#    }
-#}' "$FILE"
-
-#echo "File updated successfully."
-
 
 CRON_ENTRY="*/10 * * * * /bin/sync"
 if ! (crontab -l 2>/dev/null | grep "/bin/sync"); then
@@ -146,7 +136,7 @@ echo -e "even if they don't look installed... (klipper, moonraker, fluidd, fluid
 sleep 20
 
 echo -e "Then Install the following, in this ORDER.\n"
-echo -e "Klipper, Moonraker, Fluidd, Mainsail (on port 81) then Mobileraker.\n\n"
+echo -e "Klipper, Moonraker, Fluidd, Mainsail (on port 81) then Mobileraker (no others for now).\n\n"
 echo -e "After, on the main kiauh menu select Update then all with (a)\n"
 echo -e "then exit kiauh\n\n"
 sleep 20
