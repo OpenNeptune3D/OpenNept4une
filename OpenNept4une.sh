@@ -88,7 +88,6 @@ update_repo() {
     echo -e "${M}Checking for updates...${NC}"
     echo "=========================================================="
     echo ""
-    set_current_branch
     process_repo_update "$OPENNEPT4UNE_DIR" "OpenNept4une"
     moonraker_update_manager "OpenNept4une"
     if [ -d "${HOME}/OpenNept4une/display/venv" ]; then
@@ -619,6 +618,7 @@ done
 # Main Script Logic
 if [ -z "$1" ]; then
     run_fixes
+    set_current_branch
     update_repo
 
     while true; do
