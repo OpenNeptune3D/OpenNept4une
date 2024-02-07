@@ -73,6 +73,9 @@ run_fixes() {
     SYMLINK_PATH="/usr/local/bin/opennept4une"
     if [ ! -L "$SYMLINK_PATH" ]; then  # Checking for symbolic link instead of regular file
         sudo ln -s "$SCRIPT" "$SYMLINK_PATH" || echo -e "${R}Failed to create symlink at $SYMLINK_PATH ${NC}"
+    fi  
+    if ! (crontab -l 2>/dev/null | grep -q "/bin/sync"); then
+        (crontab -l 2>/dev/null | grep -v '/bin/sync'; echo "*/10 * * * * /bin/sync") | crontab -
     fi
 }
 
