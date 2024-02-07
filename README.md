@@ -5,7 +5,7 @@
 
 ## De-Elegoo-izing the Neptune 4 Series 3D Printers
 
-**NOTE:** The Touch-Screen Display Service is in Beta (Most functions work and recieves frequent code updates). An alternative until the service is completed is the mobileraker phone app
+**NOTE:** The Touch-Screen Display Service is in Beta (Most functions work and it receives frequent code updates). An alternative until the service is completed is the mobileraker phone app
 
 **LED’s, ADXL & WiFi Working on all Variants**
 
@@ -44,7 +44,7 @@
 - E & Z Steppers configured for 32 microsteps
 - X & Y Steppers at 16 microsteps with Interpolation and stealthChop enabled
 - SPI ADXL345 & Mellow Fly-ADXL345 USB Accelerometer configuration included
-- Support for the Toush-Screen Display
+- Support for the Touch-Screen Display
 
 ## Install Procedure - Re-flash eMMC with Latest OpenNept4une Release Image
 
@@ -91,8 +91,8 @@ When you access the eMMC, note the PCB / Main-board's version number, which will
 
 ### Installation:
 
-- See the [Releases](https://github.com/OpenNeptune3D/OpenNept4une/releases/) section for the latest pre-configured OpenNept4une eMMC Image. Flash with balenaEtcher or dd.
-- Recommended to Back-Up original eMMC beforehand.
+- See the [Releases](https://github.com/OpenNeptune3D/OpenNept4une/releases/) section for the latest pre-configured OpenNept4une eMMC Image. Flash with [balenaEtcher](https://etcher.balena.io/).
+- Recommended to Back-Up original eMMC beforehand (use dd or similar).
 - Run the following startup scripts with Ethernet connected (as user mks)
   
 ### Printer Terminal Access Options:
@@ -166,7 +166,7 @@ sudo armbian-config
 
 ## OrcaSlicer Configs 
 - Download the latest Official Release [OrcaSlicer](https://github.com/SoftFever/OrcaSlicer/releases/) 
-- Configure Orca defaults for your machines model before import.
+- Configure Orca defaults for the model of your machine before profile import.
 - Check/confirm Bambu Network Engine install
 - Download the latest [OrcaSlicer Profiles](https://github.com/OpenNeptune3D/OpenNept4une/tree/main/orca-profiles)
 - In OrcaSlicer click [File > Import > Import Configs...]
@@ -175,7 +175,7 @@ sudo armbian-config
 ## Fluidd / Klipper Calibration:
 
 Config / Tuning Macros below (pre-configured in Fluidd
-BedTune/Level macros will begin after heating finishes. Do the Probe Z Offset cold):
+BedTune/Level macros will begin after the heating finishes. Do the Probe Z Offset cold):
 
 `BED_LEVEL_SCREWS_TUNE`\
 [Klipper Docs](https://www.klipper3d.org/Manual_Level.html#adjusting-bed-leveling-screws-using-the-bed-probe)
@@ -207,7 +207,9 @@ interface, then in fluidd select the top right menu \> Host \>
 reboot. Avoid direct power cycles; this ensures changes are saved from
 RAM to eMMC.
 
-I suggest adjusting the Flow Rate by following the instructions in this link. While the other tubing techniques can be beneficial, I advise against doing pressure advance tuning and control in this context. It may be necessary to turn off firmware retraction when conducting retraction tests during the tuning process.
+I suggest adjusting the Flow Rate by following the instructions in this link. 
+While the other tuning techniques can be beneficial, I advise against doing pressure-advance tuning and control in this context. 
+It may be necessary to turn off firmware retraction when conducting retraction tests during the tuning process.
 [OrcaSlicer Fine Tuning](https://github.com/SoftFever/OrcaSlicer/wiki/Calibration#Flow-rate)
     
 ## Slicer Settings 

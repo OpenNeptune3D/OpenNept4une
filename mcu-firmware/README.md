@@ -127,27 +127,20 @@
    - If you read the MicroSD card from a computer you should see that the X_4.bin has been renamed to X_4.CUR if it has been successfully updated
    - If the file hasn't been renamed to (.CUR) try renaming the X_4.bin to elegoo_k1.bin and try again
      
-## How to Recover Original Elegoo MCU Firmware
+## How to revert to Original Elegoo MCU Firmware
 
-(Your previously backed-up Elegoo Firmware or the backup in this repo)
-
-1. **Power On and Boot Process:**
-   - Similar to the above steps.
-   
-2. **SSH and Commands:**
-   - Leave the printer on, and SSH in (as mks) and type:
-     ```
-     sudo service klipper stop
-     stm32flash -w ~/firmware-bak.bin -v /dev/ttyS0
-     ```
-   - If you didn't make your own backup run
-     ```
-     sudo service klipper stop
-     stm32flash -w ~/OpenNept4une/mcu-firmware/firmware-bak.bin -v /dev/ttyS0
-     ```
-   - If the stm32flash command fails [Failed to init device, timeout.], retry the BOOT & RESET button method above then re-run the stm32flash command till it works.
-   - Type `sudo poweroff` (then power cycle after ~20s).
-
+1. **MicroSD Preparation:**
+   - Format a MicroSD card to FAT32
+   - Download this firmware file [ElegooSD-restore.bin](https://github.com/OpenNeptune3D/OpenNept4une/raw/dev/mcu-firmware/ElegooSD-restore.bin).
+   - Move the file to the root of the MicroSD, duplicate the file and name one X_4.bin , and the other elegoo_K1.bin
+   - Safely Eject the MicroSD
+   -   
+2. **Firmware Update:**
+   - Ensure your printer is powered off
+   - Insert the MicroSD into your printer (Internal access is required on some models: Remove 4 front hex bolts, bottom panel, then the 2 front panel mount screws. Cut a slot for future updates.)
+   - Power on the printer and wait 2min
+   - Check Fluidd's System tab for the updated klipper version [mcu Information v0.12.0-93]
+   - If you read the MicroSD card from a computer you should see that X_4.bin (or elegoo_K1.bin) has been renamed to a (.CUR) if it has been successfully flashed.
 
 ## Notes
 
