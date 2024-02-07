@@ -520,8 +520,9 @@ run_install_screen_service_with_setup() {
 initialize_display_connector() {
     if [ ! -d "${HOME}/display_connector" ]; then
         git clone -b "$current_branch" "${DISPLAY_CONNECTOR_REPO}" "${DISPLAY_CONNECTOR_DIR}"
-        echo -e"${G}Initialized repository for Touch-Screen Display Service.${NC}"
+        echo -e "${G}Initialized repository for Touch-Screen Display Service.${NC}"
     fi
+    moonraker_update_manager "display"
 }
 
 reboot_system() {
