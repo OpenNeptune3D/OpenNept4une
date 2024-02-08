@@ -114,10 +114,13 @@ update_repo() {
 process_repo_update() {
     repo_dir=$1
     name=$2
+    current_branch=$(git -C "$repo_dir" branch --show-current)  # Added to determine the current branch
+
     if [ ! -d "$repo_dir" ]; then
         echo -e "${R}Repository directory not found at $repo_dir!${NC}"
         return 1
     fi
+
     if ! git -C "$repo_dir" fetch origin "$current_branch" --quiet; then
         echo -e "${R}Failed to fetch updates from the repository.${NC}"
         return 1
@@ -133,18 +136,30 @@ process_repo_update() {
         fi
         if [[ $REPLY =~ ^[Yy]$ || $auto_yes = "true" ]]; then
             echo "Updating..."
-            git -C "$repo_dir" reset --hard && \
-            git -C "$repo_dir" clean -fd && \
-            git -C "$repo_dir" pull origin "$current_branch" --force || {
-                echo -e "${R}Failed to update ${name}.${NC}"
-                return 1
-            }
+
+            # Attempt to pull and capture any errors
+            UPDATE_OUTPUT=$(git -C "$repo_dir" pull origin "$current_branch" --force 2>&1) || true
+
+            # Check for the specific divergent branches error message in the output
+            if echo "$UPDATE_OUTPUT" | grep -q "divergent branches"; then
+                echo "Divergent branches detected, performing a hard reset to origin/${current_branch}..."
+                sleep 1
+                git -C "$repo_dir" reset --hard "origin/${current_branch}" && \
+                git -C "$repo_dir" clean -fd || {
+                    echo -e "${R}Failed to hard reset ${name}.${NC}"
+                    sleep 1
+                    return 1
+                }
+            fi
+
             echo -e "${name} ${G}Updated successfully.${NC}"
+            sleep 1
             sync
             exec "$SCRIPT"
             exit 0
         else
             echo -e "${Y}Update skipped.${NC}"
+            sleep 1
         fi
     else
         echo -e "${G}●${NC} ${name} ${G}is already up-to-date.${NC}"
