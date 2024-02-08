@@ -114,32 +114,27 @@ update_repo() {
 process_repo_update() {
     repo_dir=$1
     name=$2
-    current_branch=$(git -C "$repo_dir" branch --show-current)  # Added to determine the current branch
-
+    current_branch=$(git -C "$repo_dir" branch --show-current)  # Determine the current branch
     if [ ! -d "$repo_dir" ]; then
         echo -e "${R}Repository directory not found at $repo_dir!${NC}"
         return 1
     fi
-
     if ! git -C "$repo_dir" fetch origin "$current_branch" --quiet; then
         echo -e "${R}Failed to fetch updates from the repository.${NC}"
         return 1
     fi
-
     LOCAL=$(git -C "$repo_dir" rev-parse '@')
     REMOTE=$(git -C "$repo_dir" rev-parse '@{u}')
-
-    if [ "$LOCAL" != "$REMOTE" ]; then
+    UPDATES_AVAILABLE=$(git -C "$repo_dir" log $LOCAL..$REMOTE)
+    if [ -n "$UPDATES_AVAILABLE" ]; then
         echo -e "${Y}Updates are available for the repository.${NC}"
         if [ "$auto_yes" != "true" ]; then
             read -r -p "Would you like to update ${G}● ${name}?${NC} (y/n): " -r
         fi
         if [[ $REPLY =~ ^[Yy]$ || $auto_yes = "true" ]]; then
             echo "Updating..."
-
             # Attempt to pull and capture any errors
             UPDATE_OUTPUT=$(git -C "$repo_dir" pull origin "$current_branch" --force 2>&1) || true
-
             # Check for the specific divergent branches error message in the output
             if echo "$UPDATE_OUTPUT" | grep -q "divergent branches"; then
                 echo "Divergent branches detected, performing a hard reset to origin/${current_branch}..."
@@ -151,7 +146,6 @@ process_repo_update() {
                     return 1
                 }
             fi
-
             echo -e "${name} ${G}Updated successfully.${NC}"
             sleep 1
             sync
@@ -164,7 +158,6 @@ process_repo_update() {
     else
         echo -e "${G}●${NC} ${name} ${G}is already up-to-date.${NC}"
         sleep 1
-        echo ""
     fi
     echo "=========================================================="
     echo ""
