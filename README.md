@@ -44,5 +44,5 @@
 ### [OpenNept4une Releases](https://github.com/OpenNeptune3D/OpenNept4une/releases/)  
 
 ## Installation:
-### [OpenNept4une Wiki](https://github.com/OpenNeptune3D/OpenNept4une/wiki/Getting-Started-with-OpenNept4une)  
+### [OpenNept4une Wiki](https://github.com/OpenNeptune3D/OpenNept4une/wiki)  
 
