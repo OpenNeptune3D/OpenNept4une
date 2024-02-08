@@ -25,9 +25,9 @@
 ### Image Features
 - Support for all Neptune 4 series models 
 - Custom Armbian Image (24.2.0 Bookworm with Linux kernel 6.1.67) ([Credit](https://github.com/halfmanbear/Armbian-ZNP-K1-build))
-- Fully Open Source + Updatable services, packages & firmware (No need for Elegoo Firmware Updates going forward)
-- TouchScreen Support BETA (More responsive)
 - Klipper v0.12 installed + Easy MCU flash 
+- Updatable services, packages & firmware (No need for Elegoo Firmware Updates going forward)
+- TouchScreen Support BETA (More responsive)
 - All Elegoo Services Removed (No Z-Axis Issues)
 - Orca Slicer Profiles Provided
 - Adaptive Meshing Configured
