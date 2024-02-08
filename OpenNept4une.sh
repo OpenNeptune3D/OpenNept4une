@@ -157,6 +157,7 @@ process_repo_update() {
         fi
     else
         echo -e "${G}●${NC} ${name} ${G}is already up-to-date.${NC}"
+        echo ""
         sleep 1
     fi
     echo "=========================================================="
