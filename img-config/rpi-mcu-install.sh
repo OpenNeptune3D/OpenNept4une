@@ -13,7 +13,7 @@ if [[ -z $1 ]]; then
         STM32 ) echo "Updating STM32 MCU..."; break;;
         Virtual\ RPi ) echo "Updating Virtual RPi MCU..."; break;;
         Pico-based\ USB\ Accelerometer ) echo "Updating Pico-based USB Accelerometer..."; break;;
-        All ) echo "Starting update process for STM32, Virtual RPi MCU and Pico-based USB Accelerometer..."; break;;
+        All ) echo "Starting update process for STM32, Virtual RPi MCU and Pico USB Accelerometer"; break;;
             Cancel ) echo "Update canceled."; exit;;
         esac
     done
@@ -27,6 +27,7 @@ cd ~/klipper/ && git pull origin master
 
 # Update procedure for STM32 MCU
 if [[ "$mcu_choice" == "STM32" ]] || [[ "$mcu_choice" == "All" ]]; then
+    clear
     echo "Proceeding with STM32 MCU Update..."
     make clean
     cp ~/OpenNept4une/mcu-firmware/mcu.config ~/klipper/.config
@@ -46,24 +47,28 @@ if [[ "$mcu_choice" == "STM32" ]] || [[ "$mcu_choice" == "All" ]]; then
         mkdir -p ~/printer_data/config/Firmware
 
         # Remove old files in previous parent directory
-        rm ~/printer_data/config/X_4.bin
-        rm ~/printer_data/config/elegoo_k1.bin
+        rm ~/printer_data/config/X_4.bin > /dev/null 2>&1
+        rm ~/printer_data/config/elegoo_k1.bin > /dev/null 2>&1
 
         cp ~/klipper/out/klipper.bin ~/printer_data/config/Firmware/X_4.bin
         cp ~/klipper/out/klipper.bin ~/printer_data/config/Firmware/elegoo_k1.bin
 
+        clear
         # Display instructions for downloading the firmware
         ip_address=$(hostname -I | awk '{print $1}')
         echo ""
         echo -e "\nTo download firmware files:"
         echo "1. Visit: http://$ip_address/#/configure"
         echo "2. Click the Firmware folder in the left Config list"
-        echo "3. Right click and Download 'X_4.bin' and 'elegoo_k1.bin' to a FAT32 formatted microSD card."
+        echo "3. Right-click and Download 'X_4.bin' and 'elegoo_k1.bin'"
+        echo "   Then copy both to a FAT32 formatted microSD card."
         echo ""
         echo -e "\nTo complete the update:"
-        echo "1. After this script completes, power off the printer and insert the microSD card."
-        echo "2. Power on and check the MCU version in Fluidd's system tab."
-        echo "3. One of the '.bin' files on the microSD should be renamed to '.CUR' if the update was successful."
+        echo "1. After this script completes, power off the printer" 
+        echo "   Then insert the microSD card."
+        echo "2. Power on, and check the MCU version in Fluidd's system tab."
+        echo "3. One of the '.bin' files on the microSD will be renamed to..." 
+        echo "   '.CUR' if the update was successful."
         echo ""
         echo -e "\nFor printers without external microSD slots:"
         echo -e "Visit the OpenNept4une wiki for info (if not already done)\n"
@@ -73,8 +78,9 @@ if [[ "$mcu_choice" == "STM32" ]] || [[ "$mcu_choice" == "All" ]]; then
         read continue_choice
         if [[ "$continue_choice" =~ ^[Yy]$ ]]; then
             echo ""
-            echo "Power-off the machine and insert the microSD card."
             if [[ "$mcu_choice" == "STM32" ]]; then
+                echo "Power-off the machine and insert the microSD card."
+                sleep 4
                 # Exit only if the selected choice was specifically STM32, not "All"
                 exit
             fi
@@ -85,18 +91,23 @@ fi
 # Update procedure for Pico-based Accelerometer
 pico_skipped=false
 if [[ "$mcu_choice" == "Pico-based USB Accelerometer" ]] || [[ "$mcu_choice" == "All" ]]; then
+    clear
     echo "Proceeding with Pico-based USB Accelerometer Update..."
 
     # check if there is any pico connected, and identify if it is in bootloader mode or not
     while true; do
         pico_bootloader=$(lsusb | grep '2e8a:0003' 2>/dev/null)
         if [[ -z "$pico_bootloader" ]]; then
-            read -n 1 -p "Please put your Pico in bootloader mode and press any key to continue or S to skip... " key
+            echo ""
+            read -n 1 -p "Please put your Pico in bootloader mode
+Skip with (s) or press any key to continue..." key
             if [[ $key = s ]] || [[ $key = S ]]; then
                 pico_skipped=true
+                clear
                 break
             fi
         else
+            echo ""
             echo "Pico detected in bootloader mode. Proceeding..."
             break
         fi
@@ -113,14 +124,16 @@ if [[ "$mcu_choice" == "Pico-based USB Accelerometer" ]] || [[ "$mcu_choice" == 
         make flash FLASH_DEVICE=2e8a:0003
         echo ""
         echo "Pico-based Accelerometer update completed."
+        sleep 2
         echo ""
     fi
 fi
 
 # Update procedure for Virtual RPi MCU
 if [[ "$mcu_choice" == "Virtual RPi" ]] || [[ "$mcu_choice" == "All" ]]; then
+    clear
     echo "Proceeding with Virtual MCU RPi Update..."
-
+    echo ""
     sudo apt install -y python3-numpy python3-matplotlib libatlas-base-dev
     ~/klippy-env/bin/pip install -v numpy
     sudo cp ./scripts/klipper-mcu.service /etc/systemd/system/
@@ -139,6 +152,8 @@ if [[ "$mcu_choice" == "Virtual RPi" ]] || [[ "$mcu_choice" == "All" ]]; then
     make flash
     echo ""
     echo "Virtual MCU update completed."
+    sleep 2
+    clear
     echo ""
 
     # System reboot countdown for Virtual RPi MCU update
