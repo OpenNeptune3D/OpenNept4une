@@ -114,6 +114,7 @@ update_repo() {
 process_repo_update() {
     repo_dir=$1
     name=$2
+    current_branch=$(git -C "$repo_dir" branch --show-current)  # Determine the current branch
     if [ ! -d "$repo_dir" ]; then
         echo -e "${R}Repository directory not found at $repo_dir!${NC}"
         return 1
@@ -122,34 +123,42 @@ process_repo_update() {
         echo -e "${R}Failed to fetch updates from the repository.${NC}"
         return 1
     fi
-
     LOCAL=$(git -C "$repo_dir" rev-parse '@')
     REMOTE=$(git -C "$repo_dir" rev-parse '@{u}')
-
-    if [ "$LOCAL" != "$REMOTE" ]; then
+    UPDATES_AVAILABLE=$(git -C "$repo_dir" log $LOCAL..$REMOTE)
+    if [ -n "$UPDATES_AVAILABLE" ]; then
         echo -e "${Y}Updates are available for the repository.${NC}"
         if [ "$auto_yes" != "true" ]; then
             read -r -p "Would you like to update ${G}● ${name}?${NC} (y/n): " -r
         fi
         if [[ $REPLY =~ ^[Yy]$ || $auto_yes = "true" ]]; then
             echo "Updating..."
-            git -C "$repo_dir" reset --hard && \
-            git -C "$repo_dir" clean -fd && \
-            git -C "$repo_dir" pull origin "$current_branch" --force || {
-                echo -e "${R}Failed to update ${name}.${NC}"
-                return 1
-            }
+            # Attempt to pull and capture any errors
+            UPDATE_OUTPUT=$(git -C "$repo_dir" pull origin "$current_branch" --force 2>&1) || true
+            # Check for the specific divergent branches error message in the output
+            if echo "$UPDATE_OUTPUT" | grep -q "divergent branches"; then
+                echo "Divergent branches detected, performing a hard reset to origin/${current_branch}..."
+                sleep 1
+                git -C "$repo_dir" reset --hard "origin/${current_branch}" && \
+                git -C "$repo_dir" clean -fd || {
+                    echo -e "${R}Failed to hard reset ${name}.${NC}"
+                    sleep 1
+                    return 1
+                }
+            fi
             echo -e "${name} ${G}Updated successfully.${NC}"
+            sleep 1
             sync
             exec "$SCRIPT"
             exit 0
         else
             echo -e "${Y}Update skipped.${NC}"
+            sleep 1
         fi
     else
         echo -e "${G}●${NC} ${name} ${G}is already up-to-date.${NC}"
-        sleep 1
         echo ""
+        sleep 1
     fi
     echo "=========================================================="
     echo ""
