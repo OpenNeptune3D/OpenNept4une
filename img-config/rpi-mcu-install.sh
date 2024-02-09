@@ -66,11 +66,10 @@ if [[ "$mcu_choice" == "STM32" ]] || [[ "$mcu_choice" == "All" ]]; then
         echo "3. One of the '.bin' files on the microSD should be renamed to '.CUR' if the update was successful."
         echo ""
         echo -e "\nFor printers without external microSD slots:"
-        echo "1. Remove the front 4 hex screws and bottom access panel."
-        echo "2. Remove the 2 front panel mount screws from inside the PCB area."
-        echo "3. Consider cutting a slot in the front panel for future ease."
+        echo -e "Visit the OpenNept4une wiki for info (if not already done)\n"
+        echo -e "https://github.com/OpenNeptune3D/OpenNept4une/wiki"
         echo ""
-        echo -e "\nHave you downloaded the bin files and are ready to continue? (y/n)"
+        echo -e "\nHave you downloaded the bin files and are ready to continue? (y)"
         read continue_choice
         if [[ "$continue_choice" =~ ^[Yy]$ ]]; then
             echo ""
