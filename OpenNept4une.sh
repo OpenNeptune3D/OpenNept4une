@@ -646,7 +646,7 @@ if [ -z "$1" ]; then
             5) install_screen_service ;;
             6) advanced_more ;;
             q) echo -e "${G}Goodbye...${NC}"; exit 0 ;;
-            *) echo -e "${R}Invalid choice. Please try again.${NC}" ;;
+            *) clear; echo -e "${G}Goodbye...${NC}"; exit 0 ;;
         esac
     done
 else
