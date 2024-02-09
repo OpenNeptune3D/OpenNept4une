@@ -645,7 +645,7 @@ if [ -z "$1" ]; then
             4) update_mcu_rpi_fw ;;
             5) install_screen_service ;;
             6) advanced_more ;;
-            q) echo -e "${G}Goodbye...${NC}"; exit 0 ;;
+            q) clear; echo -e "${G}Goodbye...${NC}"; sleep 2; exit 0 ;;
             *) echo -e "${R}Invalid choice. Please try again.${NC}" ;;
         esac
     done
