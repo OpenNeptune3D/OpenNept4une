@@ -34,6 +34,7 @@
 - Easy WiFi config
 - Simplified and highly modified printer.cfg
 - Preconfigured LED, Bed Leveling & PID Calibration Macros
+- Screws Tilt Adjust Configured 
 - Axis Twist Compensation Configured
 - Firmware Retraction configured
 - Linux Host CPU & MCU temperature monitoring in Fluidd
