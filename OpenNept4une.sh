@@ -393,13 +393,14 @@ install_printer_cfg() {
     DTB_DEST="/boot/dtb/rockchip/rk3328-roc-cc.dtb"
     DATABASE_DEST="${HOME}/printer_data/database"
     PRINTER_CFG_FILE="$PRINTER_CFG_DEST/printer.cfg"
+    PRINTER_CFG_SOURCE="${HOME}/OpenNept4une/printer-confs/output.cfg"
     # Build configuration paths based on selections
     if [[ $model_key == "n4" || $model_key == "n4pro" ]]; then
-        PRINTER_CFG_SOURCE="${HOME}/OpenNept4une/printer-confs/${model_key}/${model_key}-${motor_current}-printer.cfg"
+        python3 ${HOME}/OpenNept4une/printer-confs/generate_conf.py ${model_key} ${motor_current} >/dev/null 2>&1 && sync
         DTB_SOURCE="${HOME}/OpenNept4une/dtb/n4-n4pro-v${pcb_version}/rk3328-roc-cc.dtb"
         FLAG_LINE=$(echo "$model_key" | sed -E 's/^(.)(4)(.?)/\U\1\2\u\3/')-${motor_current}A-v${pcb_version}
     else
-        PRINTER_CFG_SOURCE="${HOME}/OpenNept4une/printer-confs/${model_key}/${model_key}-printer.cfg"
+        python3 ${HOME}/OpenNept4une/printer-confs/generate_conf.py ${model_key} >/dev/null 2>&1 && sync
         DTB_SOURCE="${HOME}/OpenNept4une/dtb/n4plus-n4max-v1.1-2.0/rk3328-roc-cc.dtb"
         FLAG_LINE=$(echo "$model_key" | sed -E 's/^(.)(4)(.?)/\U\1\2\u\3/')-
     fi
