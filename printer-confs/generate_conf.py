@@ -21,7 +21,11 @@ def generate_conf(printer_model, current):
     for line in printer_conf:
         split = line.split('=')
         if len(split) > 1:
-            base_conf = base_conf.replace('{{ ' + split[0].strip() + ' }}', split[1].strip())
+            key, value = split[0].strip(), split[1].strip()
+            # Convert "\n" sequence in value to actual newline character
+            value = value.replace('\\n', '\n')
+            # Replace the placeholder in base_conf with the modified value
+            base_conf = base_conf.replace('{{ ' + key + ' }}', value)
 
     section_files = os.listdir(os.path.join(script_dir, printer_model))  # Use script_dir to list section files
     for section_file in section_files:
