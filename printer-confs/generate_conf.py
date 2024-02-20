@@ -21,21 +21,25 @@ def generate_conf(printer_model, current):
     for line in printer_conf:
         split = line.split('=')
         if len(split) > 1:
-            base_conf = base_conf.replace('{{ ' + split[0] + ' }}', split[1].strip())
+            base_conf = base_conf.replace('{{ ' + split[0].strip() + ' }}', split[1].strip())
 
     section_files = os.listdir(os.path.join(script_dir, printer_model))  # Use script_dir to list section files
     for section_file in section_files:
         if section_file.startswith('section_') and section_file.endswith('.cfg'):
             section_name = section_file.replace('section_', '').replace('.cfg', '')
-            section_conf = open(os.path.join(script_dir, printer_model, section_file), 'r').read()
-            base_conf = base_conf.replace('{{ ' + section_name + ' }}', section_conf.strip())
+            section_path = os.path.join(script_dir, printer_model, section_file)
+            try:
+                with open(section_path, 'r') as file:
+                    section_conf = file.read()
+                    base_conf = base_conf.replace('{{ ' + section_name + ' }}', section_conf.strip())
+            except FileNotFoundError:
+                print(f"Warning: '{section_file}' was not found and will be skipped.")
 
-    result = re.findall(variable_regex, base_conf)
-    if len(result) > 0:
-        print("ERROR: Some variables were not replaced")
-        for group in result:
-            print("    " + group)
-        return
+    # Remove any unreplaced placeholders
+    unreplaced = variable_regex.findall(base_conf)
+    for placeholder in unreplaced:
+        base_conf = base_conf.replace('{{ ' + placeholder + ' }}', '')
+
     with open(os.path.join(script_dir, 'output.cfg'), 'w') as output:  # Save output.cfg in the script's directory
         output.write(base_conf)
     print("Config generated at " + os.path.join(script_dir, 'output.cfg'))
