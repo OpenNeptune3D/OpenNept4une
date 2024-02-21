@@ -41,7 +41,10 @@ def generate_conf(printer_model, current):
 
     unreplaced = variable_regex.findall(base_conf)
     for placeholder in unreplaced:
-        base_conf = base_conf.replace('{{ ' + placeholder + ' }}', '')
+        # Define a pattern to match the entire line containing the placeholder
+        pattern = f'^.*{{{{\s*{placeholder}\s*}}}}.*\n?'
+        # Replace the entire line containing the placeholder with an empty string
+        base_conf = re.sub(pattern, '', base_conf, flags=re.MULTILINE)
 
     # Write the base configuration to output.cfg
     with open(os.path.join(script_dir, 'output.cfg'), 'w') as output:
@@ -49,7 +52,6 @@ def generate_conf(printer_model, current):
 
     # Now append the printer section
     append_printer_section(os.path.join(os.path.expanduser('~/printer_data/config'), 'printer.cfg'))
-
 
 def append_printer_section(printer_cfg_path):
     # Check if printer.cfg exists
@@ -86,7 +88,6 @@ def append_printer_section(printer_cfg_path):
     with open(output_cfg_path, 'a') as output:
         output.write('\n' + '\n'.join(section))
         print("Printer section appended to " + os.path.join(script_dir, 'output.cfg'))
-
 
 if __name__ == '__main__':
     script_dir = os.path.dirname(os.path.abspath(__file__))
