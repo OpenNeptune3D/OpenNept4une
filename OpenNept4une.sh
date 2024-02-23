@@ -406,6 +406,7 @@ install_printer_cfg() {
     fi
     # Create directories if they don't exist
     mkdir -p "$PRINTER_CFG_DEST" "$DATABASE_DEST"
+    touch ${HOME}/printer_data/config/user_settings.cfg
     update_flag_file() {
     local flag_value=$1
     # Use sudo with awk to read and update the flag file, then use sudo tee to overwrite the original file
