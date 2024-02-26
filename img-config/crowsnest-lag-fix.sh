@@ -27,3 +27,5 @@ sleep 3
 sed -i "s|device: \+/dev/video[0-9]\+|device: $DEVICE_PATH|" "$CONF_FILE"
 echo
 echo "Updated configuration file with video device path: $DEVICE_PATH"
+sync
+sudo service crowsnest restart
