@@ -210,7 +210,7 @@ advanced_more() {
         echo ""
         echo "1) Install Android ADB rules (if using klipperscreen app)"
         echo ""
-        echo "2) Install Crowsnest FPS Fix - FPS & Configs Device"
+        echo "2) Webcam Auto-Config (Crowsnest) - FPS fix & Device Number"
         echo ""
         echo "3) Resize Active Armbian Partition - for eMMC > 8GB."
         echo ""
