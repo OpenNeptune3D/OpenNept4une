@@ -69,6 +69,8 @@ run_fixes() {
     if ! sudo grep -qF "$SYSTEM_INFO" "$FLAG_FILE"; then
         echo "$SYSTEM_INFO" | sudo tee -a "$FLAG_FILE" >/dev/null || echo -e "${R}Failed to append system info to $FLAG_FILE ${NC}"
     fi
+    # Create a symbolic link for OpenNept4une Logo in fluidd
+    ln -s ${HOME}/OpenNept4une/pictures/logo_opennept4une.svg ${HOME}/fluidd/logo_opennept4une.svg > /dev/null 2>&1
     # Create a symbolic link to the main script if it doesn't exist
     SYMLINK_PATH="/usr/local/bin/opennept4une"
     if [ ! -L "$SYMLINK_PATH" ]; then  # Checking for symbolic link instead of regular file
