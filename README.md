@@ -46,6 +46,13 @@ Phillip Thelen, barrenechea, SQUIRRELYMOOSE, DanDonut & Jaerax
   
 ---
 
+<div style="text-align: center;">
+  <img src="pictures/main-page.png" width="450" alt="OpenNept4une Main-Page" style="margin-right: 10px;">
+  <img src="pictures/advanced-page.png" width="450" alt="OpenNept4une Advanced-Page">
+</div>
+
+---
+
 ### Included Projects: 
   - [Armbian](https://github.com/armbian/build)
   - [(Fork) Armbian-ZNP-K1-build base image](https://github.com/OpenNeptune3D/Armbian-ZNP-K1-build)
