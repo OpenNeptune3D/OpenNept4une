@@ -69,6 +69,8 @@ run_fixes() {
     if ! sudo grep -qF "$SYSTEM_INFO" "$FLAG_FILE"; then
         echo "$SYSTEM_INFO" | sudo tee -a "$FLAG_FILE" >/dev/null || echo -e "${R}Failed to append system info to $FLAG_FILE ${NC}"
     fi
+    # Create a symbolic link for OpenNept4une Logo in fluidd
+    ln -s ${HOME}/OpenNept4une/pictures/logo_opennept4une.svg ${HOME}/fluidd/logo_opennept4une.svg > /dev/null 2>&1
     # Create a symbolic link to the main script if it doesn't exist
     SYMLINK_PATH="/usr/local/bin/opennept4une"
     if [ ! -L "$SYMLINK_PATH" ]; then  # Checking for symbolic link instead of regular file
@@ -210,7 +212,7 @@ advanced_more() {
         echo ""
         echo "1) Install Android ADB rules (if using klipperscreen app)"
         echo ""
-        echo "2) Install Crowsnest FPS Fix - FPS & Configs Device"
+        echo "2) Webcam Auto-Config (Crowsnest) - FPS fix & Device Number"
         echo ""
         echo "3) Resize Active Armbian Partition - for eMMC > 8GB."
         echo ""
@@ -393,18 +395,20 @@ install_printer_cfg() {
     DTB_DEST="/boot/dtb/rockchip/rk3328-roc-cc.dtb"
     DATABASE_DEST="${HOME}/printer_data/database"
     PRINTER_CFG_FILE="$PRINTER_CFG_DEST/printer.cfg"
+    PRINTER_CFG_SOURCE="${HOME}/OpenNept4une/printer-confs/output.cfg"
     # Build configuration paths based on selections
     if [[ $model_key == "n4" || $model_key == "n4pro" ]]; then
-        PRINTER_CFG_SOURCE="${HOME}/OpenNept4une/printer-confs/${model_key}/${model_key}-${motor_current}-printer.cfg"
+        python3 ${HOME}/OpenNept4une/printer-confs/generate_conf.py ${model_key} ${motor_current} >/dev/null 2>&1 && sync
         DTB_SOURCE="${HOME}/OpenNept4une/dtb/n4-n4pro-v${pcb_version}/rk3328-roc-cc.dtb"
         FLAG_LINE=$(echo "$model_key" | sed -E 's/^(.)(4)(.?)/\U\1\2\u\3/')-${motor_current}A-v${pcb_version}
     else
-        PRINTER_CFG_SOURCE="${HOME}/OpenNept4une/printer-confs/${model_key}/${model_key}-printer.cfg"
+        python3 ${HOME}/OpenNept4une/printer-confs/generate_conf.py ${model_key} >/dev/null 2>&1 && sync
         DTB_SOURCE="${HOME}/OpenNept4une/dtb/n4plus-n4max-v1.1-2.0/rk3328-roc-cc.dtb"
         FLAG_LINE=$(echo "$model_key" | sed -E 's/^(.)(4)(.?)/\U\1\2\u\3/')-
     fi
     # Create directories if they don't exist
     mkdir -p "$PRINTER_CFG_DEST" "$DATABASE_DEST"
+    touch ${HOME}/printer_data/config/user_settings.cfg
     update_flag_file() {
     local flag_value=$1
     # Use sudo with awk to read and update the flag file, then use sudo tee to overwrite the original file
