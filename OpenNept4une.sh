@@ -79,6 +79,26 @@ run_fixes() {
     if ! (crontab -l 2>/dev/null | grep -q "/bin/sync"); then
         (crontab -l 2>/dev/null | grep -v '/bin/sync'; echo "*/10 * * * * /bin/sync") | crontab -
     fi
+    if [ ! -f "/etc/systemd/system/power_monitor.service" ]; then
+        # Create the systemd service file
+        sudo tee "/etc/systemd/system/power_monitor.service" > /dev/null <<EOF
+[Unit]
+Description=Power Cut Monitor and Safe Shutdown
+
+[Service]
+Type=simple
+ExecStart=/home/mks/OpenNept4une/img-config/power_monitor.sh
+User=root
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
+EOF
+        sudo systemctl daemon-reload > /dev/null 2>&1
+        sudo systemctl enable power_monitor.service > /dev/null 2>&1
+        sudo systemctl start power_monitor.service > /dev/null 2>&1
+    fi
 }
 
 set_current_branch() {
