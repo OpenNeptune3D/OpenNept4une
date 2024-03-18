@@ -6,7 +6,7 @@ gpioset gpiochip1 21=1
 # Function to handle power-cut
 handle_power_cut() {
     # Then, initiate a safe shutdown
-    sudo poweroff
+    poweroff
 }
 
 # Monitor GPIO line 10 for changes in the background
