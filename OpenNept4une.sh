@@ -481,6 +481,33 @@ apply_configuration() {
         printf "${R}Error: Invalid printer configuration file '$PRINTER_CFG_SOURCE'.${NC}\n"
         return 1
     fi
+    # Config file update prompt
+        local install_configs="$auto_yes"  # Defaults to the value of auto_yes
+    if [ "$auto_yes" != "true" ]; then
+        printf "The latest KAMP/moonraker/fluiddGUI configurations include...\n" 
+        printf "updated settings and features for your printer.\n\n"
+        printf "${Y}It's recommended when updating printer.cfg & initial installs...\n" 
+        printf "OR if you want to RESET to the default configurations.${NC}\n\n"
+        read -r -p "${M}Install latest configurations?${NC} (y/N): " -r choice
+        [[ $choice =~ ^[Yy]$ ]] && install_configs="true"
+    fi
+    # Install the configurations if confirmed
+    if [ "$install_configs" = "true" ]; then
+        printf "Installing latest configurations...\n\n"
+        sleep 1
+        if cp -r ~/OpenNept4une/img-config/printer-data/* ~/printer_data/config/ && \
+           mv ~/printer_data/config/data.mdb ~/printer_data/database/data.mdb; then
+           printf "${G}Configurations installed successfully.${NC}\n\n"
+           sleep 1
+        else
+            echo -e "${R}Error: Failed to install latest configurations.${NC}"
+            sleep 1
+            return 1
+        fi
+    else
+        printf "${Y}Installation of latest configurations skipped.${NC}\n"
+        sleep 1
+    fi
     # DTB file update prompt
     if [[ -n "$DTB_SOURCE" && -f "$DTB_SOURCE" ]]; then
         local update_dtb=false
@@ -504,32 +531,6 @@ apply_configuration() {
         printf "${R}Error: DTB file '$DTB_SOURCE' not found.${NC}\n"
         sleep 2
         return 1
-    fi
-    local install_configs="$auto_yes"  # Defaults to the value of auto_yes
-    if [ "$auto_yes" != "true" ]; then
-        printf "The latest KAMP/moonraker/fluiddGUI configurations include...\n" 
-        printf "updated settings and features for your printer.\n\n"
-        printf "${Y}It's recommended for first-time installs...\n" 
-        printf "OR if you want to RESET to the default configurations.${NC}\n\n"
-        read -r -p "${M}Install latest configurations?${NC} (y/N): " -r choice
-        [[ $choice =~ ^[Yy]$ ]] && install_configs="true"
-    fi
-    # Install the configurations if confirmed
-    if [ "$install_configs" = "true" ]; then
-        printf "Installing latest configurations...\n\n"
-        sleep 1
-        if cp -r ~/OpenNept4une/img-config/printer-data/* ~/printer_data/config/ && \
-           mv ~/printer_data/config/data.mdb ~/printer_data/database/data.mdb; then
-           printf "${G}Configurations installed successfully.${NC}\n\n"
-           sleep 1
-        else
-            echo -e "${R}Error: Failed to install latest configurations.${NC}"
-            sleep 1
-            return 1
-        fi
-    else
-        printf "${Y}Installation of latest configurations skipped.${NC}\n"
-        sleep 1
     fi
 }
 
