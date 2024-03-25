@@ -543,7 +543,7 @@ usb_auto_mount() {
 }
 
 update_mcu_rpi_fw() {
-    install_feature "MCU Updater" "$MCU_RPI_INSTALLER" "Do you want to update the MCU's?"
+    install_feature "MCU Updater" "$MCU_RPI_INSTALLER" "Do you want to update the MCUs?"
 }
 
 install_screen_service() {
