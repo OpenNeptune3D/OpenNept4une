@@ -134,7 +134,7 @@ if [[ "$mcu_choice" == "Virtual RPi" ]] || [[ "$mcu_choice" == "All" ]]; then
     clear
     echo "Proceeding with Virtual MCU RPi Update..."
     echo ""
-    sudo apt install -y python3-numpy python3-matplotlib libatlas-base-dev
+    sudo apt install -y python3-numpy python3-matplotlib libatlas-base-dev libopenblas-dev
     ~/klippy-env/bin/pip install -v numpy
     sudo cp ./scripts/klipper-mcu.service /etc/systemd/system/
     sudo systemctl enable klipper-mcu.service
