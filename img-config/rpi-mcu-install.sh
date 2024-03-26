@@ -114,7 +114,7 @@ Skip with (s) or press any key to continue..." key
     done
 
     if [[ "$pico_skipped" == false ]]; then
-        sudo apt install -y python3-numpy python3-matplotlib libatlas-base-dev
+        sudo apt install -y python3-numpy python3-matplotlib libatlas-base-dev libopenblas-dev
         ~/klippy-env/bin/pip install -v numpy
 
         make clean
