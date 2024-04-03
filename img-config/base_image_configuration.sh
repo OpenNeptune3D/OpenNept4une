@@ -68,7 +68,7 @@ fi
 
 # System updates and cleanups
 sudo apt update 
-sudo apt install ustreamer git python3-numpy python3-matplotlib libatlas-base-dev -y
+sudo apt install ustreamer git python3-numpy python3-matplotlib libatlas-base-dev libopenblas-dev -y
 sudo apt dist-upgrade -y
 sudo apt clean -y
 sudo apt autoclean -y

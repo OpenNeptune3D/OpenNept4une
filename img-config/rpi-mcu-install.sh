@@ -114,7 +114,7 @@ Skip with (s) or press any key to continue..." key
     done
 
     if [[ "$pico_skipped" == false ]]; then
-        sudo apt install -y python3-numpy python3-matplotlib libatlas-base-dev
+        sudo apt install -y python3-numpy python3-matplotlib libatlas-base-dev libopenblas-dev
         ~/klippy-env/bin/pip install -v numpy
 
         make clean
@@ -134,7 +134,7 @@ if [[ "$mcu_choice" == "Virtual RPi" ]] || [[ "$mcu_choice" == "All" ]]; then
     clear
     echo "Proceeding with Virtual MCU RPi Update..."
     echo ""
-    sudo apt install -y python3-numpy python3-matplotlib libatlas-base-dev
+    sudo apt install -y python3-numpy python3-matplotlib libatlas-base-dev libopenblas-dev
     ~/klippy-env/bin/pip install -v numpy
     sudo cp ./scripts/klipper-mcu.service /etc/systemd/system/
     sudo systemctl enable klipper-mcu.service
