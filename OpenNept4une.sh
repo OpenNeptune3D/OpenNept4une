@@ -243,7 +243,7 @@ advanced_more() {
         echo ""
         echo -e "6) Base ZNP-K1 Compiled Image Config (NOT for OpenNept4une)"
         echo ""
-        echo -e "7) Elegoo Image Cleanser Script (NOT for OpenNept4une)"
+        echo -e "7) Change Machine Model / Board Version / Motor Current"
         echo -e "----------------------------------------------------------${NC}"
         echo ""
         echo -e "(${Y} B ${NC}) Back to Main Menu"
@@ -258,6 +258,7 @@ advanced_more() {
             4) update_repo;;
             5) toggle_branch;;
             6) base_image_config;;
+            7) $HOME/OpenNept4une/img-config/set-printer-model.sh;;
             b) return;;  # Return to the main menu
             *) echo -e "${R}Invalid choice, please try again.${NC}";;
         esac
