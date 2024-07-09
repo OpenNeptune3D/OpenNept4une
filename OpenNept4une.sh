@@ -406,18 +406,15 @@ install_printer_cfg() {
     fi
     # Define necessary paths
     PRINTER_CFG_DEST="${HOME}/printer_data/config"
-    DTB_DEST="/boot/dtb/rockchip/rk3328-roc-cc.dtb"
     DATABASE_DEST="${HOME}/printer_data/database"
     PRINTER_CFG_FILE="$PRINTER_CFG_DEST/printer.cfg"
     PRINTER_CFG_SOURCE="${HOME}/OpenNept4une/printer-confs/output.cfg"
     # Build configuration paths based on selections
     if [[ $model_key == "n4" || $model_key == "n4pro" ]]; then
         python3 ${HOME}/OpenNept4une/printer-confs/generate_conf.py ${model_key} ${motor_current} >/dev/null 2>&1 && sync
-        DTB_SOURCE="${HOME}/OpenNept4une/dtb/n4-n4pro-v${pcb_version}/rk3328-roc-cc.dtb"
         FLAG_LINE=$(echo "$model_key" | sed -E 's/^(.)(4)(.?)/\U\1\2\u\3/')-${motor_current}A-v${pcb_version}
     else
         python3 ${HOME}/OpenNept4une/printer-confs/generate_conf.py ${model_key} >/dev/null 2>&1 && sync
-        DTB_SOURCE="${HOME}/OpenNept4une/dtb/n4plus-n4max-v1.1-2.0/rk3328-roc-cc.dtb"
         FLAG_LINE=$(echo "$model_key" | sed -E 's/^(.)(4)(.?)/\U\1\2\u\3/')-
     fi
     # Create directories if they don't exist
@@ -501,30 +498,6 @@ apply_configuration() {
     else
         printf "${Y}Installation of latest configurations skipped.${NC}\n"
         sleep 1
-    fi
-    # DTB file update prompt
-    if [[ -n "$DTB_SOURCE" && -f "$DTB_SOURCE" ]]; then
-        local update_dtb=false
-        if [ "$auto_yes" != "true" ]; then
-            read -r -p "${M}Update DTB file? (Recommended for first-time setup)${NC} (y/N): " -r reply
-            [[ $reply =~ ^[Yy]$ ]] && update_dtb=true
-        else
-            update_dtb=true
-        fi
-        if $update_dtb && ! grep -q "mks" /boot/.OpenNept4une.txt; then
-            sudo cp "$DTB_SOURCE" "$DTB_DEST" && \
-            printf "${G}DTB file updated from '$DTB_SOURCE'.${NC}\n\n" && \
-            sleep 1 || \
-            printf "${R}Error: Failed to update DTB file from '$DTB_SOURCE'.${NC}\n" && \
-            sleep 1
-        elif grep -q "mks" /boot/.OpenNept4une.txt; then
-            printf "${Y}Skipping DTB update based on system check.${NC}\n"
-            sleep 2
-        fi
-    elif [[ -n "$DTB_SOURCE" ]]; then
-        printf "${R}Error: DTB file '$DTB_SOURCE' not found.${NC}\n"
-        sleep 2
-        return 1
     fi
 }
 
