@@ -10,7 +10,7 @@ CROWSNEST_FIX_INSTALLER="${HOME}/OpenNept4une/img-config/crowsnest-lag-fix.sh"
 BASE_IMAGE_INSTALLER="${HOME}/OpenNept4une/img-config/base_image_configuration.sh"
 
 FLAG_FILE="/boot/.OpenNept4une.txt"
-MODEL_FROM_FLAG=$(grep '^N4' "$FLAG_FILE")
+MODEL_FROM_FLAG=$(grep -E '^N4|^n4' "$FLAG_FILE")
 KERNEL_FROM_FLAG=$(grep 'Linux' "$FLAG_FILE" | awk '{split($3,a,"-"); print a[1]}')
 
 OPENNEPT4UNE_REPO="https://github.com/OpenNeptune3D/OpenNept4une.git"
@@ -371,81 +371,63 @@ toggle_branch() {
 
 ### MAIN PAGE INSTALLERS ###
 
-install_printer_cfg() {
-    # Headless operation checks
-    if [ "$auto_yes" = "true" ]; then
-        if { [ "$model_key" = "n4" ] || [ "$model_key" = "n4pro" ]; } && { [ -z "$motor_current" ] || [ -z "$pcb_version" ]; }; then
-            echo -e "${R}Headless mode for n4 and n4pro requires --motor_current and --pcb_version.${NC}"
-            return 1
-        elif [ -z "$model_key" ]; then
-            echo -e "${R}Headless mode requires --printer_model.${NC}"
-            return 1
+# Function to check MODEL_FROM_FLAG and run set-printer-model.sh if needed
+check_and_set_printer_model() {
+
+    if [ -z "$MODEL_FROM_FLAG" ]; then
+        echo "Model Flag is empty. Running Set Model script..."
+        $HOME/OpenNept4une/img-config/set-printer-model.sh
+        MODEL_FROM_FLAG=$(grep '^N4' "$FLAG_FILE")
+        if [ -z "$MODEL_FROM_FLAG" ]; then
+            echo "Failed to set Model Flag. Exiting."
+            exit 1
+        else
+            echo "Model Flag set successfully."
         fi
     else
-        # Interactive mode for model selection
-        clear_screen
-        echo -e "${C}$OPENNEPT4UNE_ART${NC}"
-        echo ""
-        printf "${Y}Note${NC}: your Printer.cfg will be backed-up as ${G}backup-printer.cfg.bak${NC}\n\n"
-        printf "${M}Please select your printer model:\n${NC}"
-        select _ in "Neptune4" "Neptune4 Pro" "Neptune4 Plus" "Neptune4 Max"; do
-            case $REPLY in
-                1) model_key="n4";;
-                2) model_key="n4pro";;
-                3) model_key="n4plus";;
-                4) model_key="n4max";;
-                *) echo -e "${R}Invalid selection. Please try again.${NC}"; continue;;
-            esac
-            break
-        done
-        # Interactive mode for motor current and PCB version if applicable
-        if [ "$model_key" = "n4" ] || [ "$model_key" = "n4pro" ]; then
-            [ -z "$motor_current" ] && select_option motor_current "${M}Select the stepper motor current:${NC}" "0.8" "1.2"
-            [ -z "$pcb_version" ] && select_option pcb_version "${M}Select the PCB version:${NC}" "1.0" "1.1"
-        fi
+        echo "Model Detected"
     fi
+}
+
+extract_model_and_motor() {
+    model_key=$(echo "$MODEL_FROM_FLAG" | sed -E 's/^(N4[a-zA-Z]+)-.*/\1/' | tr '[:upper:]' '[:lower:]')
+    motor_current=$(echo "$MODEL_FROM_FLAG" | sed -E 's/^(N4[a-zA-Z]+)-([0-9.]+)A-v([0-9.]+).*/\2/' | tr '[:upper:]' '[:lower:]')
+    pcb_version=$(echo "$MODEL_FROM_FLAG" | sed -E 's/^(N4[a-zA-Z]+)-([0-9.]+)A-v([0-9.]+).*/\3/' | tr '[:upper:]' '[:lower:]')
+}
+
+install_printer_cfg() {
+    clear_screen
+    echo -e "${C}$OPENNEPT4UNE_ART${NC}"
+    echo ""
+    # Check Model Type has been set
+    check_and_set_printer_model
+    sleep 1
+    # Extract model_key and motor_current from FLAG_FILE
+    extract_model_and_motor
+
     # Define necessary paths
     PRINTER_CFG_DEST="${HOME}/printer_data/config"
     DATABASE_DEST="${HOME}/printer_data/database"
     PRINTER_CFG_FILE="$PRINTER_CFG_DEST/printer.cfg"
     PRINTER_CFG_SOURCE="${HOME}/OpenNept4une/printer-confs/output.cfg"
+
     # Build configuration paths based on selections
     if [[ $model_key == "n4" || $model_key == "n4pro" ]]; then
         python3 ${HOME}/OpenNept4une/printer-confs/generate_conf.py ${model_key} ${motor_current} >/dev/null 2>&1 && sync
-        FLAG_LINE=$(echo "$model_key" | sed -E 's/^(.)(4)(.?)/\U\1\2\u\3/')-${motor_current}A-v${pcb_version}
+        sleep 1
     else
         python3 ${HOME}/OpenNept4une/printer-confs/generate_conf.py ${model_key} >/dev/null 2>&1 && sync
-        FLAG_LINE=$(echo "$model_key" | sed -E 's/^(.)(4)(.?)/\U\1\2\u\3/')-
+        sleep 1
     fi
+
     # Create directories if they don't exist
     mkdir -p "$PRINTER_CFG_DEST" "$DATABASE_DEST"
     touch ${HOME}/printer_data/config/user_settings.cfg
-    update_flag_file() {
-    local flag_value=$1
-    # Use sudo with awk to read and update the flag file, then use sudo tee to overwrite the original file
-    sudo awk -v line="$flag_value" '
-    BEGIN { added = 0 }
-    /^N4/ { print line; added = 1; next }
-    { print }
-    END { if (!added) print line }
-    ' "$FLAG_FILE" | sudo tee "$FLAG_FILE" > /dev/null
-    }
-    update_flag_file "$FLAG_LINE"
-    apply_configuration
-    reboot_system
-}
 
-select_option() {
-    local -n ref=$1
-    echo -e "$2"
-    select opt in "${@:3}"; do
-        if [[ -n $opt ]]; then
-            ref=$opt
-            break
-        else
-            echo -e "${R}Invalid option, please try again.${NC}"  # Assuming ${R} is your color code for error messages
-        fi
-    done
+    apply_configuration
+    printf "Restarting Klipper Service"
+    sleep 2
+    sudo service klipper restart
 }
 
 apply_configuration() {
@@ -459,21 +441,29 @@ apply_configuration() {
     if [[ -f "$PRINTER_CFG_FILE" ]]; then
         cp "$PRINTER_CFG_FILE" "$BACKUP_PRINTER_CFG_FILE" && \
         printf "${G}BACKUP of 'printer.cfg' created as '$BACKUP_PRINTER_CFG_FILE'.${NC}\n\n" && \
-        sleep 1 || \
+        sleep 2 || \
         printf "${R}Error: Failed to create backup of 'printer.cfg'.${NC}\n"
+        sleep 1
     fi
     # Copy new printer configuration
     if [[ -n "$PRINTER_CFG_SOURCE" && -f "$PRINTER_CFG_SOURCE" ]]; then
         cp "$PRINTER_CFG_SOURCE" "$PRINTER_CFG_FILE" && \
         printf "${G}Printer configuration updated from '$PRINTER_CFG_SOURCE'.${NC}\n\n" && \
-        sleep 1 || \
+        sleep 2 || \
         printf "${R}Error: Failed to update printer configuration from '$PRINTER_CFG_SOURCE'.${NC}\n"
+        sleep 1
     else
         printf "${R}Error: Invalid printer configuration file '$PRINTER_CFG_SOURCE'.${NC}\n"
         return 1
     fi
+}
+
+install_configs() {
+    clear_screen
+    echo -e "${C}$OPENNEPT4UNE_ART${NC}"
+    echo ""
     # Config file update prompt
-        local install_configs="$auto_yes"  # Defaults to the value of auto_yes
+    local install_configs="$auto_yes"  # Defaults to the value of auto_yes
     if [ "$auto_yes" != "true" ]; then
         printf "The latest KAMP/moonraker/fluiddGUI configurations include...\n" 
         printf "updated settings and features for your printer.\n\n"
@@ -486,8 +476,8 @@ apply_configuration() {
     if [ "$install_configs" = "true" ]; then
         printf "Installing latest configurations...\n\n"
         sleep 1
-        if cp -r ~/OpenNept4une/img-config/printer-data/* ~/printer_data/config/ && \
-           mv ~/printer_data/config/data.mdb ~/printer_data/database/data.mdb; then
+        if cp -r ${HOME}/OpenNept4une/img-config/printer-data/* ${HOME}/printer_data/config/ && \
+           mv ${HOME}/printer_data/config/data.mdb ${HOME}/printer_data/database/data.mdb; then
            printf "${G}Configurations installed successfully.${NC}\n\n"
            sleep 1
         else
@@ -584,17 +574,19 @@ print_menu() {
     echo -e "                OpenNept4une - ${M}Main Menu${NC}       "
     echo "=========================================================="
     echo ""
-    echo "1) Install/Update OpenNept4une printer configurations"
+    echo "1) Install/Update OpenNept4une printer.cfg"
     echo ""
-    echo "2) Configure WiFi"
+    echo "2) Install/Update KAMP/Moonraker/fluiddGUI/Crowsnest confs"
     echo ""
-    echo "3) Enable USB Storage AutoMount"
+    echo "3) Configure WiFi"
     echo ""
     echo "4) Update MCU & Virtual MCU Firmware"
     echo ""
     echo "5) Install/Update Touch-Screen Service (BETA)"
     echo ""
-    echo -e "6) ${M}* Advanced Options Menu *${NC}"
+    echo "6) Enable USB Storage AutoMount"
+    echo ""
+    echo -e "7) ${M}* Advanced Options Menu *${NC}"
     echo ""
     echo -e "(${R} Q ${NC}) Quit"
     echo "=========================================================="
@@ -631,11 +623,12 @@ if [ -z "$1" ]; then
         read choice
         case $choice in
             1) install_printer_cfg ;;
-            2) wifi_config ;;
-            3) usb_auto_mount ;;
+            2) install_configs ;;
+            3) wifi_config ;;
             4) update_mcu_rpi_fw ;;
             5) install_screen_service ;;
-            6) advanced_more ;;
+            6) usb_auto_mount ;;
+            7) advanced_more ;;
             q) clear; echo -e "${G}Goodbye...${NC}"; sleep 2; exit 0 ;;
             *) echo -e "${R}Invalid choice. Please try again.${NC}" ;;
         esac
@@ -646,10 +639,11 @@ else
     COMMAND=$1;
     case $COMMAND in
         install_printer_cfg) install_printer_cfg ;;
+        install_configs) install_configs ;;
         wifi_config) wifi_config ;;
-        usb_auto_mount) usb_auto_mount ;;
         update_mcu_rpi_fw) update_mcu_rpi_fw ;;
         install_screen_service) install_screen_service ;;
+        usb_auto_mount) usb_auto_mount ;;
         update_repo) update_repo ;;
         android_rules) android_rules ;;
         crowsnest_fix) crowsnest_fix ;;
