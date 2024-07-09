@@ -8,7 +8,6 @@ USB_STORAGE_AUTOMOUNT="${HOME}/OpenNept4une/img-config/usb-storage-automount.sh"
 ANDROID_RULE_INSTALLER="${HOME}/OpenNept4une/img-config/adb-automount.sh"
 CROWSNEST_FIX_INSTALLER="${HOME}/OpenNept4une/img-config/crowsnest-lag-fix.sh"
 BASE_IMAGE_INSTALLER="${HOME}/OpenNept4une/img-config/base_image_configuration.sh"
-DE_ELEGOO_IMAGE_CLEANSER="${HOME}/OpenNept4une/img-config/de_elegoo_cleanser.sh"
 
 FLAG_FILE="/boot/.OpenNept4une.txt"
 MODEL_FROM_FLAG=$(grep '^N4' "$FLAG_FILE")
@@ -259,7 +258,6 @@ advanced_more() {
             4) update_repo;;
             5) toggle_branch;;
             6) base_image_config;;
-            7) de_elegoo_image_cleanser;;
             b) return;;  # Return to the main menu
             *) echo -e "${R}Invalid choice, please try again.${NC}";;
         esac
@@ -319,10 +317,6 @@ crowsnest_fix() {
 
 base_image_config() {
     install_feature "Base Ambian Image Confifg" "$BASE_IMAGE_INSTALLER" "Do you want to configure a base/fresh armbian image that you compiled?"
-}
-
-de_elegoo_image_cleanser() {
-    install_feature "Elegoo Image/eMMC Cleanser" "$DE_ELEGOO_IMAGE_CLEANSER" "DO NOT run this on an OpenNept4une GitHub Image, for Elegoo images only! Do you want to proceed?"
 }
 
 armbian_resize() {
@@ -603,7 +597,6 @@ Commands:
   android_rules              Install Android ADB rules (for klipperscreen).
   crowsnest_fix              Install Crowsnest FPS fix.
   base_image_config          Apply base configuration for ZNP-K1 Compiled Image (Not for release images).
-  de_elegoo_image_cleanser   Run Elegoo Image/eMMC Cleanser Script (Use with caution).
   armbian_resize             Resize the active Armbian partition (for eMMC > 8GB).
 
 EOF
@@ -688,7 +681,6 @@ else
         android_rules) android_rules ;;
         crowsnest_fix) crowsnest_fix ;;
         base_image_config) base_image_config ;;
-        de_elegoo_image_cleanser) de_elegoo_image_cleanser ;;
         armbian_resize) armbian_resize ;;
         *) echo -e "${G}Invalid command. Please try again.${NC}" ;;
     esac
