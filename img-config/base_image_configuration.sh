@@ -1,26 +1,35 @@
 #!/bin/bash
 
+# Ensure the script is run with sudo
+if [ "$(id -u)" -ne 0 ]; then
+    echo "Please run this script with sudo."
+    exit 1
+fi
+
 # Create the config directory structure if not exists
-[ ! -d "$HOME/printer_data/config/" ] && mkdir -p ~/printer_data/config/
+[ ! -d "$HOME/printer_data/config/" ] && mkdir -p "$HOME/printer_data/config/"
+
+# Change ownership of the printer_data directory to the user who runs the script
+chown -R "$SUDO_USER:$SUDO_USER" "$HOME/printer_data"
 
 # Clone the KAMP git repository if not exists
 if [ ! -d "$HOME/Klipper-Adaptive-Meshing-Purging" ]; then
-    cd ~/ && git clone https://github.com/kyleisah/Klipper-Adaptive-Meshing-Purging.git
+    git clone https://github.com/kyleisah/Klipper-Adaptive-Meshing-Purging.git "$HOME/Klipper-Adaptive-Meshing-Purging"
 fi
 
 # Create a symbolic link if not exists
-[ ! -L "$HOME/printer_data/config/KAMP" ] && ln -s ~/Klipper-Adaptive-Meshing-Purging/Configuration ~/printer_data/config/KAMP
+[ ! -L "$HOME/printer_data/config/KAMP" ] && ln -s "$HOME/Klipper-Adaptive-Meshing-Purging/Configuration" "$HOME/printer_data/config/KAMP"
 
 # Clone Kiauh git repository if not exists
 if [ ! -d "$HOME/kiauh" ]; then
-    cd ~/ && git clone https://github.com/dw-0/kiauh.git
+    git clone https://github.com/dw-0/kiauh.git "$HOME/kiauh"
 fi
 
 # Add extraargs to armbianEnv.txt if not exists
 FILE_PATH="/boot/armbianEnv.txt"
 LINE_TO_ADD="extraargs=net.ifnames=0"
 if ! grep -q "$LINE_TO_ADD" "$FILE_PATH"; then
-    echo "$LINE_TO_ADD" | sudo tee -a "$FILE_PATH" > /dev/null
+    echo "$LINE_TO_ADD" | tee -a "$FILE_PATH" > /dev/null
     echo "Added '$LINE_TO_ADD' to $FILE_PATH."
 else
     echo "The line '$LINE_TO_ADD' already exists in $FILE_PATH."
@@ -49,6 +58,9 @@ for link in "${!LINKS_AND_NAMES[@]}"; do
     fi
 done
 
+# Change ownership of the config directory and its contents
+chown -R "$SUDO_USER:$SUDO_USER" "$DEST_DIR"
+
 # Fluidd DB transfer
 SHARE_LINK="https://raw.githubusercontent.com/OpenNeptune3D/OpenNept4une/main/img-config/printer-data/data.mdb"
 
@@ -66,25 +78,32 @@ else
     echo "${DESTINATION_FILE} already exists. Skipping download."
 fi
 
+# Change ownership of the database directory and its contents
+chown -R "$SUDO_USER:$SUDO_USER" "$DESTINATION_DIR"
+
+# Change ownership of the entire printer_data directory to the user who runs the script
+chown -R "$SUDO_USER:$SUDO_USER" "$HOME/printer_data"
+
 # System updates and cleanups
-sudo apt update 
-sudo apt install ustreamer git python3-numpy python3-matplotlib libatlas-base-dev libopenblas-dev -y
-sudo apt dist-upgrade -y
-sudo apt clean -y
-sudo apt autoclean -y
-sudo apt autoremove -y
-sudo rm -rf /var/log/*
+apt update 
+apt install ustreamer git python3-numpy python3-matplotlib libatlas-base-dev libopenblas-dev -y
+apt upgrade -y
+apt clean -y
+apt autoclean -y
+apt autoremove -y
+rm -rf /var/log/*
 
-# Create gpio and spi groups if they don't exist (for led control v.1.1+ & ADXL SPI
-sudo groupadd gpio || true && sudo usermod -a -G gpio mks && echo 'SUBSYSTEM=="gpio", KERNEL=="gpiochip*", GROUP="gpio", MODE="0660"' | sudo tee /etc/udev/rules.d/99-gpio.rules > /dev/null 
-sudo groupadd spiusers || true $$ sudo usermod -a -G spiusers mks 
+# Create gpio and spi groups if they don't exist (for led control v.1.1+ & ADXL SPI)
+groupadd gpio || true && usermod -a -G gpio mks && echo 'SUBSYSTEM=="gpio", KERNEL=="gpiochip*", GROUP="gpio", MODE="0660"' | tee /etc/udev/rules.d/99-gpio.rules > /dev/null 
+groupadd spiusers || true && usermod -a -G spiusers mks 
 
-sudo cp ~/OpenNept4une/img-config/spidev-fix/rockchip-fixup.scr /boot/dtb/rockchip/overlay/
-sudo cp ~/OpenNept4une/img-config/spidev-fix/rockchip-spi-spidev.dtbo /boot/dtb/rockchip/overlay/
+# Copy necessary files for spidev fix
+cp "$HOME/OpenNept4une/img-config/spidev-fix/99-spidev.rules" /etc/udev/rules.d/
 
-sudo cp ~/OpenNept4une/img-config/spidev-fix/99-spidev.rules /etc/udev/rules.d/
+#sudo cp ~/OpenNept4une/img-config/spidev-fix/rockchip-fixup.scr /boot/dtb/rockchip/overlay/
+#sudo cp ~/OpenNept4une/img-config/spidev-fix/rockchip-spi-spidev.dtbo /boot/dtb/rockchip/overlay/
 
-sudo sh -c 'echo "$(date +"%Y-%m-%d") - OpenNept4une-v0.1.x-ZNP-K1" > /boot/.OpenNept4une.txt'
+sh -c 'echo "$(date +"%Y-%m-%d") - OpenNept4une-v0.1.x-ZNP-K1" > /boot/.OpenNept4une.txt'
 
 # Add sync command to crontab if not exists
 CRON_ENTRY="*/10 * * * * /bin/sync"
@@ -95,15 +114,19 @@ else
     echo "The sync command is already in the crontab."
 fi
 
-~/OpenNept4une/img-config/usb-storage-automount.sh
-~/OpenNept4une/img-config/adb-automount.sh
-~/OpenNept4une/display/display-service-installer.sh
+# Execute additional scripts
+"$HOME/OpenNept4une/img-config/usb-storage-automount.sh"
+"$HOME/OpenNept4une/img-config/adb-automount.sh"
+"$HOME/OpenNept4une/display/display-service-installer.sh"
+
+# Kernel RT/Timing fix 
+echo "kernel.sched_rt_runtime_us = -1" | tee -a /etc/sysctl.d/10-disable-rt-group-limit.conf
 
 # Immediate sync execution
 sync
 
 # Start Network Manager Text User Interface
-sudo nmtui
+nmtui
 
 # Run kiauh.sh as the mks user
-~/kiauh/kiauh.sh
+sudo -u mks "$HOME/kiauh/kiauh.sh"
