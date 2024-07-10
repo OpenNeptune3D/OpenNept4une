@@ -396,7 +396,7 @@ extract_model_and_motor() {
     pcb_version=$(echo "$MODEL_FROM_FLAG" | sed -E 's/^(N4[a-zA-Z]+)-([0-9.]+)A-v([0-9.]+).*/\3/' | tr '[:upper:]' '[:lower:]')
 }
 
-install_printer_cfg() {
+ install_printer_cfg() {
     clear_screen
     echo -e "${C}$OPENNEPT4UNE_ART${NC}"
     echo ""
@@ -414,19 +414,64 @@ install_printer_cfg() {
 
     # Build configuration paths based on selections
     if [[ $model_key == "n4" || $model_key == "n4pro" ]]; then
-        python3 ${HOME}/OpenNept4une/printer-confs/generate_conf.py ${model_key} ${motor_current} >/dev/null 2>&1 && sync
+        python3 "${HOME}/OpenNept4une/printer-confs/generate_conf.py" "${model_key}" "${motor_current}" >/dev/null 2>&1 && sync
         sleep 1
     else
-        python3 ${HOME}/OpenNept4une/printer-confs/generate_conf.py ${model_key} >/dev/null 2>&1 && sync
+        python3 "${HOME}/OpenNept4une/printer-confs/generate_conf.py" "${model_key}" >/dev/null 2>&1 && sync
         sleep 1
     fi
 
     # Create directories if they don't exist
     mkdir -p "$PRINTER_CFG_DEST" "$DATABASE_DEST"
-    touch ${HOME}/printer_data/config/user_settings.cfg
+    touch "${HOME}/printer_data/config/user_settings.cfg"
+
+    # Print the initial prompt
+    echo ""
+    printf "${G}Would you like to compare/diff your current printer.cfg with the latest? (y/n).${NC}\n\n"
+    read -r -p "${M}Enter your choice ${NC}: " DIFF_CHOICE
+
+    # Check user's choice
+    if [[ "$DIFF_CHOICE" =~ ^[Yy]$ ]]; then
+        clear_screen
+        echo ""
+        SPACES=$(printf '%*s' 32)
+        printf "${C}%s${SPACES}%s${NC}\n" "Updated File:" "Current File:"
+        printf "${C}%s${NC}\n" "=========================================================="
+
+        DIFF_OUTPUT=$(diff -y --suppress-common-lines --width=58 "${HOME}/OpenNept4une/printer-confs/output.cfg" "${HOME}/printer_data/config/printer.cfg")
+
+        if [[ -z "$DIFF_OUTPUT" ]]; then
+            echo ""
+            printf "${G}There are no differences, Already up-to-date! ${NC}\n"
+        else
+            echo "$DIFF_OUTPUT"
+        fi
+
+        # Prompt to ask if user wants to continue or exit
+        echo ""
+        printf "${Y}Would you like to continue with the update? (y/n).${NC}\n\n"
+        read -r -p "${M}Enter your choice ${NC}: " CONTINUE_CHOICE
+
+        if [[ "$CONTINUE_CHOICE" =~ ^[Yy]$ ]]; then
+            echo ""
+            printf "${G}Continuing with printer.cfg update.${NC}\n"
+            sleep 1
+        else
+            echo ""
+            printf "${Y}Exiting the update process.${NC}\n"
+            sleep 1
+            return 0
+        fi
+    else
+        echo ""
+        printf "${G}Continuing with printer.cfg update.${NC}\n"
+        sleep 1
+    fi
 
     apply_configuration
-    printf "Restarting Klipper Service"
+    sync
+    echo ""
+    printf "${Y}Restarting Klipper Service${NC}\n"
     sleep 2
     sudo service klipper restart
 }
@@ -441,6 +486,7 @@ apply_configuration() {
     # Backup existing printer configuration if it exists
     if [[ -f "$PRINTER_CFG_FILE" ]]; then
         cp "$PRINTER_CFG_FILE" "$BACKUP_PRINTER_CFG_FILE" && \
+        echo ""
         printf "${G}BACKUP of 'printer.cfg' created as '$BACKUP_PRINTER_CFG_FILE'.${NC}\n\n" && \
         sleep 2 || \
         printf "${R}Error: Failed to create backup of 'printer.cfg'.${NC}\n"
