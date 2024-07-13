@@ -8,10 +8,9 @@ USB_STORAGE_AUTOMOUNT="${HOME}/OpenNept4une/img-config/usb-storage-automount.sh"
 ANDROID_RULE_INSTALLER="${HOME}/OpenNept4une/img-config/adb-automount.sh"
 CROWSNEST_FIX_INSTALLER="${HOME}/OpenNept4une/img-config/crowsnest-lag-fix.sh"
 BASE_IMAGE_INSTALLER="${HOME}/OpenNept4une/img-config/base_image_configuration.sh"
-DE_ELEGOO_IMAGE_CLEANSER="${HOME}/OpenNept4une/img-config/de_elegoo_cleanser.sh"
 
 FLAG_FILE="/boot/.OpenNept4une.txt"
-MODEL_FROM_FLAG=$(grep '^N4' "$FLAG_FILE")
+MODEL_FROM_FLAG=$(grep -E '^N4|^n4' "$FLAG_FILE")
 KERNEL_FROM_FLAG=$(grep 'Linux' "$FLAG_FILE" | awk '{split($3,a,"-"); print a[1]}')
 
 OPENNEPT4UNE_REPO="https://github.com/OpenNeptune3D/OpenNept4une.git"
@@ -244,7 +243,7 @@ advanced_more() {
         echo ""
         echo -e "6) Base ZNP-K1 Compiled Image Config (NOT for OpenNept4une)"
         echo ""
-        echo -e "7) Elegoo Image Cleanser Script (NOT for OpenNept4une)"
+        echo -e "7) Change Machine Model / Board Version / Motor Current"
         echo -e "----------------------------------------------------------${NC}"
         echo ""
         echo -e "(${Y} B ${NC}) Back to Main Menu"
@@ -259,7 +258,7 @@ advanced_more() {
             4) update_repo;;
             5) toggle_branch;;
             6) base_image_config;;
-            7) de_elegoo_image_cleanser;;
+            7) $HOME/OpenNept4une/img-config/set-printer-model.sh;;
             b) return;;  # Return to the main menu
             *) echo -e "${R}Invalid choice, please try again.${NC}";;
         esac
@@ -321,10 +320,6 @@ base_image_config() {
     install_feature "Base Ambian Image Confifg" "$BASE_IMAGE_INSTALLER" "Do you want to configure a base/fresh armbian image that you compiled?"
 }
 
-de_elegoo_image_cleanser() {
-    install_feature "Elegoo Image/eMMC Cleanser" "$DE_ELEGOO_IMAGE_CLEANSER" "DO NOT run this on an OpenNept4une GitHub Image, for Elegoo images only! Do you want to proceed?"
-}
-
 armbian_resize() {
     # Commands for resizing are passed directly
     local resize_commands="sudo systemctl enable armbian-resize-filesystem && sudo reboot"
@@ -377,84 +372,108 @@ toggle_branch() {
 
 ### MAIN PAGE INSTALLERS ###
 
-install_printer_cfg() {
-    # Headless operation checks
-    if [ "$auto_yes" = "true" ]; then
-        if { [ "$model_key" = "n4" ] || [ "$model_key" = "n4pro" ]; } && { [ -z "$motor_current" ] || [ -z "$pcb_version" ]; }; then
-            echo -e "${R}Headless mode for n4 and n4pro requires --motor_current and --pcb_version.${NC}"
-            return 1
-        elif [ -z "$model_key" ]; then
-            echo -e "${R}Headless mode requires --printer_model.${NC}"
-            return 1
+# Function to check MODEL_FROM_FLAG and run set-printer-model.sh if needed
+check_and_set_printer_model() {
+
+    if [ -z "$MODEL_FROM_FLAG" ]; then
+        echo "Model Flag is empty. Running Set Model script..."
+        $HOME/OpenNept4une/img-config/set-printer-model.sh
+        MODEL_FROM_FLAG=$(grep '^N4' "$FLAG_FILE")
+        if [ -z "$MODEL_FROM_FLAG" ]; then
+            echo "Failed to set Model Flag. Exiting."
+            exit 1
+        else
+            echo "Model Flag set successfully."
         fi
     else
-        # Interactive mode for model selection
-        clear_screen
-        echo -e "${C}$OPENNEPT4UNE_ART${NC}"
-        echo ""
-        printf "${Y}Note${NC}: your Printer.cfg will be backed-up as ${G}backup-printer.cfg.bak${NC}\n\n"
-        printf "${M}Please select your printer model:\n${NC}"
-        select _ in "Neptune4" "Neptune4 Pro" "Neptune4 Plus" "Neptune4 Max"; do
-            case $REPLY in
-                1) model_key="n4";;
-                2) model_key="n4pro";;
-                3) model_key="n4plus";;
-                4) model_key="n4max";;
-                *) echo -e "${R}Invalid selection. Please try again.${NC}"; continue;;
-            esac
-            break
-        done
-        # Interactive mode for motor current and PCB version if applicable
-        if [ "$model_key" = "n4" ] || [ "$model_key" = "n4pro" ]; then
-            [ -z "$motor_current" ] && select_option motor_current "${M}Select the stepper motor current:${NC}" "0.8" "1.2"
-            [ -z "$pcb_version" ] && select_option pcb_version "${M}Select the PCB version:${NC}" "1.0" "1.1"
-        fi
+        echo "Model Detected"
     fi
+}
+
+extract_model_and_motor() {
+    model_key=$(echo "$MODEL_FROM_FLAG" | sed -E 's/^(N4[a-zA-Z]+)-.*/\1/' | tr '[:upper:]' '[:lower:]')
+    motor_current=$(echo "$MODEL_FROM_FLAG" | sed -E 's/^(N4[a-zA-Z]+)-([0-9.]+)A-v([0-9.]+).*/\2/' | tr '[:upper:]' '[:lower:]')
+    pcb_version=$(echo "$MODEL_FROM_FLAG" | sed -E 's/^(N4[a-zA-Z]+)-([0-9.]+)A-v([0-9.]+).*/\3/' | tr '[:upper:]' '[:lower:]')
+}
+
+ install_printer_cfg() {
+    clear_screen
+    echo -e "${C}$OPENNEPT4UNE_ART${NC}"
+    echo ""
+    # Check Model Type has been set
+    check_and_set_printer_model
+    sleep 1
+    # Extract model_key and motor_current from FLAG_FILE
+    extract_model_and_motor
+
     # Define necessary paths
     PRINTER_CFG_DEST="${HOME}/printer_data/config"
-    DTB_DEST="/boot/dtb/rockchip/rk3328-roc-cc.dtb"
     DATABASE_DEST="${HOME}/printer_data/database"
     PRINTER_CFG_FILE="$PRINTER_CFG_DEST/printer.cfg"
     PRINTER_CFG_SOURCE="${HOME}/OpenNept4une/printer-confs/output.cfg"
+
     # Build configuration paths based on selections
     if [[ $model_key == "n4" || $model_key == "n4pro" ]]; then
-        python3 ${HOME}/OpenNept4une/printer-confs/generate_conf.py ${model_key} ${motor_current} >/dev/null 2>&1 && sync
-        DTB_SOURCE="${HOME}/OpenNept4une/dtb/n4-n4pro-v${pcb_version}/rk3328-roc-cc.dtb"
-        FLAG_LINE=$(echo "$model_key" | sed -E 's/^(.)(4)(.?)/\U\1\2\u\3/')-${motor_current}A-v${pcb_version}
+        python3 "${HOME}/OpenNept4une/printer-confs/generate_conf.py" "${model_key}" "${motor_current}" >/dev/null 2>&1 && sync
+        sleep 1
     else
-        python3 ${HOME}/OpenNept4une/printer-confs/generate_conf.py ${model_key} >/dev/null 2>&1 && sync
-        DTB_SOURCE="${HOME}/OpenNept4une/dtb/n4plus-n4max-v1.1-2.0/rk3328-roc-cc.dtb"
-        FLAG_LINE=$(echo "$model_key" | sed -E 's/^(.)(4)(.?)/\U\1\2\u\3/')-
+        python3 "${HOME}/OpenNept4une/printer-confs/generate_conf.py" "${model_key}" >/dev/null 2>&1 && sync
+        sleep 1
     fi
+
     # Create directories if they don't exist
     mkdir -p "$PRINTER_CFG_DEST" "$DATABASE_DEST"
-    touch ${HOME}/printer_data/config/user_settings.cfg
-    update_flag_file() {
-    local flag_value=$1
-    # Use sudo with awk to read and update the flag file, then use sudo tee to overwrite the original file
-    sudo awk -v line="$flag_value" '
-    BEGIN { added = 0 }
-    /^N4/ { print line; added = 1; next }
-    { print }
-    END { if (!added) print line }
-    ' "$FLAG_FILE" | sudo tee "$FLAG_FILE" > /dev/null
-    }
-    update_flag_file "$FLAG_LINE"
-    apply_configuration
-    reboot_system
-}
+    touch "${HOME}/printer_data/config/user_settings.cfg"
 
-select_option() {
-    local -n ref=$1
-    echo -e "$2"
-    select opt in "${@:3}"; do
-        if [[ -n $opt ]]; then
-            ref=$opt
-            break
+    # Print the initial prompt
+    echo ""
+    printf "${G}Would you like to compare/diff your current printer.cfg with the latest? (y/n).${NC}\n\n"
+    read -r -p "${M}Enter your choice ${NC}: " DIFF_CHOICE
+
+    # Check user's choice
+    if [[ "$DIFF_CHOICE" =~ ^[Yy]$ ]]; then
+        clear_screen
+        echo ""
+        SPACES=$(printf '%*s' 32)
+        printf "${C}%s${SPACES}%s${NC}\n" "Updated File:" "Current File:"
+        printf "${C}%s${NC}\n" "=========================================================="
+
+        DIFF_OUTPUT=$(diff -y --suppress-common-lines --width=58 "${HOME}/OpenNept4une/printer-confs/output.cfg" "${HOME}/printer_data/config/printer.cfg")
+
+        if [[ -z "$DIFF_OUTPUT" ]]; then
+            echo ""
+            printf "${G}There are no differences, Already up-to-date! ${NC}\n"
         else
-            echo -e "${R}Invalid option, please try again.${NC}"  # Assuming ${R} is your color code for error messages
+            echo "$DIFF_OUTPUT"
         fi
-    done
+
+        # Prompt to ask if user wants to continue or exit
+        echo ""
+        printf "${Y}Would you like to continue with the update? (y/n).${NC}\n\n"
+        read -r -p "${M}Enter your choice ${NC}: " CONTINUE_CHOICE
+
+        if [[ "$CONTINUE_CHOICE" =~ ^[Yy]$ ]]; then
+            echo ""
+            printf "${G}Continuing with printer.cfg update.${NC}\n"
+            sleep 1
+        else
+            echo ""
+            printf "${Y}Exiting the update process.${NC}\n"
+            sleep 1
+            return 0
+        fi
+    else
+        echo ""
+        printf "${G}Continuing with printer.cfg update.${NC}\n"
+        sleep 1
+    fi
+
+    apply_configuration
+    sync
+    echo ""
+    printf "${Y}Restarting Klipper Service${NC}\n"
+    sleep 2
+    sudo service klipper restart
 }
 
 apply_configuration() {
@@ -467,70 +486,180 @@ apply_configuration() {
     # Backup existing printer configuration if it exists
     if [[ -f "$PRINTER_CFG_FILE" ]]; then
         cp "$PRINTER_CFG_FILE" "$BACKUP_PRINTER_CFG_FILE" && \
+        echo ""
         printf "${G}BACKUP of 'printer.cfg' created as '$BACKUP_PRINTER_CFG_FILE'.${NC}\n\n" && \
-        sleep 1 || \
+        sleep 2 || \
         printf "${R}Error: Failed to create backup of 'printer.cfg'.${NC}\n"
+        sleep 1
     fi
     # Copy new printer configuration
     if [[ -n "$PRINTER_CFG_SOURCE" && -f "$PRINTER_CFG_SOURCE" ]]; then
         cp "$PRINTER_CFG_SOURCE" "$PRINTER_CFG_FILE" && \
         printf "${G}Printer configuration updated from '$PRINTER_CFG_SOURCE'.${NC}\n\n" && \
-        sleep 1 || \
+        sleep 2 || \
         printf "${R}Error: Failed to update printer configuration from '$PRINTER_CFG_SOURCE'.${NC}\n"
+        sleep 1
     else
         printf "${R}Error: Invalid printer configuration file '$PRINTER_CFG_SOURCE'.${NC}\n"
         return 1
     fi
+}
+
+install_configs() {
+    clear_screen
+    echo -e "${C}$OPENNEPT4UNE_ART${NC}"
+    echo ""
+
+    # Config file descriptions and paths
+    declare -A config_files=(
+        ["All"]=""
+        ["Fluidd web interface Conf"]="data.mdb"
+        ["Moonraker Conf"]="moonraker.conf"
+        ["Crowsnest (webcam) Conf"]="crowsnest.conf"
+        ["KAMP Conf"]="KAMP_Settings.cfg"
+        ["Mainsail web interface Conf"]="mainsail.cfg"
+        ["Pico USB-C ADXL Conf"]="adxl.cfg"
+        ["Klipper DEBUG Addon"]="klipper_debug.cfg"
+    )
+
     # Config file update prompt
-        local install_configs="$auto_yes"  # Defaults to the value of auto_yes
+    local install_configs="$auto_yes"  # Defaults to the value of auto_yes
     if [ "$auto_yes" != "true" ]; then
-        printf "The latest KAMP/moonraker/fluiddGUI configurations include...\n" 
-        printf "updated settings and features for your printer.\n\n"
-        printf "${Y}It's recommended when updating printer.cfg & initial installs...\n" 
-        printf "OR if you want to RESET to the default configurations.${NC}\n\n"
-        read -r -p "${M}Install latest configurations?${NC} (y/N): " -r choice
+        printf "The latest configurations include updated settings and features for your printer.\n\n"
+        printf "${Y}It's recommended to update configurations during initial installs or when resetting to default configurations.${NC}\n\n"
+        read -r -p "${M}Select latest configurations to install?${NC} (y/N): " choice
         [[ $choice =~ ^[Yy]$ ]] && install_configs="true"
     fi
-    # Install the configurations if confirmed
+
     if [ "$install_configs" = "true" ]; then
-        printf "Installing latest configurations...\n\n"
+        PS3="Enter the number of the configuration to install (or 'Exit' to finish): "
+        options=("All" "Fluidd web interface Conf" "Moonraker Conf" "Crowsnest (webcam) Conf" "KAMP Conf" "Mainsail web interface Conf" "Pico USB-C ADXL Conf" "Klipper DEBUG Addon" "Exit")
+
+        while true; do
+            clear_screen
+            echo -e "${C}$OPENNEPT4UNE_ART${NC}"
+            echo ""
+            echo "Select configurations to install:"
+            for i in "${!options[@]}"; do
+                printf "%2d) %s\n" $((i+1)) "${options[$i]}"
+            done
+
+            read -p "$PS3" opt
+            case $opt in
+                1)
+                    printf "Installing all configurations...\n"
+                    for file in "${config_files[@]}"; do
+                        if [[ -n $file ]]; then
+                            cp "${HOME}/OpenNept4une/img-config/printer-data/$file" "${HOME}/printer_data/config/"
+                            if [[ $file == "data.mdb" ]]; then
+                                mv "${HOME}/printer_data/config/data.mdb" "${HOME}/printer_data/database/data.mdb"
+                            fi
+                            printf "${G}${file} installed successfully.${NC}\n"
+                        fi
+                    done
+                    echo ""
+                    printf "${G}All configurations installed successfully.${NC}\n"
+                    sleep 2
+                    return 0
+                    ;;
+                2|3|4|5|6|7|8)
+                    opt_name="${options[$((opt-1))]}"
+                    printf "Installing ${opt_name}...\n"
+                    file=${config_files[$opt_name]}
+                    
+                    # Print the initial prompt for diff
+                    echo ""
+                    printf "${G}Would you like to compare/diff your current ${opt_name} with the latest? (y/n).${NC}\n\n"
+                    read -r -p "${M}Enter your choice ${NC}: " DIFF_CHOICE
+
+                    # Check user's choice
+                    if [[ "$DIFF_CHOICE" =~ ^[Yy]$ ]]; then
+                        clear_screen
+                        echo ""
+                        SPACES=$(printf '%*s' 32)
+                        printf "${C}%s${SPACES}%s${NC}\n" "Updated File:" "Current File:"
+                        printf "${C}%s${NC}\n" "=========================================================="
+
+                        if [[ $file == "data.mdb" ]]; then
+                            DIFF_OUTPUT=$(diff -y --suppress-common-lines --width=58 "${HOME}/OpenNept4une/img-config/printer-data/$file" "${HOME}/printer_data/database/$file")
+                        else
+                            DIFF_OUTPUT=$(diff -y --suppress-common-lines --width=58 "${HOME}/OpenNept4une/img-config/printer-data/$file" "${HOME}/printer_data/config/$file")
+                        fi
+
+                        if [[ -z "$DIFF_OUTPUT" ]]; then
+                            echo ""
+                            printf "${G}There are no differences, Already up-to-date! ${NC}\n"
+                            echo ""
+                            printf "${Y}Would you like to install another configuration? (y/n).${NC}\n\n"
+                            read -r -p "${M}Enter your choice ${NC}: " CONTINUE_CHOICE
+
+                            if [[ "$CONTINUE_CHOICE" =~ ^[Nn]$ ]]; then
+                                echo ""
+                                printf "${Y}Exiting the update process.${NC}\n"
+                                sleep 1
+                                break
+                            else
+                                echo ""
+                                printf "${G}Returning to configuration selection.${NC}\n"
+                                sleep 1
+                                continue
+                            fi
+                        else
+                            echo "$DIFF_OUTPUT"
+                            # Prompt to ask if user wants to continue or exit
+                            echo ""
+                            printf "${Y}Would you like to continue with the update? (y/n).${NC}\n\n"
+                            read -r -p "${M}Enter your choice ${NC}: " CONTINUE_CHOICE
+
+                            if [[ "$CONTINUE_CHOICE" =~ ^[Yy]$ ]]; then
+                                echo ""
+                                printf "${G}Continuing with ${opt_name} update.${NC}\n"
+                                sleep 1
+                            else
+                                echo ""
+                                printf "${Y}Exiting the update process.${NC}\n"
+                                sleep 1
+                                continue
+                            fi
+                        fi
+                    else
+                        echo ""
+                        printf "${G}Continuing with ${opt_name} update.${NC}\n"
+                        sleep 1
+                    fi
+
+                    cp "${HOME}/OpenNept4une/img-config/printer-data/$file" "${HOME}/printer_data/config/"
+                    if [[ $file == "data.mdb" ]]; then
+                        mv "${HOME}/printer_data/config/data.mdb" "${HOME}/printer_data/database/data.mdb"
+                    fi
+                    printf "${G}${opt_name} installed successfully.${NC}\n"
+                    ;;
+                9)
+                    printf "${Y}Exiting the update process.${NC}\n"
+                    break
+                    ;;
+                *)
+                    echo -e "${R}Invalid selection. Please try again.${NC}"
+                    ;;
+            esac
+
+            # Re-display the menu after each operation, unless 'Exit' was selected
+            if [[ $opt != 9 ]]; then
+                clear_screen
+                echo -e "${C}$OPENNEPT4UNE_ART${NC}"
+                echo ""
+                echo "Select configurations to install:"
+                for i in "${!options[@]}"; do
+                    printf "%2d) %s\n" $((i+1)) "${options[$i]}"
+                done
+            fi
+        done
+
+        printf "${G}Selected configurations installed successfully.${NC}\n\n"
         sleep 1
-        if cp -r ~/OpenNept4une/img-config/printer-data/* ~/printer_data/config/ && \
-           mv ~/printer_data/config/data.mdb ~/printer_data/database/data.mdb; then
-           printf "${G}Configurations installed successfully.${NC}\n\n"
-           sleep 1
-        else
-            echo -e "${R}Error: Failed to install latest configurations.${NC}"
-            sleep 1
-            return 1
-        fi
     else
         printf "${Y}Installation of latest configurations skipped.${NC}\n"
         sleep 1
-    fi
-    # DTB file update prompt
-    if [[ -n "$DTB_SOURCE" && -f "$DTB_SOURCE" ]]; then
-        local update_dtb=false
-        if [ "$auto_yes" != "true" ]; then
-            read -r -p "${M}Update DTB file? (Recommended for first-time setup)${NC} (y/N): " -r reply
-            [[ $reply =~ ^[Yy]$ ]] && update_dtb=true
-        else
-            update_dtb=true
-        fi
-        if $update_dtb && ! grep -q "mks" /boot/.OpenNept4une.txt; then
-            sudo cp "$DTB_SOURCE" "$DTB_DEST" && \
-            printf "${G}DTB file updated from '$DTB_SOURCE'.${NC}\n\n" && \
-            sleep 1 || \
-            printf "${R}Error: Failed to update DTB file from '$DTB_SOURCE'.${NC}\n" && \
-            sleep 1
-        elif grep -q "mks" /boot/.OpenNept4une.txt; then
-            printf "${Y}Skipping DTB update based on system check.${NC}\n"
-            sleep 2
-        fi
-    elif [[ -n "$DTB_SOURCE" ]]; then
-        printf "${R}Error: DTB file '$DTB_SOURCE' not found.${NC}\n"
-        sleep 2
-        return 1
     fi
 }
 
@@ -603,7 +732,6 @@ Commands:
   android_rules              Install Android ADB rules (for klipperscreen).
   crowsnest_fix              Install Crowsnest FPS fix.
   base_image_config          Apply base configuration for ZNP-K1 Compiled Image (Not for release images).
-  de_elegoo_image_cleanser   Run Elegoo Image/eMMC Cleanser Script (Use with caution).
   armbian_resize             Resize the active Armbian partition (for eMMC > 8GB).
 
 EOF
@@ -618,17 +746,19 @@ print_menu() {
     echo -e "                OpenNept4une - ${M}Main Menu${NC}       "
     echo "=========================================================="
     echo ""
-    echo "1) Install/Update OpenNept4une printer configurations"
+    echo "1) Install/Update OpenNept4une printer.cfg"
     echo ""
-    echo "2) Configure WiFi"
+    echo "2) Install/Update KAMP/Moonraker/fluiddGUI/Crowsnest confs"
     echo ""
-    echo "3) Enable USB Storage AutoMount"
+    echo "3) Configure WiFi"
     echo ""
     echo "4) Update MCU & Virtual MCU Firmware"
     echo ""
     echo "5) Install/Update Touch-Screen Service (BETA)"
     echo ""
-    echo -e "6) ${M}* Advanced Options Menu *${NC}"
+    echo "6) Enable USB Storage AutoMount"
+    echo ""
+    echo -e "7) ${M}* Advanced Options Menu *${NC}"
     echo ""
     echo -e "(${R} Q ${NC}) Quit"
     echo "=========================================================="
@@ -665,11 +795,12 @@ if [ -z "$1" ]; then
         read choice
         case $choice in
             1) install_printer_cfg ;;
-            2) wifi_config ;;
-            3) usb_auto_mount ;;
+            2) install_configs ;;
+            3) wifi_config ;;
             4) update_mcu_rpi_fw ;;
             5) install_screen_service ;;
-            6) advanced_more ;;
+            6) usb_auto_mount ;;
+            7) advanced_more ;;
             q) clear; echo -e "${G}Goodbye...${NC}"; sleep 2; exit 0 ;;
             *) echo -e "${R}Invalid choice. Please try again.${NC}" ;;
         esac
@@ -680,15 +811,15 @@ else
     COMMAND=$1;
     case $COMMAND in
         install_printer_cfg) install_printer_cfg ;;
+        install_configs) install_configs ;;
         wifi_config) wifi_config ;;
-        usb_auto_mount) usb_auto_mount ;;
         update_mcu_rpi_fw) update_mcu_rpi_fw ;;
         install_screen_service) install_screen_service ;;
+        usb_auto_mount) usb_auto_mount ;;
         update_repo) update_repo ;;
         android_rules) android_rules ;;
         crowsnest_fix) crowsnest_fix ;;
         base_image_config) base_image_config ;;
-        de_elegoo_image_cleanser) de_elegoo_image_cleanser ;;
         armbian_resize) armbian_resize ;;
         *) echo -e "${G}Invalid command. Please try again.${NC}" ;;
     esac
