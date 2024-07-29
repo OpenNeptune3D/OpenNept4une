@@ -39,7 +39,7 @@ if [ -f "$SERVICE_FILE" ]; then
   # Update the camera format
   sudo sed -i "s|-camera-format=JPEG|--camera-format=MJPEG|" /etc/systemd/system/camera-streamer.service
   # Update the camera width and height
-  sudo sed -i "s|-camera-width=1920 --camera-height=1080|--camera-width=640 --camera-height=480|" /etc/systemd/system/camera-streamer.service
+  sudo sed -i "s|-camera-width=1920 -camera-height=1080|--camera-width=640 --camera-height=480|" /etc/systemd/system/camera-streamer.service
   # Update the camera FPS
   sudo sed -i "s|-camera-fps=30|--camera-fps=30|" /etc/systemd/system/camera-streamer.service
   # Update the http-listen and http-port
