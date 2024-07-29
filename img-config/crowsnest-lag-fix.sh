@@ -1,31 +1,65 @@
 #!/bin/bash
 
-# Create symbolic link for ustreamer
-ln -sfn /usr/bin/ustreamer ~/crowsnest/bin/ustreamer/ustreamer
-
-# Create symbolic link for ustreamer-dump
-ln -sfn /usr/bin/ustreamer-dump ~/crowsnest/bin/ustreamer/ustreamer-dump
-
-# Path to the log and configuration files
-LOG_FILE="${HOME}/printer_data/logs/crowsnest.log"
-CONF_FILE="${HOME}/printer_data/config/crowsnest.conf"
-
-# Search for the video device in the log file
-# The grep -P command uses Perl-compatible regex to look for lines that map the camera to a video device, capturing only the '/dev/video[0-9]+' part
-DEVICE_PATH=$(grep -oP '(?<= -> )/dev/video[0-9]+' "$LOG_FILE" | tail -1) # Using 'tail -1' to get the last match, if multiple
-
-# Check if a device path was found
-if [ -z "$DEVICE_PATH" ]; then
-    echo "No video device path found in the log file."
-    exit 1
+# Uninstall previous installations if any
+if [ -f "${HOME}/crowsnest/tools/uninstall.sh" ]; then
+  ${HOME}/crowsnest/tools/uninstall.sh
 fi
 
-echo "$DEVICE_PATH"
-sleep 3
-# Update the configuration file with the detected video device path
-# This sed command looks for the line starting with 'device:' and replaces it with the new device path
-sed -i "s|device: \+/dev/video[0-9]\+|device: $DEVICE_PATH|" "$CONF_FILE"
-echo
-echo "Updated configuration file with video device path: $DEVICE_PATH"
+# Determine package name
+PACKAGE="camera-streamer-$(test -e /etc/default/raspberrypi-kernel && echo raspi || echo generic)_0.2.8.$(. /etc/os-release; echo $VERSION_CODENAME)_$(dpkg --print-architecture).deb"
+
+# Download the package
+wget "https://github.com/ayufan/camera-streamer/releases/download/v0.2.8/$PACKAGE"
+
+# Install the package
+sudo apt install -y "./$PACKAGE"
+
+systemctl enable camera-streamer
+systemctl start camera-streamer
+
+sudo cp /usr/share/camera-streamer/examples/camera-streamer-generic-usb-cam.service /etc/systemd/system/camera-streamer.service
 sync
-sudo service crowsnest restart
+
+# Detect the video device
+VIDEO_DEVICE=$(v4l2-ctl --list-devices | grep -A 1 'GENERAL WEBCAM' | tail -n 1 | awk '{print $1}')
+
+if [ -z "$VIDEO_DEVICE" ]; then
+  echo "No USB video device found."
+  exit 1
+fi
+
+echo "Detected video device: $VIDEO_DEVICE"
+
+# Update the systemd service file
+SERVICE_FILE="/etc/systemd/system/camera-streamer.service"
+
+if [ -f "$SERVICE_FILE" ]; then
+  # Update the camera path
+  sudo sed -i "s|-camera-path=/dev/video[0-9]*|--camera-path=$VIDEO_DEVICE|" /etc/systemd/system/camera-streamer.service
+  # Update the camera format
+  sudo sed -i "s|-camera-format=JPEG|--camera-format=MJPEG|" /etc/systemd/system/camera-streamer.service
+  # Update the camera width and height
+  sudo sed -i "s|-camera-width=1920 --camera-height=1080|--camera-width=640 --camera-height=480|" /etc/systemd/system/camera-streamer.service
+  # Update the camera FPS
+  sudo sed -i "s|-camera-fps=30|--camera-fps=30|" /etc/systemd/system/camera-streamer.service
+  # Update the http-listen and http-port
+  sudo sed -i "s|--http-listen=0.0.0.0|--http-listen=0.0.0.0|" /etc/systemd/system/camera-streamer.service
+  sudo sed -i "s|--http-port=8080|--http-port=8080|" /etc/systemd/system/camera-streamer.service
+  # Remove lines containing specific settings
+  sudo sed -i "/-camera-nbufs=3/d" /etc/systemd/system/camera-streamer.service
+  sudo sed -i "/-camera-video.disabled/d" /etc/systemd/system/camera-streamer.service
+  # Remove comment lines related to specific settings
+  sudo sed -i "/; use two memory buffers to optimise usage/d" /etc/systemd/system/camera-streamer.service
+  sudo sed -i "/; disable video streaming (WebRTC, RTSP, H264)/d" /etc/systemd/system/camera-streamer.service
+  sudo sed -i "/; on non-supported platforms/d" /etc/systemd/system/camera-streamer.service
+
+  # Reload systemd and restart the service
+  sync
+  sudo systemctl daemon-reload
+  sudo systemctl restart camera-streamer.service
+  echo "Service updated and restarted successfully."
+
+else
+  echo "Service file not found: $SERVICE_FILE"
+  exit 1
+fi
