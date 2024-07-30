@@ -31,6 +31,8 @@ echo "Sections and entries for 'crowsnest' have been removed from the configurat
 
 rm -rf ${HOME}/crowsnest/
 
+rm printer_data/config/crowsnest.conf
+
 # Determine package name
 PACKAGE="camera-streamer-$(test -e /etc/default/raspberrypi-kernel && echo raspi || echo generic)_0.2.8.$(. /etc/os-release; echo $VERSION_CODENAME)_$(dpkg --print-architecture).deb"
 
