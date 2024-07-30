@@ -12,10 +12,28 @@ check_sudo() {
 # Run the check_sudo function
 check_sudo "$@"
 
-# Uninstall previous installations if any
-if [ -f "${HOME}/crowsnest/tools/uninstall.sh" ]; then
-  ${HOME}/crowsnest/tools/uninstall.sh
+# Define the crowsnest directory
+CROWSNEST_DIR="${HOME}/crowsnest"
+
+# Uninstall previous installations if any using make uninstall
+if [ -d "${CROWSNEST_DIR}" ]; then
+  pushd "${CROWSNEST_DIR}" &> /dev/null || exit 1
+  echo "Uninstaller will prompt you for sudo password!"
+  echo "Launching crowsnest uninstaller ..."
+
+  if ! sudo make uninstall; then
+    echo "Something went wrong! Please try again..."
+    exit 1
+  fi
+
+  echo "Removing crowsnest directory ..."
+  rm -rf "${CROWSNEST_DIR}"
+  echo "Directory removed!"
+
+  popd &> /dev/null
 fi
+
+echo "Crowsnest successfully removed!"
 
 # Define the file paths
 MOONRAKER_CONF=${HOME}/printer_data/config/moonraker.conf
@@ -30,8 +48,7 @@ sed -i '/crowsnest/d' "$MOONRAKER_ASVC"
 echo "Sections and entries for 'crowsnest' have been removed from the configuration files."
 
 rm -rf ${HOME}/crowsnest/
-
-rm printer_data/config/crowsnest.conf
+rm ${HOME}/printer_data/config/crowsnest.conf
 
 # Determine package name
 PACKAGE="camera-streamer-$(test -e /etc/default/raspberrypi-kernel && echo raspi || echo generic)_0.2.8.$(. /etc/os-release; echo $VERSION_CODENAME)_$(dpkg --print-architecture).deb"
@@ -65,23 +82,23 @@ SERVICE_FILE="/etc/systemd/system/camera-streamer.service"
 
 if [ -f "$SERVICE_FILE" ]; then
   # Update the camera path
-  sudo sed -i "s|-camera-path=/dev/video[0-9]*|--camera-path=$VIDEO_DEVICE|" /etc/systemd/system/camera-streamer.service
+  sudo sed -i "s|-camera-path=/dev/video[0-9]*|--camera-path=$VIDEO_DEVICE|" "$SERVICE_FILE"
   # Update the camera format
-  sudo sed -i "s|-camera-format=JPEG|--camera-format=MJPEG|" /etc/systemd/system/camera-streamer.service
+  sudo sed -i "s|-camera-format=JPEG|--camera-format=MJPEG|" "$SERVICE_FILE"
   # Update the camera width and height
-  sudo sed -i "s|-camera-width=1920 -camera-height=1080|--camera-width=640 --camera-height=480|" /etc/systemd/system/camera-streamer.service
+  sudo sed -i "s|-camera-width=1920 -camera-height=1080|--camera-width=640 --camera-height=480|" "$SERVICE_FILE"
   # Update the camera FPS
-  sudo sed -i "s|-camera-fps=30|--camera-fps=30|" /etc/systemd/system/camera-streamer.service
+  sudo sed -i "s|-camera-fps=30|--camera-fps=30|" "$SERVICE_FILE"
   # Update the http-listen and http-port
-  sudo sed -i "s|--http-listen=0.0.0.0|--http-listen=0.0.0.0|" /etc/systemd/system/camera-streamer.service
-  sudo sed -i "s|--http-port=8080|--http-port=8080|" /etc/systemd/system/camera-streamer.service
+  sudo sed -i "s|--http-listen=0.0.0.0|--http-listen=0.0.0.0|" "$SERVICE_FILE"
+  sudo sed -i "s|--http-port=8080|--http-port=8080|" "$SERVICE_FILE"
   # Remove lines containing specific settings
-  sudo sed -i "/-camera-nbufs=3/d" /etc/systemd/system/camera-streamer.service
-  sudo sed -i "/-camera-video.disabled/d" /etc/systemd/system/camera-streamer.service
+  sudo sed -i "/-camera-nbufs=3/d" "$SERVICE_FILE"
+  sudo sed -i "/-camera-video.disabled/d" "$SERVICE_FILE"
   # Remove comment lines related to specific settings
-  sudo sed -i "/; use two memory buffers to optimise usage/d" /etc/systemd/system/camera-streamer.service
-  sudo sed -i "/; disable video streaming (WebRTC, RTSP, H264)/d" /etc/systemd/system/camera-streamer.service
-  sudo sed -i "/; on non-supported platforms/d" /etc/systemd/system/camera-streamer.service
+  sudo sed -i "/; use two memory buffers to optimise usage/d" "$SERVICE_FILE"
+  sudo sed -i "/; disable video streaming (WebRTC, RTSP, H264)/d" "$SERVICE_FILE"
+  sudo sed -i "/; on non-supported platforms/d" "$SERVICE_FILE"
 
   # Reload systemd and restart the service
   sync
