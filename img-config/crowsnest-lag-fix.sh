@@ -3,14 +3,11 @@
 # Function to check if the script is run with sudo
 check_sudo() {
   if [[ $EUID -ne 0 ]]; then
-    echo "This script must be run with sudo. Re-running with sudo..."
+    echo "This script must be run with sudo for certain operations. Re-running with sudo..."
     sudo HOME="$HOME" bash "$0" "$@"
     exit $?
   fi
 }
-
-# Run the check_sudo function
-check_sudo "$@"
 
 # Define the crowsnest directory
 CROWSNEST_DIR="${HOME}/crowsnest"
@@ -34,6 +31,9 @@ if [ -d "${CROWSNEST_DIR}" ]; then
 fi
 
 echo "Crowsnest successfully removed!"
+
+# Run the check_sudo function after uninstalling crowsnest
+check_sudo "$@"
 
 # Define the file paths
 MOONRAKER_CONF=${HOME}/printer_data/config/moonraker.conf
