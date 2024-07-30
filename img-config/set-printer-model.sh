@@ -73,3 +73,5 @@ update_flag_file "$FLAG_LINE"
 # Check the contents of the FLAG_FILE
 #echo "DEBUG: Contents of $FLAG_FILE"
 #sudo cat "$FLAG_FILE"
+sync
+exit 0
