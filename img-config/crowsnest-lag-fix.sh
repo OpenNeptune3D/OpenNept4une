@@ -21,7 +21,7 @@ if [ -d "${CROWSNEST_DIR}" ]; then
   echo "Uninstaller will prompt you for sudo password!"
   echo "Launching crowsnest uninstaller ..."
 
-  if ! sudo make uninstall; then
+  if ! make uninstall; then
     echo "Something went wrong! Please try again..."
     exit 1
   fi
