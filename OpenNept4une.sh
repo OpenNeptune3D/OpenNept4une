@@ -392,9 +392,9 @@ check_and_set_printer_model() {
 }
 
 extract_model_and_motor() {
-    model_key=$(echo "$MODEL_FROM_FLAG" | sed -E 's/^(N4[a-zA-Z]+)-.*/\1/' | tr '[:upper:]' '[:lower:]')
-    motor_current=$(echo "$MODEL_FROM_FLAG" | sed -E 's/^(N4[a-zA-Z]+)-([0-9.]+)A-v([0-9.]+).*/\2/' | tr '[:upper:]' '[:lower:]')
-    pcb_version=$(echo "$MODEL_FROM_FLAG" | sed -E 's/^(N4[a-zA-Z]+)-([0-9.]+)A-v([0-9.]+).*/\3/' | tr '[:upper:]' '[:lower:]')
+    model_key=$(echo "$MODEL_FROM_FLAG" | cut -d'-' -f1 | tr '[:upper:]' '[:lower:]')
+    motor_current=$(echo "$MODEL_FROM_FLAG" | sed -E 's/^[^-]*-([0-9.]+)A.*/\1/')
+    pcb_version=$(echo "$MODEL_FROM_FLAG" | sed -E 's/.*-v([0-9.]+).*/\1/')
 }
 
  install_printer_cfg() {
