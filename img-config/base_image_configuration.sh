@@ -41,7 +41,6 @@ declare -A LINKS_AND_NAMES=(
     ["https://raw.githubusercontent.com/OpenNeptune3D/OpenNept4une/main/img-config/printer-data/moonraker.conf"]="moonraker.conf"
     ["https://raw.githubusercontent.com/OpenNeptune3D/OpenNept4une/main/img-config/printer-data/KAMP_Settings.cfg"]="KAMP_Settings.cfg"
     ["https://raw.githubusercontent.com/OpenNeptune3D/OpenNept4une/main/img-config/printer-data/adxl.cfg"]="adxl.cfg"  
-    ["https://raw.githubusercontent.com/OpenNeptune3D/OpenNept4une/main/img-config/printer-data/crowsnest.conf"]="crowsnest.conf"
 )
 
 # Destination directory
