@@ -258,7 +258,7 @@ advanced_more() {
             4) update_repo;;
             5) toggle_branch;;
             6) base_image_config;;
-            7) $HOME/OpenNept4une/img-config/set-printer-model.sh;;
+            7) $HOME/OpenNept4une/img-config/set-printer-model.sh; exit 0;;
             b) return;;  # Return to the main menu
             *) echo -e "${R}Invalid choice, please try again.${NC}";;
         esac
@@ -385,6 +385,7 @@ check_and_set_printer_model() {
         else
             echo "Model Flag set successfully."
         fi
+        exit 0
     else
         echo "Model Detected"
     fi
