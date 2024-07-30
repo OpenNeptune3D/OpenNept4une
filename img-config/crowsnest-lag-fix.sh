@@ -1,9 +1,35 @@
 #!/bin/bash
 
+# Function to check if the script is run with sudo
+check_sudo() {
+  if [[ $EUID -ne 0 ]]; then
+    echo "This script must be run with sudo. Re-running with sudo..."
+    sudo HOME="$HOME" bash "$0" "$@"
+    exit $?
+  fi
+}
+
+# Run the check_sudo function
+check_sudo "$@"
+
 # Uninstall previous installations if any
 if [ -f "${HOME}/crowsnest/tools/uninstall.sh" ]; then
   ${HOME}/crowsnest/tools/uninstall.sh
 fi
+
+# Define the file paths
+MOONRAKER_CONF=${HOME}/printer_data/config/moonraker.conf
+MOONRAKER_ASVC=${HOME}/printer_data/moonraker.asvc
+
+# Remove the [update_manager crowsnest] section from moonraker.conf
+sed -i '/\[update_manager crowsnest\]/,/^$/d' "$MOONRAKER_CONF"
+
+# Remove crowsnest from moonraker.asvc
+sed -i '/crowsnest/d' "$MOONRAKER_ASVC"
+
+echo "Sections and entries for 'crowsnest' have been removed from the configuration files."
+
+rm -rf ${HOME}/crowsnest/
 
 # Determine package name
 PACKAGE="camera-streamer-$(test -e /etc/default/raspberrypi-kernel && echo raspi || echo generic)_0.2.8.$(. /etc/os-release; echo $VERSION_CODENAME)_$(dpkg --print-architecture).deb"
@@ -14,8 +40,8 @@ wget "https://github.com/ayufan/camera-streamer/releases/download/v0.2.8/$PACKAG
 # Install the package
 sudo apt install -y "./$PACKAGE"
 
-systemctl enable camera-streamer
-systemctl start camera-streamer
+sudo systemctl enable camera-streamer
+sudo systemctl start camera-streamer
 
 sudo cp /usr/share/camera-streamer/examples/camera-streamer-generic-usb-cam.service /etc/systemd/system/camera-streamer.service
 sync
