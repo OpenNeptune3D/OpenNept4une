@@ -515,7 +515,6 @@ install_configs() {
         ["All"]=""
         ["Fluidd web interface Conf"]="data.mdb"
         ["Moonraker Conf"]="moonraker.conf"
-        ["Crowsnest (webcam) Conf"]="crowsnest.conf"
         ["KAMP Conf"]="KAMP_Settings.cfg"
         ["Mainsail web interface Conf"]="mainsail.cfg"
         ["Pico USB-C ADXL Conf"]="adxl.cfg"
@@ -533,7 +532,7 @@ install_configs() {
 
     if [ "$install_configs" = "true" ]; then
         PS3="Enter the number of the configuration to install (or 'Exit' to finish): "
-        options=("All" "Fluidd web interface Conf" "Moonraker Conf" "Crowsnest (webcam) Conf" "KAMP Conf" "Mainsail web interface Conf" "Pico USB-C ADXL Conf" "Klipper DEBUG Addon" "Exit")
+        options=("All" "Fluidd web interface Conf" "Moonraker Conf" "KAMP Conf" "Mainsail web interface Conf" "Pico USB-C ADXL Conf" "Klipper DEBUG Addon" "Exit")
 
         while true; do
             clear_screen
@@ -730,7 +729,7 @@ Commands:
   install_screen_service     Install or update the Touch-Screen Display Service (BETA).
   update_repo                Update the OpenNept4une repository to the latest version.
   android_rules              Install Android ADB rules (for klipperscreen).
-  crowsnest_fix              Install Crowsnest FPS fix.
+  crowsnest_fix              Install webcam FPS fix.
   base_image_config          Apply base configuration for ZNP-K1 Compiled Image (Not for release images).
   armbian_resize             Resize the active Armbian partition (for eMMC > 8GB).
 
@@ -748,7 +747,7 @@ print_menu() {
     echo ""
     echo "1) Install/Update OpenNept4une printer.cfg"
     echo ""
-    echo "2) Install/Update KAMP/Moonraker/fluiddGUI/Crowsnest confs"
+    echo "2) Install/Update KAMP/Moonraker/fluiddGUI confs"
     echo ""
     echo "3) Configure WiFi"
     echo ""
