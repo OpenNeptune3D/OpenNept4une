@@ -1,8 +1,7 @@
 sudo groupadd spiusers
 sudo usermod -a -G spiusers mks
 
-move 99-spidev.rules to /etc/udev/rules.d/
+sudo cp ~/OpenNept4une/img-config/spidev-fix/99-spidev.rules /etc/udev/rules.d/
 
-move rockchip-fixup.scr & rockchip-spi-spidev.dtbo to /boot/dtb/rockchip/overlays/
+sudo cp ~/OpenNept4une/img-config/spidev-fix/{rockchip-fixup.scr,rockchip-spi-spidev.dtbo} /boot/dtb/rockchip/overlay/
 
-move your printer models fixed dtb file to /boot/dtb/rockchip/
