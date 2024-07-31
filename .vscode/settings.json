@@ -1,0 +1,93 @@
+# This file contains a basic configuration for the Neptune 4 running Klipper firmware.
+# Adjust the parameters to suit your specific hardware and preferences.
+
+# Microcontroller configuration
+[mcu]
+serial: /dev/serial/by-id/usb-Klipper_Klipper_firmware_12345-if00
+# You may need to replace the 'serial' value with the correct serial port for your board.
+
+# Stepper motor configurations
+[stepper_x]
+step_pin: PC0
+dir_pin: PB15
+enable_pin: !PC1
+microsteps: 16
+rotation_distance: 40
+endstop_pin: ^PA2
+position_endstop: 0
+position_max: 220
+homing_speed: 50
+
+[stepper_y]
+step_pin: PC3
+dir_pin: !PC2
+enable_pin: !PC1
+microsteps: 16
+rotation_distance: 40
+endstop_pin: ^PA3
+position_endstop: 0
+position_max: 220
+homing_speed: 50
+
+[stepper_z]
+step_pin: PB3
+dir_pin: PB2
+enable_pin: !PB4
+microsteps: 16
+rotation_distance: 8
+endstop_pin: ^PB5
+position_endstop: 0
+position_max: 250
+homing_speed: 4
+
+# Extruder configuration
+[extruder]
+step_pin: PB6
+dir_pin: PB7
+enable_pin: !PC4
+microsteps: 16
+rotation_distance: 33.5
+nozzle_diameter: 0.400
+filament_diameter: 1.750
+heater_pin: PB8
+sensor_type: ATC Semitec 104GT-2
+sensor_pin: PA0
+control: pid
+pid_kp: 21.527
+pid_ki: 1.063
+pid_kd: 108.982
+min_extrude_temp: 170
+
+# Heater bed configuration
+[heater_bed]
+heater_pin: PA4
+sensor_type: EPCOS 100K B57560G104F
+sensor_pin: PA1
+control: pid
+pid_kp: 69.829
+pid_ki: 1.422
+pid_kd: 743.781
+
+# Fan configuration
+[fan]
+pin: PA7
+
+# Temperature sensor settings
+[temperature_sensor chamber]
+sensor_type: NTC 100K beta 3950
+sensor_pin: PA6
+
+# Endstop configuration
+[endstop_phase]
+endstop_phase: -0.5
+
+# Board settings
+[printer]
+kinematics: cartesian
+max_velocity: 300
+max_accel: 3000
+max_z_velocity: 5
+max_z_accel: 100
+
+# Custom settings
+[include custom.cfg]
