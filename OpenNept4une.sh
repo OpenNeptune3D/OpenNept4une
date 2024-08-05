@@ -562,7 +562,7 @@ install_configs() {
                     sleep 2
                     return 0
                     ;;
-                2|3|4|5|6|7|8)
+                2|3|4|5|6|7)
                     opt_name="${options[$((opt-1))]}"
                     printf "Installing ${opt_name}...\n"
                     file=${config_files[$opt_name]}
@@ -634,7 +634,7 @@ install_configs() {
                     fi
                     printf "${G}${opt_name} installed successfully.${NC}\n"
                     ;;
-                9)
+                8)
                     printf "${Y}Exiting the update process.${NC}\n"
                     break
                     ;;
@@ -644,7 +644,7 @@ install_configs() {
             esac
 
             # Re-display the menu after each operation, unless 'Exit' was selected
-            if [[ $opt != 9 ]]; then
+            if [[ $opt != 8 ]]; then
                 clear_screen
                 echo -e "${C}$OPENNEPT4UNE_ART${NC}"
                 echo ""
