@@ -31,9 +31,9 @@ if [ -d "${CROWSNEST_DIR}" ]; then
   echo "Directory removed!"
 
   popd &> /dev/null
-fi
 
-echo "Crowsnest successfully removed!"
+  echo "Crowsnest successfully removed!"
+fi
 
 # Define the file paths
 MOONRAKER_CONF="${HOME}/printer_data/config/moonraker.conf"
@@ -49,16 +49,18 @@ echo "Sections and entries for 'crowsnest' have been removed from the configurat
 
 # Remove crowsnest related files
 rm -rf "${HOME}/crowsnest/"
-rm -f "${HOME}/printer_data/config/crowsnest.conf"
+
+if [ -f "${HOME}/printer_data/config/crowsnest.conf" ]; then
+  rm -f "${HOME}/printer_data/config/crowsnest.conf"
+fi
 
 # Determine package name
 PACKAGE="camera-streamer-$(test -e /etc/default/raspberrypi-kernel && echo raspi || echo generic)_0.2.8.$(. /etc/os-release; echo $VERSION_CODENAME)_$(dpkg --print-architecture).deb"
 
 # Download the package
-wget "https://github.com/ayufan/camera-streamer/releases/download/v0.2.8/$PACKAGE"
-
+wget "https://github.com/ayufan/camera-streamer/releases/download/v0.2.8/$PACKAGE" -P ${HOME} > /dev/null 2>&1
 # Install the package
-sudo apt install -y "./$PACKAGE"
+sudo apt install -y "${HOME}/$PACKAGE"
 
 sudo systemctl enable camera-streamer
 sudo systemctl start camera-streamer
