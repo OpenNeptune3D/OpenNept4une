@@ -68,7 +68,7 @@ sync
 sudo rm ${HOME}/camera-streamer-generic*
 
 # Detect the video device
-VIDEO_DEVICE=$(v4l2-ctl --list-devices | grep -A 1 'GENERAL WEBCAM' | tail -n 1 | awk '{print $1}')
+VIDEO_DEVICE=$(v4l2-ctl --list-devices | grep -A 1 'usb' | tail -n 1 | awk '{print $1}')
 
 if [ -z "$VIDEO_DEVICE" ]; then
   echo "No USB video device found."
