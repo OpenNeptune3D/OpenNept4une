@@ -9,6 +9,9 @@ check_sudo() {
   fi
 }
 
+# Run the check_sudo function at the beginning
+check_sudo "$@"
+
 # Define the crowsnest directory
 CROWSNEST_DIR="${HOME}/crowsnest"
 
@@ -32,12 +35,9 @@ if [ -d "${CROWSNEST_DIR}" ]; then
   echo "Crowsnest successfully removed!"
 fi
 
-# Run the check_sudo function after uninstalling crowsnest
-check_sudo "$@"
-
 # Define the file paths
-MOONRAKER_CONF=${HOME}/printer_data/config/moonraker.conf
-MOONRAKER_ASVC=${HOME}/printer_data/moonraker.asvc
+MOONRAKER_CONF="${HOME}/printer_data/config/moonraker.conf"
+MOONRAKER_ASVC="${HOME}/printer_data/moonraker.asvc"
 
 # Remove the [update_manager crowsnest] section from moonraker.conf
 sed -i '/\[update_manager crowsnest\]/,/^$/d' "$MOONRAKER_CONF"
@@ -47,10 +47,11 @@ sed -i '/crowsnest/d' "$MOONRAKER_ASVC"
 
 echo "Sections and entries for 'crowsnest' have been removed from the configuration files."
 
-rm -rf ${HOME}/crowsnest/
+# Remove crowsnest related files
+rm -rf "${HOME}/crowsnest/"
 
-if [ -f ${HOME}/printer_data/config/crowsnest.conf ]; then
-  rm ${HOME}/printer_data/config/crowsnest.conf
+if [ -f "${HOME}/printer_data/config/crowsnest.conf" ]; then
+  rm -f "${HOME}/printer_data/config/crowsnest.conf"
 fi
 
 # Determine package name
@@ -67,13 +68,24 @@ sudo systemctl start camera-streamer
 sudo cp /usr/share/camera-streamer/examples/camera-streamer-generic-usb-cam.service /etc/systemd/system/camera-streamer.service
 sync
 
-sudo rm ${HOME}/camera-streamer-generic*
+sudo rm "${HOME}/camera-streamer-generic*"
 
-# Detect the video device
-VIDEO_DEVICE=$(v4l2-ctl --list-devices | grep -A 1 'usb' | tail -n 1 | awk '{print $1}')
+# Initialize the VIDEO_DEVICE variable
+VIDEO_DEVICE=""
+
+# List all USB video devices
+usb_devices=$(v4l2-ctl --list-devices | grep -A 9999 'usb' | grep -E '/dev/video' | awk '{print $1}')
+
+# Check each USB video device for MJPEG support
+for device in $usb_devices; do
+    if v4l2-ctl --device=$device --list-formats | grep -q 'MJPG'; then
+        VIDEO_DEVICE="$device"
+        break
+    fi
+done
 
 if [ -z "$VIDEO_DEVICE" ]; then
-  echo "No USB video device found."
+  echo "No USB video device found that supports MJPG."
   exit 1
 fi
 
@@ -84,19 +96,19 @@ SERVICE_FILE="/etc/systemd/system/camera-streamer.service"
 
 if [ -f "$SERVICE_FILE" ]; then
   # Update the camera path
-  sudo sed -i "s|-camera-path=/dev/video[0-9]*|--camera-path=$VIDEO_DEVICE|" "$SERVICE_FILE"
+  sudo sed -i "s|--camera-path=/dev/video[0-9]*|--camera-path=$VIDEO_DEVICE|" "$SERVICE_FILE"
   # Update the camera format
-  sudo sed -i "s|-camera-format=JPEG|--camera-format=MJPEG|" "$SERVICE_FILE"
+  sudo sed -i "s|--camera-format=JPEG|--camera-format=MJPEG|" "$SERVICE_FILE"
   # Update the camera width and height
-  sudo sed -i "s|-camera-width=1920 -camera-height=1080|--camera-width=640 --camera-height=480|" "$SERVICE_FILE"
+  sudo sed -i "s|--camera-width=1920 --camera-height=1080|--camera-width=640 --camera-height=480|" "$SERVICE_FILE"
   # Update the camera FPS
-  sudo sed -i "s|-camera-fps=30|--camera-fps=30|" "$SERVICE_FILE"
+  sudo sed -i "s|--camera-fps=30|--camera-fps=30|" "$SERVICE_FILE"
   # Update the http-listen and http-port
   sudo sed -i "s|--http-listen=0.0.0.0|--http-listen=0.0.0.0|" "$SERVICE_FILE"
   sudo sed -i "s|--http-port=8080|--http-port=8080|" "$SERVICE_FILE"
   # Remove lines containing specific settings
-  sudo sed -i "/-camera-nbufs=3/d" "$SERVICE_FILE"
-  sudo sed -i "/-camera-video.disabled/d" "$SERVICE_FILE"
+  sudo sed -i "/--camera-nbufs=3/d" "$SERVICE_FILE"
+  sudo sed -i "/--camera-video.disabled/d" "$SERVICE_FILE"
   # Remove comment lines related to specific settings
   sudo sed -i "/; use two memory buffers to optimise usage/d" "$SERVICE_FILE"
   sudo sed -i "/; disable video streaming (WebRTC, RTSP, H264)/d" "$SERVICE_FILE"
