@@ -28,9 +28,9 @@ if [ -d "${CROWSNEST_DIR}" ]; then
   echo "Directory removed!"
 
   popd &> /dev/null
-fi
 
-echo "Crowsnest successfully removed!"
+  echo "Crowsnest successfully removed!"
+fi
 
 # Run the check_sudo function after uninstalling crowsnest
 check_sudo "$@"
@@ -48,16 +48,18 @@ sed -i '/crowsnest/d' "$MOONRAKER_ASVC"
 echo "Sections and entries for 'crowsnest' have been removed from the configuration files."
 
 rm -rf ${HOME}/crowsnest/
-rm ${HOME}/printer_data/config/crowsnest.conf
+
+if [ -f ${HOME}/printer_data/config/crowsnest.conf ]; then
+  rm ${HOME}/printer_data/config/crowsnest.conf
+fi
 
 # Determine package name
 PACKAGE="camera-streamer-$(test -e /etc/default/raspberrypi-kernel && echo raspi || echo generic)_0.2.8.$(. /etc/os-release; echo $VERSION_CODENAME)_$(dpkg --print-architecture).deb"
 
 # Download the package
-wget "https://github.com/ayufan/camera-streamer/releases/download/v0.2.8/$PACKAGE"
-
+wget "https://github.com/ayufan/camera-streamer/releases/download/v0.2.8/$PACKAGE" -P ${HOME} > /dev/null 2>&1
 # Install the package
-sudo apt install -y "./$PACKAGE"
+sudo apt install -y "${HOME}/$PACKAGE"
 
 sudo systemctl enable camera-streamer
 sudo systemctl start camera-streamer
@@ -68,7 +70,7 @@ sync
 sudo rm ${HOME}/camera-streamer-generic*
 
 # Detect the video device
-VIDEO_DEVICE=$(v4l2-ctl --list-devices | grep -A 1 'GENERAL WEBCAM' | tail -n 1 | awk '{print $1}')
+VIDEO_DEVICE=$(v4l2-ctl --list-devices | grep -A 1 'usb' | tail -n 1 | awk '{print $1}')
 
 if [ -z "$VIDEO_DEVICE" ]; then
   echo "No USB video device found."
