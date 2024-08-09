@@ -30,18 +30,18 @@ MOONRAKER_ASVC="${HOME}/printer_data/moonraker.asvc"
 echo "Modifying system configuration files..."
 
 # Remove the [update_manager crowsnest] section from moonraker.conf
-sudo sed -i '/\[update_manager crowsnest\]/,/^$/d' "$MOONRAKER_CONF"
+sed -i '/\[update_manager crowsnest\]/,/^$/d' "$MOONRAKER_CONF"
 
 # Remove crowsnest from moonraker.asvc
-sudo sed -i '/crowsnest/d' "$MOONRAKER_ASVC"
+sed -i '/crowsnest/d' "$MOONRAKER_ASVC"
 
 echo "Sections and entries for 'crowsnest' have been removed from the configuration files."
 
 # Remove crowsnest related files
-sudo rm -rf "${HOME}/crowsnest/"
+rm -rf "${HOME}/crowsnest/"
 
 if [ -f "${HOME}/printer_data/config/crowsnest.conf" ]; then
-  sudo rm -f "${HOME}/printer_data/config/crowsnest.conf"
+  rm -f "${HOME}/printer_data/config/crowsnest.conf"
 fi
 
 # Determine package name
@@ -60,7 +60,7 @@ sudo systemctl start camera-streamer
 
 sudo cp /usr/share/camera-streamer/examples/camera-streamer-generic-usb-cam.service /etc/systemd/system/camera-streamer.service
 
-sudo rm "${HOME}/camera-streamer-generic*"
+rm "${HOME}/camera-streamer-generic*"
 
 # Initialize the VIDEO_DEVICE variable
 VIDEO_DEVICE=""
