@@ -96,13 +96,13 @@ SERVICE_FILE="/etc/systemd/system/camera-streamer.service"
 
 if [ -f "$SERVICE_FILE" ]; then
   # Update the camera path
-  sudo sed -i "s|-camera-path=/dev/video[0-9]*|--camera-path=$VIDEO_DEVICE|" "$SERVICE_FILE"
+  sudo sed -i "s|-camera-path=/dev/video[0-9]*|-camera-path=$VIDEO_DEVICE|" "$SERVICE_FILE"
   # Update the camera format
-  sudo sed -i "s|-camera-format=JPEG|--camera-format=MJPEG|" "$SERVICE_FILE"
+  sudo sed -i "s|-camera-format=JPEG|-camera-format=MJPEG|" "$SERVICE_FILE"
   # Update the camera width and height
-  sudo sed -i "s|-camera-width=1920 --camera-height=1080|--camera-width=640 --camera-height=480|" "$SERVICE_FILE"
+  sudo sed -i "s|-camera-width=1920 -camera-height=1080|-camera-width=640 -camera-height=480|" "$SERVICE_FILE"
   # Update the camera FPS
-  sudo sed -i "s|-camera-fps=30|--camera-fps=30|" "$SERVICE_FILE"
+  sudo sed -i "s|-camera-fps=30|-camera-fps=30|" "$SERVICE_FILE"
   # Update the http-listen and http-port
   sudo sed -i "s|--http-listen=0.0.0.0|--http-listen=0.0.0.0|" "$SERVICE_FILE"
   sudo sed -i "s|--http-port=8080|--http-port=8080|" "$SERVICE_FILE"
