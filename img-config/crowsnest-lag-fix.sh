@@ -181,3 +181,12 @@ sudo systemctl restart mjpg-streamer
 sudo systemctl enable mjpg-streamer
 
 echo "Service updated and restarted successfully with resolution $selected_resolution, FPS $selected_fps, and format $selected_format."
+echo ""
+LOCAL_IP=$(hostname -I | awk '{print $1}')
+echo "Configure Fluidd > Settings > Cameras > USB insert the the URL's below"
+echo ""
+echo "http://$LOCAL_IP:8080/?action=stream"
+echo "http://$LOCAL_IP:8080/?action=snapshot"
+echo ""
+echo "script will auto close in 1 min"
+sleep 60
