@@ -61,6 +61,7 @@ if [ ! -d "${HOME}/mjpg-streamer" ]; then
     echo "Cloning and building mjpg-streamer..."
     git clone https://github.com/ArduCAM/mjpg-streamer.git || { echo "Failed to clone mjpg-streamer repository"; exit 1; }
     cd mjpg-streamer/mjpg-streamer-experimental || exit 1
+    sed -i '/add_subdirectory(plugins\/input_libcamera)/ s/^/#/' ./CMakeLists.txt
     make || { echo "Make failed for mjpg-streamer"; exit 1; }
     sudo make install || { echo "Installation failed for mjpg-streamer"; exit 1; }
     export LD_LIBRARY_PATH=.
