@@ -680,7 +680,7 @@ install_screen_service() {
 }
 
 run_install_screen_service_with_setup() {
-    initialize_display_connector && eval "$DISPLAY_SERVICE_INSTALLER"
+    rm -rf ${HOME}/display_connector && initialize_display_connector && eval "$DISPLAY_SERVICE_INSTALLER"
 }
 
 initialize_display_connector() {
