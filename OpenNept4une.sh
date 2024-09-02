@@ -381,13 +381,14 @@ check_and_set_printer_model() {
         MODEL_FROM_FLAG=$(grep '^N4' "$FLAG_FILE")
         if [ -z "$MODEL_FROM_FLAG" ]; then
             echo "Failed to set Model Flag. Exiting."
-            exit 1
+            return 1
         else
             echo "Model Flag set successfully."
         fi
-        exit 0
+        return 0
     else
         echo "Model Detected"
+        return 0
     fi
 }
 
