@@ -6,7 +6,7 @@ DISPLAY_SERVICE_INSTALLER="${HOME}/display_connector/display-service-installer.s
 MCU_RPI_INSTALLER="${HOME}/OpenNept4une/img-config/rpi-mcu-install.sh"
 USB_STORAGE_AUTOMOUNT="${HOME}/OpenNept4une/img-config/usb-storage-automount.sh"
 ANDROID_RULE_INSTALLER="${HOME}/OpenNept4une/img-config/adb-automount.sh"
-CROWSNEST_FIX_INSTALLER="${HOME}/OpenNept4une/img-config/crowsnest-lag-fix.sh"
+WEBCAM_SETUP_INSTALLER="${HOME}/OpenNept4une/img-config/webcam-setup.sh"
 BASE_IMAGE_INSTALLER="${HOME}/OpenNept4une/img-config/base_image_configuration.sh"
 
 FLAG_FILE="/boot/.OpenNept4une.txt"
@@ -253,7 +253,7 @@ advanced_more() {
 
         case $choice in
             1) android_rules;;
-            2) crowsnest_fix;;
+            2) webcam_setup;;
             3) armbian_resize;;
             4) update_repo;;
             5) toggle_branch;;
@@ -312,8 +312,8 @@ android_rules() {
     install_feature "Android ADB Rules" "$ANDROID_RULE_INSTALLER" "Do you want to install the android ADB rules? (may fix klipperscreen issues)"
 }
 
-crowsnest_fix() {
-    install_feature "Crowsnest FPS Fix" "$CROWSNEST_FIX_INSTALLER" "Do you want to install the crowsnest fps fix?"
+webcam_setup() {
+    install_feature "Webcam Setup" "$WEBCAM_SETUP_INSTALLER" "Do you want to configure mjpg-streamer?"
 }
 
 base_image_config() {
@@ -730,7 +730,7 @@ Commands:
   install_screen_service     Install or update the Touch-Screen Display Service (BETA).
   update_repo                Update the OpenNept4une repository to the latest version.
   android_rules              Install Android ADB rules (for klipperscreen).
-  crowsnest_fix              Install webcam FPS fix.
+  webcam_setup              Install webcam FPS fix.
   base_image_config          Apply base configuration for ZNP-K1 Compiled Image (Not for release images).
   armbian_resize             Resize the active Armbian partition (for eMMC > 8GB).
 
@@ -818,7 +818,7 @@ else
         usb_auto_mount) usb_auto_mount ;;
         update_repo) update_repo ;;
         android_rules) android_rules ;;
-        crowsnest_fix) crowsnest_fix ;;
+        webcam_setup) webcam_setup ;;
         base_image_config) base_image_config ;;
         armbian_resize) armbian_resize ;;
         *) echo -e "${G}Invalid command. Please try again.${NC}" ;;
