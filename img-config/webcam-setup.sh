@@ -6,6 +6,7 @@ CROWSNEST_DIR="${HOME}/crowsnest"
 # Check if required commands are available
 for cmd in make v4l2-ctl sed systemctl git; do
     if ! command -v $cmd &> /dev/null; then
+        echo ""
         echo "Error: $cmd command not found. Please install it before running this script."
         exit 1
     fi
@@ -14,18 +15,23 @@ done
 # Uninstall previous installations if any using make uninstall as the standard user
 if [ -d "${CROWSNEST_DIR}" ]; then
     pushd "${CROWSNEST_DIR}" &> /dev/null || exit 1
+    echo ""
     echo "Launching crowsnest uninstaller as the standard user..."
     
     if ! make uninstall; then
+        echo ""
         echo "Something went wrong during uninstallation! Please try again..."
         exit 1
     fi
     
+    echo ""
     echo "Removing crowsnest directory ..."
     rm -rf "${CROWSNEST_DIR}"
+    echo ""
     echo "Directory removed!"
     
     popd &> /dev/null
+    echo ""
     echo "Crowsnest successfully removed!"
 fi
 
@@ -38,10 +44,12 @@ MOONRAKER_CONF="${HOME}/printer_data/config/moonraker.conf"
 MOONRAKER_ASVC="${HOME}/printer_data/moonraker.asvc"
 
 # Modify system files with sudo
+echo ""
 echo "Modifying system configuration files..."
 sed -i '/\[update_manager crowsnest\]/,/^$/d' "$MOONRAKER_CONF"
 sed -i '/crowsnest/d' "$MOONRAKER_ASVC"
 
+echo ""
 echo "Sections and entries for 'crowsnest' have been removed from the configuration files."
 
 # Remove camera-streamer related service & files
@@ -53,23 +61,25 @@ sudo rm /etc/systemd/system/camera-streamer.service > /dev/null 2>&1
 
 if [ ! -d "${HOME}/mjpg-streamer" ]; then
     # Install dependencies
+    echo ""
     echo "Installing dependencies..."
     sudo apt update
     sudo apt autoremove -y 
     sudo apt install -y cmake libjpeg62-turbo-dev gcc g++
-    cd {HOME}
+    cd "$HOME"
+    echo ""
     echo "Cloning and building mjpg-streamer..."
-    git clone https://github.com/ArduCAM/mjpg-streamer.git || { echo "Failed to clone mjpg-streamer repository"; exit 1; }
+    git clone https://github.com/ArduCAM/mjpg-streamer.git || { echo ""; echo "Failed to clone mjpg-streamer repository"; exit 1; }
     cd mjpg-streamer/mjpg-streamer-experimental || exit 1
     sed -i '/add_subdirectory(plugins\/input_libcamera)/ s/^/#/' ./CMakeLists.txt
-    make || { echo "Make failed for mjpg-streamer"; exit 1; }
-    sudo make install || { echo "Installation failed for mjpg-streamer"; exit 1; }
+    make || { echo ""; echo "Make failed for mjpg-streamer"; exit 1; }
+    sudo make install || { echo ""; echo "Installation failed for mjpg-streamer"; exit 1; }
     export LD_LIBRARY_PATH=.
     clear
 fi
 
-# Initialize the VIDEO_DEVICE variable
-VIDEO_DEVICE=""
+# Initialize an array to store all valid video devices
+valid_video_devices=()
 
 # List all USB video devices
 usb_devices=$(v4l2-ctl --list-devices | grep -A 9999 'usb' | grep -E '/dev/video' | awk '{print $1}')
@@ -77,17 +87,45 @@ usb_devices=$(v4l2-ctl --list-devices | grep -A 9999 'usb' | grep -E '/dev/video
 for device in $usb_devices; do
     FORMATS_OUTPUT=$(v4l2-ctl --device=$device --list-formats-ext)
     if [[ -n "$FORMATS_OUTPUT" ]]; then
-        VIDEO_DEVICE="$device"
-        break
+        # Check if the output contains 'MJPG' or 'YUYV'
+        if echo "$FORMATS_OUTPUT" | grep -q -E 'MJPG|YUYV'; then
+            valid_video_devices+=("$device")
+            echo ""
+            echo "Valid video device found: $device"
+        else
+            echo ""
+            echo "Device $device does not support MJPG or YUYV. Ignoring."
+        fi
     fi
 done
 
-if [ -z "$VIDEO_DEVICE" ]; then
-    echo "No USB video device found. Ensure your camera is connected and recognized by the system."
+# Check if any valid devices were found
+if [[ ${#valid_video_devices[@]} -eq 0 ]]; then
+    echo ""
+    echo "No valid video devices found."
     exit 1
+elif [[ ${#valid_video_devices[@]} -gt 1 ]]; then
+    echo ""
+    echo "Multiple valid video devices detected:"
+    for i in "${!valid_video_devices[@]}"; do
+        echo "$((i+1))) ${valid_video_devices[$i]}"
+    done
+    read -p "Enter the number of the device you want to use: " device_choice
+    if ! [[ "$device_choice" =~ ^[0-9]+$ ]] || [ "$device_choice" -lt 1 ] || [ "$device_choice" -gt "${#valid_video_devices[@]}" ]; then
+        echo ""
+        echo "Invalid selection. Exiting."
+        exit 1
+    fi
+    VIDEO_DEVICE="${valid_video_devices[$((device_choice-1))]}"
+else
+    VIDEO_DEVICE="${valid_video_devices[0]}"
 fi
 
-echo "Detected video device: $VIDEO_DEVICE"
+echo ""
+echo "Selected video device: $VIDEO_DEVICE"
+
+# Retrieve the formats again for the selected video device
+FORMATS_OUTPUT=$(v4l2-ctl --device=$VIDEO_DEVICE --list-formats-ext)
 
 # Initialize arrays to store formats, resolutions, and fps
 declare -A formats_map
@@ -111,7 +149,15 @@ while IFS= read -r line; do
     fi
 done <<< "$FORMATS_OUTPUT"
 
+# Check if there are any available formats before continuing
+if [[ ${#formats_order[@]} -eq 0 ]]; then
+    echo ""
+    echo "No valid formats found for the selected video device. Exiting."
+    exit 1
+fi
+
 # Provide the user with a brief explanation of the formats
+echo ""
 echo "Please select the video format:"
 echo "1) MJPG (Motion-JPEG, compressed):"
 echo "   - Pros: Uses less bandwidth, resulting in higher resolutions and frame rates."
@@ -132,6 +178,7 @@ elif [[ "$format_choice" == "2" ]] && [[ -n "${formats_map["YUYV"]}" ]]; then
     selected_format="YUYV"
     video_format="-y"
 else
+    echo ""
     echo "Invalid selection or format not available. Exiting."
     exit 1
 fi
@@ -150,7 +197,8 @@ done
 read -p "Enter the number of your preferred resolution and framerate: " choice
 
 # Validate user input
-if ! [[ "$choice" =~ ^[0-9]+$ ]] || [ "$choice" -lt 1 ] || [ "$choice" -gt "${#res_fps_array[@]}" ]; then
+if ! [[ "$choice" =~ ^[0-9]+$ && "$choice" -ge 1 && "$choice" -le "${#res_fps_array[@]}" ]]; then
+    echo ""
     echo "Invalid selection. Exiting."
     exit 1
 fi
@@ -181,9 +229,11 @@ sudo systemctl daemon-reload
 sudo systemctl restart mjpg-streamer
 sudo systemctl enable mjpg-streamer
 
+echo ""
 echo "Service updated and restarted successfully with resolution $selected_resolution, FPS $selected_fps, and format $selected_format."
 echo ""
 LOCAL_IP=$(hostname -I | awk '{print $1}')
+echo ""
 echo "Configure Fluidd > Settings > Cameras > USB insert the the URL's below"
 echo ""
 echo "http://$LOCAL_IP:8080/?action=stream"
