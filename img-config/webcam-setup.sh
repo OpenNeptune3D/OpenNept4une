@@ -52,8 +52,8 @@ if [ -d "${CROWSNEST_DIR}" ]; then
 fi
 
 # Remove any remaining crowsnest related files
-rm -rf "${HOME}/crowsnest/"
-rm -f "${HOME}/printer_data/config/crowsnest.conf"
+rm -rf "${HOME}/crowsnest/" > /dev/null 2>&1
+rm -f "${HOME}/printer_data/config/crowsnest.conf" > /dev/null 2>&1
 
 # Define the file paths
 MOONRAKER_CONF="${HOME}/printer_data/config/moonraker.conf"
@@ -219,7 +219,7 @@ for (( i=1; i<=num_webcams; i++ )); do
     selected_fps=$(echo "$selected_res_fps" | awk '{print $2}')
 
     # Remove legacy service file
-    sudo rm /etc/systemd/system/mjpg-streamer.service
+    sudo rm /etc/systemd/system/mjpg-streamer.service > /dev/null 2>&1
     
     # Create a unique systemd service file for each webcam
     SERVICE_FILE="/etc/systemd/system/mjpg-streamer-webcam$i.service"
