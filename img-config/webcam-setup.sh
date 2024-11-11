@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 # Log all output to a logfile
 LOGFILE="${HOME}/webcam_setup.log"
@@ -7,14 +8,14 @@ exec > >(tee -a "$LOGFILE") 2>&1
 # Ask the user how many webcams they want to configure
 echo ""
 echo "How many webcams do you wish to configure? (1 or 2)"
-read -r -p "Enter 1 or 2: " num_webcams
-
-# Validate the user's input
-if [[ "$num_webcams" != "1" && "$num_webcams" != "2" ]]; then
-    echo ""
-    echo "Invalid input. Please enter either 1 or 2. Exiting."
-    exit 1
-fi
+while true; do
+    read -r -p "Enter 1 or 2: " num_webcams
+    if [[ "$num_webcams" == "1" || "$num_webcams" == "2" ]]; then
+        break
+    else
+        echo "Invalid input. Please enter either 1 or 2."
+    fi
+done
 
 # Define the crowsnest directory
 CROWSNEST_DIR="${HOME}/crowsnest"
@@ -62,7 +63,7 @@ MOONRAKER_ASVC="${HOME}/printer_data/moonraker.asvc"
 # Modify system files with sudo
 echo ""
 echo "Modifying system configuration files..."
-sed -i '/\[update_manager crowsnest\]/,/^$/d' "$MOONRAKER_CONF"
+sed -i '/update_manager crowsnest/,/^$/d' "$MOONRAKER_CONF"
 sed -i '/crowsnest/d' "$MOONRAKER_ASVC"
 
 echo ""
@@ -80,7 +81,7 @@ if [ ! -d "${HOME}/mjpg-streamer" ]; then
     echo "Installing dependencies..."
     sudo apt update
     sudo apt autoremove -y 
-    sudo apt install -y cmake libjpeg62-turbo-dev gcc g++
+    sudo apt install -y cmake libjpeg62-turbo-dev gcc g++ build-essential v4l-utils
     cd "$HOME" || exit
     echo ""
     echo "Cloning and building mjpg-streamer..."
@@ -100,7 +101,7 @@ valid_video_devices=()
 usb_devices=$(v4l2-ctl --list-devices | grep -A 9999 'usb' | grep -E '/dev/video' | awk '{print $1}')
 
 for device in $usb_devices; do
-    FORMATS_OUTPUT=$(v4l2-ctl --device="$device" --list-formats-ext)
+    FORMATS_OUTPUT=$(v4l2-ctl --device="$device" --list-formats-ext 2>/dev/null)
     if [[ -n "$FORMATS_OUTPUT" ]]; then
         # Check if the output contains 'MJPG' or 'YUYV'
         if echo "$FORMATS_OUTPUT" | grep -q -E 'MJPG|YUYV'; then
@@ -136,13 +137,18 @@ for (( i=1; i<=num_webcams; i++ )); do
         for j in "${!valid_video_devices[@]}"; do
             echo "$((j+1))) ${valid_video_devices[$j]}"
         done
-        read -r -p "Enter the number of the device you want to use for webcam $i: " device_choice
-        if ! [[ "$device_choice" =~ ^[0-9]+$ && "$device_choice" -ge 1 && "$device_choice" -le "${#valid_video_devices[@]}" ]]; then
-            echo ""
-            echo "Invalid selection. Exiting."
-            exit 1
-        fi
-        VIDEO_DEVICE="${valid_video_devices[$((device_choice-1))]}"
+        while true; do
+            read -r -p "Enter the number of the device you want to use for webcam $i: " device_choice
+            if [[ "$device_choice" =~ ^[0-9]+$ && "$device_choice" -ge 1 && "$device_choice" -le "${#valid_video_devices[@]}" ]]; then
+                VIDEO_DEVICE="${valid_video_devices[$((device_choice-1))]}"
+                # Remove the selected device from the list
+                unset 'valid_video_devices[$((device_choice-1))]'
+                valid_video_devices=("${valid_video_devices[@]}")
+                break
+            else
+                echo "Invalid selection. Please try again."
+            fi
+        done
     else
         VIDEO_DEVICE="${valid_video_devices[0]}"
     fi
@@ -151,7 +157,7 @@ for (( i=1; i<=num_webcams; i++ )); do
     echo "Selected video device: $VIDEO_DEVICE for webcam $i"
 
     # The rest of the configuration for formats and resolutions follows here
-    FORMATS_OUTPUT=$(v4l2-ctl --device="$VIDEO_DEVICE" --list-formats-ext)
+    FORMATS_OUTPUT=$(v4l2-ctl --device="$VIDEO_DEVICE" --list-formats-ext 2>/dev/null)
 
     # Declare arrays to store formats, resolutions, and fps
     declare -A formats_map
@@ -159,17 +165,17 @@ for (( i=1; i<=num_webcams; i++ )); do
 
     current_format=""
     while IFS= read -r line; do
-        if [[ "$line" =~ \[([0-9]+)\]:\ \'(.*)\'\ \((.*)\) ]]; then
+        if [[ "$line" =~ ([0-9]+):\ \'(.*)\'\ (.*) ]]; then
             current_format="${BASH_REMATCH[2]}"
             formats_order+=("$current_format")
             formats_map["$current_format"]=""
         elif [[ "$line" =~ Size:\ Discrete\ ([0-9]+x[0-9]+) ]]; then
             resolution="${BASH_REMATCH[1]}"
-        elif [[ "$line" =~ Interval:\ Discrete\ ([0-9.]+)s\ \(([0-9.]+)\ fps\) ]]; then
+        elif [[ "$line" =~ Interval:\ Discrete\ ([0-9.]+)s\ ([0-9.]+)\ fps ]]; then
             fps="${BASH_REMATCH[2]}"
             pair="$resolution $fps"
             if [[ ! ${formats_map[$current_format]} =~ $pair ]]; then
-                formats_map["$current_format"]+="$pair\n"
+                formats_map["$current_format"]+="$pair"$'\n'
             fi
         fi
     done <<< "$FORMATS_OUTPUT"
@@ -180,47 +186,69 @@ for (( i=1; i<=num_webcams; i++ )); do
         exit 1
     fi
 
-    echo ""
-    echo "Please select the video format for webcam $i:"
-    echo "1) MJPG (Motion-JPEG, compressed):"
-    echo "2) YUYV (YUYV 4:2:2, uncompressed):"
-    
-    video_format=""
-    read -r -p "Enter the number of your preferred format (1 for MJPG, 2 for YUYV): " format_choice
-    if [[ "$format_choice" == "1" ]] && [[ -n "${formats_map["MJPG"]}" ]]; then
-        selected_format="MJPG"
-    elif [[ "$format_choice" == "2" ]] && [[ -n "${formats_map["YUYV"]}" ]]; then
-        selected_format="YUYV"
-        video_format="-y"
-    else
+    # Allow the user to select the video format
+    while true; do
         echo ""
-        echo "Invalid selection or format not available. Exiting."
-        exit 1
-    fi
+        echo "Please select the video format for webcam $i:"
+        available_formats=()
+        index=1
+        for fmt in "${formats_order[@]}"; do
+            if [[ "$fmt" == "MJPG" || "$fmt" == "YUYV" ]]; then
+                available_formats+=("$fmt")
+                if [[ "$fmt" == "MJPG" ]]; then
+                    echo "$index) MJPG (Motion-JPEG, compressed)"
+                elif [[ "$fmt" == "YUYV" ]]; then
+                    echo "$index) YUYV (YUYV 4:2:2, uncompressed)"
+                fi
+                ((index++))
+            fi
+        done
+
+        if [[ ${#available_formats[@]} -eq 0 ]]; then
+            echo "No suitable formats (MJPG or YUYV) available on this device."
+            exit 1
+        fi
+
+        read -r -p "Enter the number of your preferred format: " format_choice
+        if [[ "$format_choice" =~ ^[0-9]+$ && "$format_choice" -ge 1 && "$format_choice" -le "${#available_formats[@]}" ]]; then
+            selected_format="${available_formats[$((format_choice-1))]}"
+            if [[ "$selected_format" == "YUYV" ]]; then
+                video_format="-y"
+            else
+                video_format=""
+            fi
+            break
+        else
+            echo "Invalid selection. Please try again."
+        fi
+    done
 
     echo ""
     echo "Available resolutions and framerates for $selected_format on webcam $i:"
-    IFS=$'\n' read -r -d '' -a res_fps_array <<< "$(echo -e "${formats_map["$selected_format"]}")"
+    mapfile -t res_fps_array <<< "${formats_map["$selected_format"]}"
     res_index=1
     for item in "${res_fps_array[@]}"; do
         echo "$res_index) $item"
         ((res_index++))
     done
 
-    read -r -p "Enter the number of your preferred resolution and framerate: " choice
-    if ! [[ "$choice" =~ ^[0-9]+$ && "$choice" -ge 1 && "$choice" -le "${#res_fps_array[@]}" ]]; then
-        echo ""
-        echo "Invalid selection. Exiting."
-        exit 1
-    fi
-
-    selected_res_fps="${res_fps_array[$((choice-1))]}"
-    selected_resolution=$(echo "$selected_res_fps" | awk '{print $1}')
-    selected_fps=$(echo "$selected_res_fps" | awk '{print $2}')
+    while true; do
+        read -r -p "Enter the number of your preferred resolution and framerate: " choice
+        if [[ "$choice" =~ ^[0-9]+$ && "$choice" -ge 1 && "$choice" -le "${#res_fps_array[@]}" ]]; then
+            selected_res_fps="${res_fps_array[$((choice-1))]}"
+            selected_resolution=$(echo "$selected_res_fps" | awk '{print $1}')
+            selected_fps=$(echo "$selected_res_fps" | awk '{print $2}')
+            break
+        else
+            echo "Invalid selection. Please try again."
+        fi
+    done
 
     # Remove legacy service file
-    sudo rm /etc/systemd/system/mjpg-streamer.service > /dev/null 2>&1
-    
+    sudo systemctl stop mjpg-streamer > /dev/null 2>&1
+    sudo systemctl disable mjpg-streamer > /dev/null 2>&1
+    sudo rm -f /etc/systemd/system/mjpg-streamer.service
+
     # Create a unique systemd service file for each webcam
     SERVICE_FILE="/etc/systemd/system/mjpg-streamer-webcam$i.service"
 
@@ -233,7 +261,7 @@ Description=MJPG Streamer Service for Webcam $i
 After=network.target
 
 [Service]
-ExecStart=/usr/local/bin/mjpg_streamer -i "input_uvc.so -d $VIDEO_DEVICE -r $selected_resolution -f $selected_fps $video_format" -o "output_http.so -w /www/webcam -p $STREAM_PORT"
+ExecStart=/usr/local/bin/mjpg_streamer -i "input_uvc.so -d \$VIDEO_DEVICE -r \$selected_resolution -f \$selected_fps \$video_format" -o "output_http.so -w /usr/local/www -p \$STREAM_PORT"
 Restart=always
 User=$(whoami)
 
