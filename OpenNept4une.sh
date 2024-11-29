@@ -6,6 +6,7 @@ DISPLAY_SERVICE_INSTALLER="${HOME}/display_connector/display-service-installer.s
 MCU_RPI_INSTALLER="${HOME}/OpenNept4une/img-config/rpi-mcu-install.sh"
 USB_STORAGE_AUTOMOUNT="${HOME}/OpenNept4une/img-config/usb-storage-automount.sh"
 ANDROID_RULE_INSTALLER="${HOME}/OpenNept4une/img-config/adb-automount.sh"
+UPDATED_DISPLAY_FIRMWARE_INSTALLER="${HOME}/display_firmware/screen-firmware.sh"
 WEBCAM_SETUP_INSTALLER="${HOME}/OpenNept4une/img-config/webcam-setup.sh"
 BASE_IMAGE_INSTALLER="${HOME}/OpenNept4une/img-config/base_image_configuration.sh"
 
@@ -17,6 +18,8 @@ OPENNEPT4UNE_REPO="https://github.com/OpenNeptune3D/OpenNept4une.git"
 OPENNEPT4UNE_DIR="${HOME}/OpenNept4une"
 DISPLAY_CONNECTOR_REPO="https://github.com/OpenNeptune3D/display_connector.git"
 DISPLAY_CONNECTOR_DIR="${HOME}/display_connector"
+DISPLAY_FIRMWARE_REPO="https://github.com/OpenNeptune3D/display_firmware.git"
+DISPLAY_FIRMWARE_DIR="${HOME}/display_firmware"
 
 current_branch=""
 
@@ -130,6 +133,10 @@ update_repo() {
         fi
     fi
     echo "=========================================================="
+    if [ -d "${HOME}/display_firmware" ]; then
+        process_repo_update "$DISPLAY_Firmware_DIR" "Display Firmware"
+        moonraker_update_manager "display_firmware"
+    fi
 }
 
 process_repo_update() {
@@ -206,8 +213,17 @@ path: $DISPLAY_CONNECTOR_DIR\n\
 virtualenv: $DISPLAY_CONNECTOR_DIR/venv\n\
 requirements: requirements.txt\n\
 origin: $DISPLAY_CONNECTOR_REPO"
+    elif [ "$update_selection" = "display_firmware" ]; then
+        current_display_branch=$(git -C "$DISPLAY_FIRMWARE_DIR" symbolic-ref --short HEAD 2>/dev/null)
+        new_lines="[update_manager $update_selection]\n\
+type: git_repo\n\
+primary_branch: $current_display_branch\n\
+path: $DISPLAY_FIRMWARE_DIR\n\
+virtualenv: $DISPLAY_FIMRWARE_DIR/venv\n\
+requirements: requirements.txt\n\
+origin: $DISPLAY_FIRMWARE_REPO"
     else
-        echo -e "${R}Invalid argument. Please specify either 'OpenNept4une' or 'display_connector'.${NC}"
+        echo -e "${R}Invalid argument. Please specify either 'OpenNept4une' or 'display_connector' or 'display_firmware'.${NC}"
         return 1
     fi
     # Check if the lines exist in the config file
@@ -237,13 +253,15 @@ advanced_more() {
         echo ""
         echo "4) Update OpenNept4une Repository"
         echo ""
+        echo "5) Update Display Firmware"
+        echo ""
         echo -e "${R}-----------------------Risky Options----------------------"
         echo ""
-        echo -e "5) Switch Git repo between main/dev"
+        echo -e "6) Switch Git repo between main/dev"
         echo ""
-        echo -e "6) Base ZNP-K1 Compiled Image Config (NOT for OpenNept4une)"
+        echo -e "7) Base ZNP-K1 Compiled Image Config (NOT for OpenNept4une)"
         echo ""
-        echo -e "7) Change Machine Model / Board Version / Motor Current"
+        echo -e "8) Change Machine Model / Board Version / Motor Current"
         echo -e "----------------------------------------------------------${NC}"
         echo ""
         echo -e "(${Y} B ${NC}) Back to Main Menu"
@@ -256,9 +274,10 @@ advanced_more() {
             2) webcam_setup;;
             3) armbian_resize;;
             4) update_repo;;
-            5) toggle_branch;;
-            6) base_image_config;;
-            7) $HOME/OpenNept4une/img-config/set-printer-model.sh; exit 0;;
+            5) display_firmware;;
+            6) toggle_branch;;
+            7) base_image_config;;
+            8) $HOME/OpenNept4une/img-config/set-printer-model.sh; exit 0;;
             b) return;;  # Return to the main menu
             *) echo -e "${R}Invalid choice, please try again.${NC}";;
         esac
@@ -287,6 +306,20 @@ install_feature() {
     # Proceed if the user agrees or if auto_yes is true
     if [[ $user_input =~ ^[Yy]$ || -z $user_input || $auto_yes = "true" ]]; then
         echo -e "Running $feature_name Installer...\n"
+
+        if [ "$feature_name" = "Updated Display Firmware" ]; then
+            if [ -d "${HOME}/display_firmware" ]; then
+                echo "Display_Firmware installed. Proceeding with installer!"
+            else
+                echo "Display_Firmware not installed. Downloading"
+                mkdir display_firmware
+                git clone --filter=blob:none --sparse https://github.com/OpenNeptune3D/display_firmware.git "${HOME}/display_firmware"
+                cd "${HOME}/display_firmware"
+                git sparse-checkout init --cone
+                git sparse-checkout set ':!Themes' ':!Updated_Scripts' ':!dev-resourses'
+            fi
+        fi
+
         if [[ -f "$action" || -n "$action" ]]; then
             if eval "$action"; then  # Use eval to execute both file paths and direct commands
                 echo -e "${G}$feature_name Installer ran successfully.${NC}"
@@ -310,6 +343,10 @@ install_feature() {
 
 android_rules() {
     install_feature "Android ADB Rules" "$ANDROID_RULE_INSTALLER" "Do you want to install the android ADB rules? (may fix klipperscreen issues)"
+}
+
+display_firmware() {
+    install_feature "Updated Display Firmware" "$UPDATED_DISPLAY_FIRMWARE_INSTALLER" "Do you want to install the updated display firmware? (customizes ui & adds some functionality)"
 }
 
 webcam_setup() {
@@ -763,7 +800,7 @@ print_menu() {
     echo ""
     echo -e "(${R} Q ${NC}) Quit"
     echo "=========================================================="
-    echo "Select an option by entering (1-7 / q):"
+    echo "Select an option by entering (1-6 / q):"
 }
 
 # Parse Command-Line Arguments
