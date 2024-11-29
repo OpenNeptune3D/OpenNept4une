@@ -800,7 +800,7 @@ print_menu() {
     echo ""
     echo -e "(${R} Q ${NC}) Quit"
     echo "=========================================================="
-    echo "Select an option by entering (1-6 / q):"
+    echo "Select an option by entering (1-7 / q):"
 }
 
 # Parse Command-Line Arguments
