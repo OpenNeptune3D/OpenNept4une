@@ -219,7 +219,7 @@ origin: $DISPLAY_CONNECTOR_REPO"
 type: git_repo\n\
 primary_branch: $current_display_branch\n\
 path: $DISPLAY_FIRMWARE_DIR\n\
-virtualenv: $DISPLAY_FIMRWARE_DIR/venv\n\
+virtualenv: $DISPLAY_FIRMWARE_DIR/venv\n\
 requirements: requirements.txt\n\
 origin: $DISPLAY_FIRMWARE_REPO"
     else
