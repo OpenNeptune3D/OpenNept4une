@@ -861,7 +861,7 @@
 
 		spi_for_cs0@0 {
 			reg = <0x00>;
-			compatible = "rockchip,spi_test_bus1_cs2";
+			compatible = "armbian,spi-dev";
 			pinctrl-names = "default";
 			pinctrl-0 = <0x32>;
 			spi-max-frequency = <0x4c4b40>;
