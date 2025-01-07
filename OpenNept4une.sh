@@ -254,9 +254,9 @@ advanced_more() {
         echo ""
         echo "4) Update OpenNept4une Repository"
         echo ""
-        echo "5) Update Display Firmware"
-        echo ""
         echo -e "${R}-----------------------Risky Options----------------------"
+        echo ""
+        echo -e "5) Flash/Update Display Firmware (Alpha)"
         echo ""
         echo -e "6) Switch Git repo between main/dev"
         echo ""
@@ -304,23 +304,10 @@ install_feature() {
         read -r -p "${M}$prompt_message (Y/n)${NC}: " -r user_input
         echo ""
     fi
+
     # Proceed if the user agrees or if auto_yes is true
     if [[ $user_input =~ ^[Yy]$ || -z $user_input || $auto_yes = "true" ]]; then
         echo -e "Running $feature_name Installer...\n"
-
-        if [ "$feature_name" = "Updated Display Firmware" ]; then
-            if [ -d "${HOME}/display_firmware" ]; then
-                echo "Display_Firmware installed. Proceeding with installer!"
-            else
-                echo "Display_Firmware not installed. Downloading"
-                mkdir display_firmware
-                git clone --filter=blob:none --sparse https://github.com/OpenNeptune3D/display_firmware.git "${HOME}/display_firmware"
-                cd "${HOME}/display_firmware"
-                git sparse-checkout init --cone
-                git sparse-checkout set ':!Themes' ':!Updated_Scripts' ':!dev-resourses'
-            fi
-        fi
-
         if [[ -f "$action" || -n "$action" ]]; then
             if eval "$action"; then  # Use eval to execute both file paths and direct commands
                 echo -e "${G}$feature_name Installer ran successfully.${NC}"
@@ -344,10 +331,6 @@ install_feature() {
 
 android_rules() {
     install_feature "Android ADB Rules" "$ANDROID_RULE_INSTALLER" "Do you want to install the android ADB rules? (may fix klipperscreen issues)"
-}
-
-display_firmware() {
-    install_feature "Updated Display Firmware" "$UPDATED_DISPLAY_FIRMWARE_INSTALLER" "Do you want to install the updated display firmware? (customizes ui & adds some functionality)"
 }
 
 webcam_setup() {
@@ -406,6 +389,29 @@ toggle_branch() {
     else
         echo -e "${R}$OPENNEPT4UNE_DIR does not exist or is not accessible.${NC}"
     fi
+}
+
+display_firmware() {  
+    clear_screen
+    echo -e "${C}$OPENNEPT4UNE_ART${NC}"
+    echo "" 
+    if [ -d "$DISPLAY_FIRMWARE_DIR" ]; then
+        echo "Display_Firmware installed. Proceeding with installer!"
+    else
+        echo "Display_Firmware not installed. Downloading..."
+        mkdir -p "$DISPLAY_FIRMWARE_DIR"
+        
+        if git clone -b "$current_branch" --filter=blob:none --sparse "$DISPLAY_FIRMWARE_REPO" "$DISPLAY_FIRMWARE_DIR"; then
+            echo "Git repository cloned successfully."
+            (cd "$DISPLAY_FIRMWARE_DIR" && \
+                git sparse-checkout init --cone && \
+                git sparse-checkout set ':!Themes' ':!Updated_Scripts' ':!dev-resourses')
+        else
+            echo "Failed to clone Git repository. Exiting."
+            exit 1
+        fi
+    fi
+    install_feature "Flash/Update Display Firmware (Alpha)" "$UPDATED_DISPLAY_FIRMWARE_INSTALLER" "Do you want to run Flash/Update Display Firmware (Alpha)?"
 }
 
 ### MAIN PAGE INSTALLERS ###
@@ -723,10 +729,18 @@ run_install_screen_service_with_setup() {
 }
 
 initialize_display_connector() {
-    if [ ! -d "${HOME}/display_connector" ]; then
-        git clone -b "$current_branch" "${DISPLAY_CONNECTOR_REPO}" "${DISPLAY_CONNECTOR_DIR}"
-        echo -e "${G}Initialized repository for Touch-Screen Display Service.${NC}"
+    # Check and clone repository
+    if [ ! -d "${DISPLAY_CONNECTOR_DIR}" ]; then
+        if git clone -b "$current_branch" "${DISPLAY_CONNECTOR_REPO}" "${DISPLAY_CONNECTOR_DIR}"; then
+            echo -e "${G}Initialized repository for Touch-Screen Display Service.${NC}"
+        else
+            echo -e "${R}Failed to initialize repository. Please check your settings.${NC}"
+            return 1
+        fi
+    else
+        echo -e "${G}Display connector repository already exists.${NC}"
     fi
+    # Call moonraker_update_manager
     moonraker_update_manager "display"
 }
 
