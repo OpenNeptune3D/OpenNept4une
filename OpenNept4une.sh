@@ -729,16 +729,9 @@ run_install_screen_service_with_setup() {
 }
 
 initialize_display_connector() {
-    # Check and clone repository
-    if [ ! -d "${DISPLAY_CONNECTOR_DIR}" ]; then
-        if git clone -b "$current_branch" "${DISPLAY_CONNECTOR_REPO}" "${DISPLAY_CONNECTOR_DIR}"; then
-            echo -e "${G}Initialized repository for Touch-Screen Display Service.${NC}"
-        else
-            echo -e "${R}Failed to initialize repository. Please check your settings.${NC}"
-            return 1
-        fi
-    else
-        echo -e "${G}Display connector repository already exists.${NC}"
+    if [ ! -d "${HOME}/display_connector" ]; then
+        git clone -b "$current_branch" "${DISPLAY_CONNECTOR_REPO}" "${DISPLAY_CONNECTOR_DIR}"
+        echo -e "${G}Initialized repository for Touch-Screen Display Service.${NC}"
     fi
     # Call moonraker_update_manager
     moonraker_update_manager "display"
