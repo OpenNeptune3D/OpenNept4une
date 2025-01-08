@@ -103,10 +103,6 @@ EOF
     fi
 }
 
-set_current_branch() {
-    current_branch=$(git -C "$OPENNEPT4UNE_DIR" symbolic-ref --short HEAD 2>/dev/null)
-}
-
 update_repo() {
     clear_screen
     echo -e "${C}$OPENNEPT4UNE_ART${NC}"
@@ -132,30 +128,44 @@ update_repo() {
             moonraker_update_manager "display"
         fi
     fi
-    echo "=========================================================="
     if [ -d "${HOME}/display_firmware" ]; then
         process_repo_update "$DISPLAY_Firmware_DIR" "Display Firmware"
         moonraker_update_manager "display_firmware"
+    else
+        echo -e "${Y}Skipping Display Firmware update: $DISPLAY_Firmware_DIR does not exist.${NC}"
     fi
+    echo "=========================================================="
 }
 
 process_repo_update() {
     repo_dir=$1
     name=$2
-    current_branch=$(git -C "$repo_dir" branch --show-current)  # Determine the current branch
+    update_branch=$(git -C "$repo_dir" branch --show-current 2>/dev/null)
+
     if [ ! -d "$repo_dir" ]; then
         echo -e "${R}Repository directory not found at $repo_dir!${NC}"
+        sleep 5
         return 1
     fi
-    if ! git -C "$repo_dir" fetch origin "$current_branch" --quiet; then
-        echo -e "${R}Failed to fetch updates from the repository.${NC}"
+
+    if [ -z "$update_branch" ]; then
+        echo -e "${R}Could not determine the current branch for $repo_dir!${NC}"
+        sleep 5
         return 1
     fi
+
+    # Fetch updates for the sparse repository
+    if ! git -C "$repo_dir" fetch origin "$update_branch" --quiet; then
+        echo -e "${R}Failed to fetch updates for ${name}.${NC}"
+        sleep 5
+        return 1
+    fi
+
+    # Check for updates between local and remote HEAD
     LOCAL=$(git -C "$repo_dir" rev-parse '@')
     REMOTE=$(git -C "$repo_dir" rev-parse '@{u}')
-    UPDATES_AVAILABLE=$(git -C "$repo_dir" log $LOCAL..$REMOTE)
-    if [ -n "$UPDATES_AVAILABLE" ]; then
-        echo -e "${Y}Updates are available for the repository.${NC}"
+    if [ "$LOCAL" != "$REMOTE" ]; then
+        echo -e "${Y}Updates are available for ${name}.${NC}"
         if [ "$auto_yes" != "true" ]; then
             read -r -p "Would you like to update ${G}● ${name}?${NC} (y/n): " -r
         fi
@@ -165,9 +175,9 @@ process_repo_update() {
             UPDATE_OUTPUT=$(git -C "$repo_dir" pull origin "$current_branch" --force 2>&1) || true
             # Check for the specific divergent branches error message in the output
             if echo "$UPDATE_OUTPUT" | grep -q "divergent branches"; then
-                echo "Divergent branches detected, performing a hard reset to origin/${current_branch}..."
+                echo -e "${R}Divergent branches detected, performing a hard reset to origin/${current_branch}...${NC}"
                 sleep 1
-                git -C "$repo_dir" reset --hard "origin/${current_branch}" && \
+                git -C "$repo_dir" reset --hard "origin/${update_branch}" && \
                 git -C "$repo_dir" clean -fd || {
                     echo -e "${R}Failed to hard reset ${name}.${NC}"
                     sleep 1
@@ -176,9 +186,6 @@ process_repo_update() {
             fi
             echo -e "${name} ${G}Updated successfully.${NC}"
             sleep 1
-            sync
-            exec "$SCRIPT"
-            exit 0
         else
             echo -e "${Y}Update skipped.${NC}"
             sleep 1
@@ -197,9 +204,10 @@ moonraker_update_manager() {
     config_file="$HOME/printer_data/config/moonraker.conf"
 
     if [ "$update_selection" = "OpenNept4une" ]; then
+        current_ON_branch=$(git -C "$OPENNEPT4UNE_DIR" symbolic-ref --short HEAD 2>/dev/null)
         new_lines="[update_manager $update_selection]\n\
 type: git_repo\n\
-primary_branch: $current_branch\n\
+primary_branch: $current_ON_branch\n\
 path: $OPENNEPT4UNE_DIR\n\
 is_system_service: False\n\
 origin: $OPENNEPT4UNE_REPO"
@@ -213,11 +221,12 @@ path: $DISPLAY_CONNECTOR_DIR\n\
 virtualenv: $DISPLAY_CONNECTOR_DIR/venv\n\
 requirements: requirements.txt\n\
 origin: $DISPLAY_CONNECTOR_REPO"
+
     elif [ "$update_selection" = "display_firmware" ]; then
-        current_display_branch=$(git -C "$DISPLAY_FIRMWARE_DIR" symbolic-ref --short HEAD 2>/dev/null)
+        current_firmware_branch=$(git -C "$DISPLAY_FIRMWARE_DIR" symbolic-ref --short HEAD 2>/dev/null)
         new_lines="[update_manager $update_selection]\n\
 type: git_repo\n\
-primary_branch: $current_display_branch\n\
+primary_branch: $current_firmware_branch\n\
 path: $DISPLAY_FIRMWARE_DIR\n\
 is_system_service: False\n\
 virtualenv: $DISPLAY_FIRMWARE_DIR/venv\n\
@@ -236,6 +245,10 @@ origin: $DISPLAY_FIRMWARE_REPO"
         # Lines do not exist, append them to the end of the file
         echo -e "\n$new_lines" >> "$config_file"
     fi
+}
+
+set_current_branch() {
+    current_branch=$(git -C "$OPENNEPT4UNE_DIR" symbolic-ref --short HEAD 2>/dev/null)
 }
 
 advanced_more() {
@@ -373,8 +386,10 @@ toggle_branch() {
             if [[ $user_response =~ ^[Yy]$ ]]; then
                 switch_branch "$target_branch" "$OPENNEPT4UNE_DIR"
                 switch_branch "$target_branch" "$DISPLAY_CONNECTOR_DIR"
+                switch_branch "$target_branch" "$DISPLAY_FIRMWARE_DIR"
                 moonraker_update_manager "OpenNept4une"
                 moonraker_update_manager "display"
+                moonraker_update_manager "display_firmware"
                 echo -e "${G}Branch switch operation completed.${NC}"
                 sync
                 sudo service moonraker restart
@@ -395,22 +410,17 @@ display_firmware() {
     clear_screen
     echo -e "${C}$OPENNEPT4UNE_ART${NC}"
     echo "" 
-    if [ -d "$DISPLAY_FIRMWARE_DIR" ]; then
-        echo "Display_Firmware installed. Proceeding with installer!"
-    else
-        echo "Display_Firmware not installed. Downloading..."
-        mkdir -p "$DISPLAY_FIRMWARE_DIR"
-        
-        if git clone -b "$current_branch" --filter=blob:none --sparse "$DISPLAY_FIRMWARE_REPO" "$DISPLAY_FIRMWARE_DIR"; then
-            echo "Git repository cloned successfully."
-            (cd "$DISPLAY_FIRMWARE_DIR" && \
-                git sparse-checkout init --cone && \
-                git sparse-checkout set ':!Themes' ':!Updated_Scripts' ':!dev-resourses')
-        else
-            echo "Failed to clone Git repository. Exiting."
-            exit 1
-        fi
+
+    if [ -z "$current_branch" ]; then
+        echo "Error: current_branch is not set. Exiting."
+        exit 1
     fi
+
+    if [ ! -d "$DISPLAY_FIRMWARE_DIR" ]; then
+        git clone -b "$current_branch" "${DISPLAY_FIRMWARE_REPO}" "${DISPLAY_FIRMWARE_DIR}"
+        echo -e "${G}Initialized repository for Display Firmware Scripts.${NC}"
+    fi
+
     install_feature "Flash/Update Display Firmware (Alpha)" "$UPDATED_DISPLAY_FIRMWARE_INSTALLER" "Do you want to run Flash/Update Display Firmware (Alpha)?"
 }
 
