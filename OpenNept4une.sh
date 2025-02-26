@@ -56,33 +56,47 @@ clear_screen() {
 run_fixes() {
     # Add user 'mks' to 'gpio' and 'spiusers' groups for GPIO and SPI access
     if ! sudo usermod -aG gpio,spiusers mks &>/dev/null; then
-        echo -e "${R}Failed to add user 'mks' to groups 'gpio' and 'spiusers'${NC}"
+        printf '%s\n' "${R}Failed to add user 'mks' to groups 'gpio' and 'spiusers'${NC}"
     fi
+
     # Remove obsolete GPIO script if it exists
     if [ -f "/usr/local/bin/set_gpio.sh" ]; then
-        sudo rm -f "/usr/local/bin/set_gpio.sh" || echo -e "${R}Failed to remove /usr/local/bin/set_gpio.sh ${NC}"
+        if ! sudo rm -f "/usr/local/bin/set_gpio.sh"; then
+            printf '%s\n' "${R}Failed to remove /usr/local/bin/set_gpio.sh${NC}"
+        fi
     fi
+
     # Ensure the flag file exists to mark completion of fixes
     if ! sudo touch "$FLAG_FILE"; then
-        echo -e "${R}Failed to ensure flag file exists at $FLAG_FILE ${NC}"
+        printf '%s\n' "${R}Failed to ensure flag file exists at $FLAG_FILE${NC}"
     fi
+
     # Append system information to the flag file if not already present
     SYSTEM_INFO=$(uname -a)
     if ! sudo grep -qF "$SYSTEM_INFO" "$FLAG_FILE"; then
-        echo "$SYSTEM_INFO" | sudo tee -a "$FLAG_FILE" >/dev/null || echo -e "${R}Failed to append system info to $FLAG_FILE ${NC}"
+        if ! echo "$SYSTEM_INFO" | sudo tee -a "$FLAG_FILE" >/dev/null; then
+            printf '%s\n' "${R}Failed to append system info to $FLAG_FILE${NC}"
+        fi
     fi
+
     # Create a symbolic link for OpenNept4une Logo in fluidd
-    ln -s ${HOME}/OpenNept4une/pictures/logo_opennept4une.svg ${HOME}/fluidd/logo_opennept4une.svg > /dev/null 2>&1
+    ln -s "${HOME}/OpenNept4une/pictures/logo_opennept4une.svg" "${HOME}/fluidd/logo_opennept4une.svg" > /dev/null 2>&1
+
     # Create a symbolic link to the main script if it doesn't exist
     SYMLINK_PATH="/usr/local/bin/opennept4une"
-    if [ ! -L "$SYMLINK_PATH" ]; then  # Checking for symbolic link instead of regular file
-        sudo ln -s "$SCRIPT" "$SYMLINK_PATH" || echo -e "${R}Failed to create symlink at $SYMLINK_PATH ${NC}"
+    if [ ! -L "$SYMLINK_PATH" ]; then
+        if ! sudo ln -s "$SCRIPT" "$SYMLINK_PATH"; then
+            printf '%s\n' "${R}Failed to create symlink at $SYMLINK_PATH${NC}"
+        fi
     fi  
+
+    # Add /bin/sync to crontab if not present
     if ! (crontab -l 2>/dev/null | grep -q "/bin/sync"); then
         (crontab -l 2>/dev/null | grep -v '/bin/sync'; echo "*/10 * * * * /bin/sync") | crontab -
     fi
+
+    # Create a power_monitor.service if not present
     if [ ! -f "/etc/systemd/system/power_monitor.service" ]; then
-        # Create the systemd service file
         sudo tee "/etc/systemd/system/power_monitor.service" > /dev/null <<EOF
 [Unit]
 Description=Power Cut Monitor and Safe Shutdown
@@ -105,21 +119,23 @@ EOF
 
 update_repo() {
     clear_screen
-    echo -e "${C}$OPENNEPT4UNE_ART${NC}"
-    echo ""
-    echo "=========================================================="
-    echo -e "${M}Checking for updates...${NC}"
-    echo "=========================================================="
-    echo ""
+    printf '%b\n' "${C}${OPENNEPT4UNE_ART}${NC}"
+    printf '\n'
+    printf '%s\n' "=========================================================="
+    printf '%b\n' "${M}Checking for updates...${NC}"
+    printf '%s\n\n' "=========================================================="
+
     process_repo_update "$OPENNEPT4UNE_DIR" "OpenNept4une"
     moonraker_update_manager "OpenNept4une"
+
     if [ -d "${HOME}/OpenNept4une/display/venv" ]; then
-        read -r -p "${Y}The Touch-Screen Display Service was moved to a different directory. Do you want to run the automatic migration?${NC} (Y/n): " -r user_input
+        printf '%b\n' "${Y}The Touch-Screen Display Service was moved to a different directory. Do you want to run the automatic migration?${NC} (Y/n): "
+        read -r user_input
         if [[ $user_input =~ ^[Yy]$ ]]; then
             initialize_display_connector && eval "$DISPLAY_SERVICE_INSTALLER"
             rm -r "${HOME}/OpenNept4une/display"
         else
-            echo -e "${Y}Skipping migration. ${R}The Display Service will not work until the migration is completed.${NC}"
+            printf '%b\n' "${Y}Skipping migration. ${R}The Display Service will not work until the migration is completed.${NC}"
             sleep 2
         fi
     else
@@ -128,13 +144,15 @@ update_repo() {
             moonraker_update_manager "display"
         fi
     fi
-    if [ -d "${HOME}/display_firmware" ]; then
-        process_repo_update "$DISPLAY_Firmware_DIR" "Display Firmware"
+
+    if [ -d "${HOME}/display_firmware/venv" ]; then
+        process_repo_update "$DISPLAY_FIRMWARE_DIR" "Display Firmware"
         moonraker_update_manager "display_firmware"
     else
-        echo -e "${Y}Skipping Display Firmware update: $DISPLAY_Firmware_DIR does not exist.${NC}"
+        printf '%b\n' "${Y}Skipping Display Firmware update: $DISPLAY_FIRMWARE_DIR does not exist.${NC}"
     fi
-    echo "=========================================================="
+
+    printf '%s\n' "=========================================================="
 }
 
 process_repo_update() {
@@ -143,60 +161,64 @@ process_repo_update() {
     update_branch=$(git -C "$repo_dir" branch --show-current 2>/dev/null)
 
     if [ ! -d "$repo_dir" ]; then
-        echo -e "${R}Repository directory not found at $repo_dir!${NC}"
+        printf '%b\n' "${R}Repository directory not found at $repo_dir!${NC}"
         sleep 5
         return 1
     fi
 
     if [ -z "$update_branch" ]; then
-        echo -e "${R}Could not determine the current branch for $repo_dir!${NC}"
+        printf '%b\n' "${R}Could not determine the current branch for $repo_dir!${NC}"
         sleep 5
         return 1
     fi
 
-    # Fetch updates for the sparse repository
+    # Fetch updates
     if ! git -C "$repo_dir" fetch origin "$update_branch" --quiet; then
-        echo -e "${R}Failed to fetch updates for ${name}.${NC}"
+        printf '%b\n' "${R}Failed to fetch updates for ${name}.${NC}"
         sleep 5
         return 1
     fi
 
-    # Check for updates between local and remote HEAD
     LOCAL=$(git -C "$repo_dir" rev-parse '@')
     REMOTE=$(git -C "$repo_dir" rev-parse '@{u}')
+
     if [ "$LOCAL" != "$REMOTE" ]; then
-        echo -e "${Y}Updates are available for ${name}.${NC}"
+        printf '%b\n' "${Y}Updates are available for ${name}.${NC}"
         if [ "$auto_yes" != "true" ]; then
-            read -r -p "Would you like to update ${G}● ${name}?${NC} (y/n): " -r
+            printf '%s' "Would you like to update ${G}● ${name}?${NC} (y/n): "
+            read -r REPLY
         fi
+
         if [[ $REPLY =~ ^[Yy]$ || $auto_yes = "true" ]]; then
-            echo "Updating..."
+            printf '%s\n' "Updating..."
             # Attempt to pull and capture any errors
             UPDATE_OUTPUT=$(git -C "$repo_dir" pull origin "$current_branch" --force 2>&1) || true
-            # Check for the specific divergent branches error message in the output
+
+            # Check for the specific divergent branches error message
             if echo "$UPDATE_OUTPUT" | grep -q "divergent branches"; then
-                echo -e "${R}Divergent branches detected, performing a hard reset to origin/${current_branch}...${NC}"
+                printf '%b\n' "${R}Divergent branches detected, performing a hard reset to origin/${current_branch}...${NC}"
                 sleep 1
-                git -C "$repo_dir" reset --hard "origin/${update_branch}" && \
-                git -C "$repo_dir" clean -fd || {
-                    echo -e "${R}Failed to hard reset ${name}.${NC}"
+                # SC2015 fix: rewrite the chaining so any failure triggers the block
+                if ! git -C "$repo_dir" reset --hard "origin/${update_branch}" ||
+                   ! git -C "$repo_dir" clean -fd; then
+                    printf '%b\n' "${R}Failed to hard reset ${name}.${NC}"
                     sleep 1
                     return 1
-                }
+                fi
             fi
-            echo -e "${name} ${G}Updated successfully.${NC}"
+
+            printf '%b\n' "${name} ${G}Updated successfully.${NC}"
             sleep 1
         else
-            echo -e "${Y}Update skipped.${NC}"
+            printf '%b\n' "${Y}Update skipped.${NC}"
             sleep 1
         fi
     else
-        echo -e "${G}●${NC} ${name} ${G}is already up-to-date.${NC}"
-        echo ""
+        printf '%b\n\n' "${G}●${NC} ${name} ${G}is already up-to-date.${NC}"
         sleep 1
     fi
-    echo "=========================================================="
-    echo ""
+
+    printf '%s\n\n' "=========================================================="
 }
 
 moonraker_update_manager() {
@@ -233,17 +255,18 @@ virtualenv: $DISPLAY_FIRMWARE_DIR/venv\n\
 requirements: requirements.txt\n\
 origin: $DISPLAY_FIRMWARE_REPO"
     else
-        echo -e "${R}Invalid argument. Please specify either 'OpenNept4une' or 'display_connector' or 'display_firmware'.${NC}"
+        printf '%b\n' "${R}Invalid argument. Please specify either 'OpenNept4une' or 'display_connector' or 'display_firmware'.${NC}"
         return 1
     fi
+
     # Check if the lines exist in the config file
     if grep -qF "[update_manager $update_selection]" "$config_file"; then
-        # Lines exist, update them
+        # Lines exist, update them with Perl
         perl -pi.bak -e "BEGIN{undef $/;} s|\[update_manager $update_selection\].*?((?:\r*\n){2}\|$)|$new_lines\$1|gs" "$config_file"
         sync
     else
-        # Lines do not exist, append them to the end of the file
-        echo -e "\n$new_lines" >> "$config_file"
+        # Append them to the end of the file
+        printf '\n%s\n' "$new_lines" >> "$config_file"
     fi
 }
 
@@ -254,34 +277,24 @@ set_current_branch() {
 advanced_more() {
     while true; do
         clear_screen
-        echo -e "${C}$OPENNEPT4UNE_ART${NC}"
-        echo "=========================================================="
-        echo -e "              OpenNept4une - ${M}Advanced Options${NC} "
-        echo "=========================================================="
-        echo ""
-        echo "1) Install Android ADB rules (if using klipperscreen app)"
-        echo ""
-        echo "2) Webcam Auto-Config (mjpg-streamer)"
-        echo ""
-        echo "3) Resize Active Armbian Partition - for eMMC > 8GB."
-        echo ""
-        echo "4) Update OpenNept4une Repository"
-        echo ""
-        echo -e "${R}-----------------------Risky Options----------------------"
-        echo ""
-        echo -e "5) Flash/Update Display Firmware (Alpha)"
-        echo ""
-        echo -e "6) Switch Git repo between main/dev"
-        echo ""
-        echo -e "7) Base ZNP-K1 Compiled Image Config (NOT for OpenNept4une)"
-        echo ""
-        echo -e "8) Change Machine Model / Board Version / Motor Current"
-        echo -e "----------------------------------------------------------${NC}"
-        echo ""
-        echo -e "(${Y} B ${NC}) Back to Main Menu"
-        echo "=========================================================="
-        echo -e "${G}Enter your choice:${NC}"
-        read choice
+        printf '%b\n' "${C}${OPENNEPT4UNE_ART}${NC}"
+        printf '%s\n' "=========================================================="
+        printf '%b\n' "              OpenNept4une - ${M}Advanced Options${NC} "
+        printf '%s\n' "=========================================================="
+        printf '\n1) Install Android ADB rules (if using klipperscreen app)\n\n'
+        printf '2) Webcam Auto-Config (mjpg-streamer)\n\n'
+        printf '3) Resize Active Armbian Partition - for eMMC > 8GB.\n\n'
+        printf '4) Update OpenNept4une Repository\n\n'
+        printf '%b\n' "${R}-----------------------Risky Options----------------------"
+        printf '\n5) Flash/Update Display Firmware (Alpha)\n\n'
+        printf '6) Switch Git repo between main/dev\n\n'
+        printf '7) Base ZNP-K1 Compiled Image Config (NOT for OpenNept4une)\n\n'
+        printf '8) Change Machine Model / Board Version / Motor Current\n'
+        printf '%b\n' "----------------------------------------------------------${NC}"
+        printf '\n%b\n' "(${Y} B ${NC}) Back to Main Menu"
+        printf '%s\n' "=========================================================="
+        printf '%b' "${G}Enter your choice:${NC} "
+        read -r choice
 
         case $choice in
             1) android_rules;;
@@ -291,12 +304,12 @@ advanced_more() {
             5) display_firmware;;
             6) toggle_branch;;
             7) base_image_config;;
-            8) $HOME/OpenNept4une/img-config/set-printer-model.sh; exit 0;;
+            8) "${HOME}/OpenNept4une/img-config/set-printer-model.sh"; exit 0;;
             b) return;;  # Return to the main menu
-            *) echo -e "${R}Invalid choice, please try again.${NC}";;
+            *) printf '%b\n' "${R}Invalid choice, please try again.${NC}";;
         esac
-        # Optional: prompt before returning to the menu
-        read -r -p "${G}Press enter to continue...${NC}"
+
+        read -r -p "$(printf '%b' "${G}Press enter to continue...${NC}")" 
     done
 }
 
@@ -306,41 +319,39 @@ install_feature() {
     local prompt_message="$3"
 
     clear_screen
-    echo -e "${C}$OPENNEPT4UNE_ART${NC}"
-    echo "=========================================================="
-    echo -e "$feature_name ${M}Installation${NC}"
-    echo "=========================================================="
-    # Initialize variable to avoid using potentially undefined variable
+    printf '%b\n' "${C}${OPENNEPT4UNE_ART}${NC}"
+    printf '%s\n' "=========================================================="
+    printf '%s\n' "$feature_name ${M}Installation${NC}"
+    printf '%s\n' "=========================================================="
+
     local user_input=""
-    # Only prompt the user if auto_yes is not set to true
     if [ "$auto_yes" != "true" ]; then
-        read -r -p "${M}$prompt_message (Y/n)${NC}: " -r user_input
-        echo ""
+        printf '%b ' "${M}$prompt_message (Y/n)${NC}: "
+        read -r user_input
+        printf '\n'
     fi
 
-    # Proceed if the user agrees or if auto_yes is true
     if [[ $user_input =~ ^[Yy]$ || -z $user_input || $auto_yes = "true" ]]; then
-        echo -e "Running $feature_name Installer...\n"
+        printf '%s\n\n' "Running $feature_name Installer..."
         if [[ -f "$action" || -n "$action" ]]; then
-            if eval "$action"; then  # Use eval to execute both file paths and direct commands
-                echo -e "${G}$feature_name Installer ran successfully.${NC}"
+            if eval "$action"; then
+                printf '%b\n' "${G}$feature_name Installer ran successfully.${NC}"
                 sleep 2
             else
-                echo -e "${R}$feature_name Installer encountered an error.${NC}"
+                printf '%b\n' "${R}$feature_name Installer encountered an error.${NC}"
                 sleep 1
             fi
         else
-            echo -e "${R}Error: Action for $feature_name not found or not specified.${NC}"
+            printf '%b\n' "${R}Error: Action for $feature_name not found or not specified.${NC}"
             sleep 1
         fi
     else
-        echo -e "${Y}Installation skipped.${NC}"
+        printf '%b\n' "${Y}Installation skipped.${NC}"
         sleep 1
     fi
-    echo "=========================================================="
-}
 
-### ADVANCED PAGE INSTALLERS ###
+    printf '%s\n' "=========================================================="
+}
 
 android_rules() {
     install_feature "Android ADB Rules" "$ANDROID_RULE_INSTALLER" "Do you want to install the android ADB rules? (may fix klipperscreen issues)"
@@ -355,34 +366,37 @@ base_image_config() {
 }
 
 armbian_resize() {
-    # Commands for resizing are passed directly
     local resize_commands="sudo systemctl enable armbian-resize-filesystem && sudo reboot"
     install_feature "Armbian Resize" "$resize_commands" "Reboot then resize Armbian filesystem?"
 }
 
 toggle_branch() {
-    # Function to switch branches in a repository
     clear_screen
-    echo -e "${C}$OPENNEPT4UNE_ART${NC}"
-    echo ""
+    printf '%b\n' "${C}${OPENNEPT4UNE_ART}${NC}"
+    printf '\n'
+
     switch_branch() {
         local branch_name="$1"
         local repo_dir="$2"
         if [ -d "$repo_dir" ]; then
             git -C "$repo_dir" reset --hard >/dev/null 2>&1
             git -C "$repo_dir" clean -fd >/dev/null 2>&1
-            git -C "$repo_dir" checkout "$branch_name" >/dev/null 2>&1 && echo -e "${G}Switched $repo_dir to $branch_name.${NC}"
+            if git -C "$repo_dir" checkout "$branch_name" >/dev/null 2>&1; then
+                printf '%b\n' "${G}Switched $repo_dir to $branch_name.${NC}"
+            fi
         fi
     }
+
     if [ -d "$OPENNEPT4UNE_DIR" ]; then
         if [ -n "$current_branch" ]; then
-            echo -e "You are currently on the ${G}'$current_branch'${NC} branch."
+            printf '%s' "You are currently on the ${G}'$current_branch'${NC} branch. "
             if [ "$current_branch" = "main" ]; then
                 target_branch="dev"
             else
                 target_branch="main"
             fi
-            read -r -p "${M}Would you like to switch to the '$target_branch' branch?${NC} (y/n): " -r user_response
+            printf '%b ' "${M}Would you like to switch to the '$target_branch' branch?${NC} (y/n): "
+            read -r user_response
             if [[ $user_response =~ ^[Yy]$ ]]; then
                 switch_branch "$target_branch" "$OPENNEPT4UNE_DIR"
                 switch_branch "$target_branch" "$DISPLAY_CONNECTOR_DIR"
@@ -390,58 +404,54 @@ toggle_branch() {
                 moonraker_update_manager "OpenNept4une"
                 moonraker_update_manager "display"
                 moonraker_update_manager "display_firmware"
-                echo -e "${G}Branch switch operation completed.${NC}"
+                printf '%b\n' "${G}Branch switch operation completed.${NC}"
                 sync
                 sudo service moonraker restart
                 exec "$SCRIPT"
                 exit 0
             else
-                echo -e "${Y}Branch switch operation aborted.${NC}"
+                printf '%b\n' "${Y}Branch switch operation aborted.${NC}"
             fi
         else
-            echo -e "${R}Could not determine the current branch for $OPENNEPT4UNE_DIR.${NC}"
+            printf '%b\n' "${R}Could not determine the current branch for $OPENNEPT4UNE_DIR.${NC}"
         fi
     else
-        echo -e "${R}$OPENNEPT4UNE_DIR does not exist or is not accessible.${NC}"
+        printf '%b\n' "${R}$OPENNEPT4UNE_DIR does not exist or is not accessible.${NC}"
     fi
 }
 
-display_firmware() {  
+display_firmware() {
     clear_screen
-    echo -e "${C}$OPENNEPT4UNE_ART${NC}"
-    echo "" 
+    printf '%b\n' "${C}${OPENNEPT4UNE_ART}${NC}"
+    printf '\n'
 
     if [ -z "$current_branch" ]; then
-        echo "Error: current_branch is not set. Exiting."
+        printf '%s\n' "Error: current_branch is not set. Exiting."
         exit 1
     fi
 
     if [ ! -d "$DISPLAY_FIRMWARE_DIR" ]; then
         git clone -b "$current_branch" "${DISPLAY_FIRMWARE_REPO}" "${DISPLAY_FIRMWARE_DIR}"
-        echo -e "${G}Initialized repository for Display Firmware Scripts.${NC}"
+        printf '%b\n' "${G}Initialized repository for Display Firmware Scripts.${NC}"
     fi
 
     install_feature "Flash/Update Display Firmware (Alpha)" "$UPDATED_DISPLAY_FIRMWARE_INSTALLER" "Do you want to run Flash/Update Display Firmware (Alpha)?"
 }
 
-### MAIN PAGE INSTALLERS ###
-
-# Function to check MODEL_FROM_FLAG and run set-printer-model.sh if needed
 check_and_set_printer_model() {
-
     if [ -z "$MODEL_FROM_FLAG" ]; then
-        echo "Model Flag is empty. Running Set Model script..."
-        $HOME/OpenNept4une/img-config/set-printer-model.sh
+        printf '%s\n' "Model Flag is empty. Running Set Model script..."
+        "${HOME}/OpenNept4une/img-config/set-printer-model.sh"
         MODEL_FROM_FLAG=$(grep '^N4' "$FLAG_FILE")
         if [ -z "$MODEL_FROM_FLAG" ]; then
-            echo "Failed to set Model Flag. Exiting."
+            printf '%s\n' "Failed to set Model Flag. Exiting."
             return 1
         else
-            echo "Model Flag set successfully."
+            printf '%s\n' "Model Flag set successfully."
         fi
         return 0
     else
-        echo "Model Detected"
+        printf '%s\n' "Model Detected"
         return 0
     fi
 }
@@ -452,121 +462,113 @@ extract_model_and_motor() {
     pcb_version=$(echo "$MODEL_FROM_FLAG" | sed -E 's/.*-v([0-9.]+).*/\1/')
 }
 
- install_printer_cfg() {
+install_printer_cfg() {
     clear_screen
-    echo -e "${C}$OPENNEPT4UNE_ART${NC}"
-    echo ""
-    # Check Model Type has been set
+    printf '%b\n' "${C}${OPENNEPT4UNE_ART}${NC}"
+    printf '\n'
+
     check_and_set_printer_model
     sleep 1
-    # Extract model_key and motor_current from FLAG_FILE
+
     extract_model_and_motor
 
-    # Define necessary paths
     PRINTER_CFG_DEST="${HOME}/printer_data/config"
     DATABASE_DEST="${HOME}/printer_data/database"
     PRINTER_CFG_FILE="$PRINTER_CFG_DEST/printer.cfg"
     PRINTER_CFG_SOURCE="${HOME}/OpenNept4une/printer-confs/output.cfg"
 
-    # Build configuration paths based on selections
+    # Build config based on user selection
     if [[ $model_key == "n4" || $model_key == "n4pro" ]]; then
         python3 "${HOME}/OpenNept4une/printer-confs/generate_conf.py" "${model_key}" "${motor_current}" >/dev/null 2>&1 && sync
-        sleep 1
     else
         python3 "${HOME}/OpenNept4une/printer-confs/generate_conf.py" "${model_key}" >/dev/null 2>&1 && sync
-        sleep 1
     fi
+    sleep 1
 
-    # Create directories if they don't exist
     mkdir -p "$PRINTER_CFG_DEST" "$DATABASE_DEST"
     touch "${HOME}/printer_data/config/user_settings.cfg"
 
-    # Print the initial prompt
-    echo ""
-    printf "${G}Would you like to compare/diff your current printer.cfg with the latest? (y/n).${NC}\n\n"
-    read -r -p "${M}Enter your choice ${NC}: " DIFF_CHOICE
+    printf '%s\n\n' "${G}Would you like to compare/diff your current printer.cfg with the latest? (y/n).${NC}"
+    read -r -p "$(printf '%b' "${M}Enter your choice ${NC}: ")" DIFF_CHOICE
 
-    # Check user's choice
     if [[ "$DIFF_CHOICE" =~ ^[Yy]$ ]]; then
         clear_screen
-        echo ""
-        SPACES=$(printf '%*s' 32)
-        printf "${C}%s${SPACES}%s${NC}\n" "Updated File:" "Current File:"
-        printf "${C}%s${NC}\n" "=========================================================="
+        printf '\n'
+        SPACES=$(printf '%*s' 32 '')
+        printf '%b%s%b%s\n' "${C}" "Updated File:" "${NC}" "${SPACES}Current File:"
+        printf '%b\n' "${C}==========================================================${NC}"
 
-        DIFF_OUTPUT=$(diff -y --suppress-common-lines --width=58 "${HOME}/OpenNept4une/printer-confs/output.cfg" "${HOME}/printer_data/config/printer.cfg")
+        DIFF_OUTPUT=$(diff -y --suppress-common-lines --width=58 \
+            "${HOME}/OpenNept4une/printer-confs/output.cfg" \
+            "${HOME}/printer_data/config/printer.cfg"
+        )
 
         if [[ -z "$DIFF_OUTPUT" ]]; then
-            echo ""
-            printf "${G}There are no differences, Already up-to-date! ${NC}\n"
+            printf '\n%s\n' "${G}There are no differences, Already up-to-date! ${NC}"
         else
-            echo "$DIFF_OUTPUT"
+            printf '%s\n' "$DIFF_OUTPUT"
         fi
 
-        # Prompt to ask if user wants to continue or exit
-        echo ""
-        printf "${Y}Would you like to continue with the update? (y/n).${NC}\n\n"
-        read -r -p "${M}Enter your choice ${NC}: " CONTINUE_CHOICE
+        printf '\n%s\n\n' "${Y}Would you like to continue with the update? (y/n).${NC}"
+        read -r -p "$(printf '%b' "${M}Enter your choice ${NC}: ")" CONTINUE_CHOICE
 
         if [[ "$CONTINUE_CHOICE" =~ ^[Yy]$ ]]; then
-            echo ""
-            printf "${G}Continuing with printer.cfg update.${NC}\n"
+            printf '\n%s\n' "${G}Continuing with printer.cfg update.${NC}"
             sleep 1
         else
-            echo ""
-            printf "${Y}Exiting the update process.${NC}\n"
+            printf '\n%s\n' "${Y}Exiting the update process.${NC}"
             sleep 1
             return 0
         fi
     else
-        echo ""
-        printf "${G}Continuing with printer.cfg update.${NC}\n"
+        printf '\n%s\n' "${G}Continuing with printer.cfg update.${NC}"
         sleep 1
     fi
 
     apply_configuration
     sync
-    echo ""
-    printf "${Y}Restarting Klipper Service${NC}\n"
+    printf '\n%s\n' "${Y}Restarting Klipper Service${NC}"
     sleep 2
     sudo service klipper restart
 }
 
 apply_configuration() {
-    BACKUP_PRINTER_CFG_FILE="$PRINTER_CFG_DEST/backup-printer.cfg.bak$backup_count"
     backup_count=0
+    BACKUP_PRINTER_CFG_FILE="$PRINTER_CFG_DEST/backup-printer.cfg.bak$backup_count"
     while [[ -f "$BACKUP_PRINTER_CFG_FILE" ]]; do
         ((backup_count++))
         BACKUP_PRINTER_CFG_FILE="$PRINTER_CFG_DEST/backup-printer.cfg.bak$backup_count"
     done
-    # Backup existing printer configuration if it exists
+
     if [[ -f "$PRINTER_CFG_FILE" ]]; then
-        cp "$PRINTER_CFG_FILE" "$BACKUP_PRINTER_CFG_FILE" && \
-        echo ""
-        printf "${G}BACKUP of 'printer.cfg' created as '$BACKUP_PRINTER_CFG_FILE'.${NC}\n\n" && \
-        sleep 2 || \
-        printf "${R}Error: Failed to create backup of 'printer.cfg'.${NC}\n"
+        if cp "$PRINTER_CFG_FILE" "$BACKUP_PRINTER_CFG_FILE"; then
+            printf '\n%s\n\n' "${G}BACKUP of 'printer.cfg' created as '${BACKUP_PRINTER_CFG_FILE}'.${NC}"
+            sleep 2
+        else
+            printf '%s\n' "${R}Error: Failed to create backup of 'printer.cfg'.${NC}"
+        fi
         sleep 1
     fi
-    # Copy new printer configuration
+
     if [[ -n "$PRINTER_CFG_SOURCE" && -f "$PRINTER_CFG_SOURCE" ]]; then
-        cp "$PRINTER_CFG_SOURCE" "$PRINTER_CFG_FILE" && \
-        printf "${G}Printer configuration updated from '$PRINTER_CFG_SOURCE'.${NC}\n\n" && \
-        sleep 2 || \
-        printf "${R}Error: Failed to update printer configuration from '$PRINTER_CFG_SOURCE'.${NC}\n"
-        sleep 1
+        if cp "$PRINTER_CFG_SOURCE" "$PRINTER_CFG_FILE"; then
+            printf '%s\n\n' "${G}Printer configuration updated from '${PRINTER_CFG_SOURCE}'.${NC}"
+            sleep 2
+        else
+            printf '%s\n' "${R}Error: Failed to update printer configuration from '${PRINTER_CFG_SOURCE}'.${NC}"
+            sleep 1
+        fi
     else
-        printf "${R}Error: Invalid printer configuration file '$PRINTER_CFG_SOURCE'.${NC}\n"
+        printf '%s\n' "${R}Error: Invalid printer configuration file '${PRINTER_CFG_SOURCE}'.${NC}"
         return 1
     fi
 }
 
 install_configs() {
     clear_screen
-    echo -e "${C}$OPENNEPT4UNE_ART${NC}"
-    echo ""
+    printf '%b\n' "${C}${OPENNEPT4UNE_ART}${NC}"
+    printf '\n'
 
-    # Config file descriptions and paths
     declare -A config_files=(
         ["All"]=""
         ["Fluidd web interface Conf"]="data.mdb"
@@ -577,12 +579,12 @@ install_configs() {
         ["Klipper DEBUG Addon"]="klipper_debug.cfg"
     )
 
-    # Config file update prompt
-    local install_configs="$auto_yes"  # Defaults to the value of auto_yes
+    local install_configs="$auto_yes"
     if [ "$auto_yes" != "true" ]; then
-        printf "The latest configurations include updated settings and features for your printer.\n\n"
-        printf "${Y}It's recommended to update configurations during initial installs or when resetting to default configurations.${NC}\n\n"
-        read -r -p "${M}Select latest configurations to install?${NC} (y/N): " choice
+        printf '%s\n\n' "The latest configurations include updated settings and features for your printer."
+        printf '%s\n\n' "${Y}It's recommended to update configurations during initial installs or when resetting to default configurations.${NC}"
+        printf '%b' "${M}Select latest configurations to install?${NC} (y/N): "
+        read -r choice
         [[ $choice =~ ^[Yy]$ ]] && install_configs="true"
     fi
 
@@ -592,94 +594,84 @@ install_configs() {
 
         while true; do
             clear_screen
-            echo -e "${C}$OPENNEPT4UNE_ART${NC}"
-            echo ""
-            echo "Select configurations to install:"
+            printf '%b\n' "${C}${OPENNEPT4UNE_ART}${NC}"
+            printf '\n%s\n' "Select configurations to install:"
             for i in "${!options[@]}"; do
-                printf "%2d) %s\n" $((i+1)) "${options[$i]}"
+                printf '%2d) %s\n' $((i+1)) "${options[$i]}"
             done
 
-            read -p "$PS3" opt
+            read -rp "$PS3" opt
             case $opt in
                 1)
-                    printf "Installing all configurations...\n"
+                    printf '%s\n' "Installing all configurations..."
                     for file in "${config_files[@]}"; do
                         if [[ -n $file ]]; then
                             cp "${HOME}/OpenNept4une/img-config/printer-data/$file" "${HOME}/printer_data/config/"
                             if [[ $file == "data.mdb" ]]; then
                                 mv "${HOME}/printer_data/config/data.mdb" "${HOME}/printer_data/database/data.mdb"
                             fi
-                            printf "${G}${file} installed successfully.${NC}\n"
+                            printf '%s\n' "${G}${file} installed successfully.${NC}"
                         fi
                     done
-                    echo ""
-                    printf "${G}All configurations installed successfully.${NC}\n"
+                    printf '\n%s\n' "${G}All configurations installed successfully.${NC}"
                     sleep 2
                     return 0
                     ;;
                 2|3|4|5|6|7)
                     opt_name="${options[$((opt-1))]}"
-                    printf "Installing ${opt_name}...\n"
+                    printf '%s\n' "Installing ${opt_name}..."
                     file=${config_files[$opt_name]}
-                    
-                    # Print the initial prompt for diff
-                    echo ""
-                    printf "${G}Would you like to compare/diff your current ${opt_name} with the latest? (y/n).${NC}\n\n"
-                    read -r -p "${M}Enter your choice ${NC}: " DIFF_CHOICE
 
-                    # Check user's choice
+                    printf '\n%s\n\n' "${G}Would you like to compare/diff your current ${opt_name} with the latest? (y/n).${NC}"
+                    read -r -p "$(printf '%b' "${M}Enter your choice ${NC}: ")" DIFF_CHOICE
+
                     if [[ "$DIFF_CHOICE" =~ ^[Yy]$ ]]; then
                         clear_screen
-                        echo ""
-                        SPACES=$(printf '%*s' 32)
-                        printf "${C}%s${SPACES}%s${NC}\n" "Updated File:" "Current File:"
-                        printf "${C}%s${NC}\n" "=========================================================="
+                        printf '\n'
+                        SPACES=$(printf '%*s' 32 '')
+                        printf '%b%s%b%s\n' "${C}" "Updated File:" "${NC}" "${SPACES}Current File:"
+                        printf '%b\n' "${C}==========================================================${NC}"
 
                         if [[ $file == "data.mdb" ]]; then
-                            DIFF_OUTPUT=$(diff -y --suppress-common-lines --width=58 "${HOME}/OpenNept4une/img-config/printer-data/$file" "${HOME}/printer_data/database/$file")
+                            DIFF_OUTPUT=$(diff -y --suppress-common-lines --width=58 \
+                                "${HOME}/OpenNept4une/img-config/printer-data/$file" \
+                                "${HOME}/printer_data/database/$file")
                         else
-                            DIFF_OUTPUT=$(diff -y --suppress-common-lines --width=58 "${HOME}/OpenNept4une/img-config/printer-data/$file" "${HOME}/printer_data/config/$file")
+                            DIFF_OUTPUT=$(diff -y --suppress-common-lines --width=58 \
+                                "${HOME}/OpenNept4une/img-config/printer-data/$file" \
+                                "${HOME}/printer_data/config/$file")
                         fi
 
                         if [[ -z "$DIFF_OUTPUT" ]]; then
-                            echo ""
-                            printf "${G}There are no differences, Already up-to-date! ${NC}\n"
-                            echo ""
-                            printf "${Y}Would you like to install another configuration? (y/n).${NC}\n\n"
-                            read -r -p "${M}Enter your choice ${NC}: " CONTINUE_CHOICE
+                            printf '\n%s\n' "${G}There are no differences, Already up-to-date! ${NC}"
+                            printf '\n%s\n\n' "${Y}Would you like to install another configuration? (y/n).${NC}"
+                            read -r -p "$(printf '%b' "${M}Enter your choice ${NC}: ")" CONTINUE_CHOICE
 
                             if [[ "$CONTINUE_CHOICE" =~ ^[Nn]$ ]]; then
-                                echo ""
-                                printf "${Y}Exiting the update process.${NC}\n"
+                                printf '\n%s\n' "${Y}Exiting the update process.${NC}"
                                 sleep 1
                                 break
                             else
-                                echo ""
-                                printf "${G}Returning to configuration selection.${NC}\n"
+                                printf '\n%s\n' "${G}Returning to configuration selection.${NC}"
                                 sleep 1
                                 continue
                             fi
                         else
-                            echo "$DIFF_OUTPUT"
-                            # Prompt to ask if user wants to continue or exit
-                            echo ""
-                            printf "${Y}Would you like to continue with the update? (y/n).${NC}\n\n"
-                            read -r -p "${M}Enter your choice ${NC}: " CONTINUE_CHOICE
+                            printf '%s\n' "$DIFF_OUTPUT"
+                            printf '\n%s\n\n' "${Y}Would you like to continue with the update? (y/n).${NC}"
+                            read -r -p "$(printf '%b' "${M}Enter your choice ${NC}: ")" CONTINUE_CHOICE
 
                             if [[ "$CONTINUE_CHOICE" =~ ^[Yy]$ ]]; then
-                                echo ""
-                                printf "${G}Continuing with ${opt_name} update.${NC}\n"
+                                printf '\n%s\n' "${G}Continuing with ${opt_name} update.${NC}"
                                 sleep 1
                             else
-                                echo ""
-                                printf "${Y}Exiting the update process.${NC}\n"
+                                printf '\n%s\n' "${Y}Exiting the update process.${NC}"
                                 sleep 1
                                 continue
                             fi
                         fi
                     else
-                        echo ""
-                        printf "${G}Continuing with ${opt_name} update.${NC}\n"
+                        printf '\n%s\n' "${G}Continuing with ${opt_name} update.${NC}"
                         sleep 1
                     fi
 
@@ -687,39 +679,28 @@ install_configs() {
                     if [[ $file == "data.mdb" ]]; then
                         mv "${HOME}/printer_data/config/data.mdb" "${HOME}/printer_data/database/data.mdb"
                     fi
-                    printf "${G}${opt_name} installed successfully.${NC}\n"
+                    printf '%s\n' "${G}${opt_name} installed successfully.${NC}"
                     ;;
                 8)
-                    printf "${Y}Exiting the update process.${NC}\n"
+                    printf '%s\n' "${Y}Exiting the update process.${NC}"
                     break
                     ;;
                 *)
-                    echo -e "${R}Invalid selection. Please try again.${NC}"
+                    printf '%b\n' "${R}Invalid selection. Please try again.${NC}"
                     ;;
             esac
-
-            # Re-display the menu after each operation, unless 'Exit' was selected
-            if [[ $opt != 8 ]]; then
-                clear_screen
-                echo -e "${C}$OPENNEPT4UNE_ART${NC}"
-                echo ""
-                echo "Select configurations to install:"
-                for i in "${!options[@]}"; do
-                    printf "%2d) %s\n" $((i+1)) "${options[$i]}"
-                done
-            fi
         done
 
-        printf "${G}Selected configurations installed successfully.${NC}\n\n"
+        printf '%s\n\n' "${G}Selected configurations installed successfully.${NC}"
         sleep 1
     else
-        printf "${Y}Installation of latest configurations skipped.${NC}\n"
+        printf '%b\n' "${Y}Installation of latest configurations skipped.${NC}"
         sleep 1
     fi
 }
 
 wifi_config() {
-sudo nmtui
+    sudo nmtui
 }
 
 usb_auto_mount() {
@@ -735,34 +716,36 @@ install_screen_service() {
 }
 
 run_install_screen_service_with_setup() {
-    rm -rf ${HOME}/display_connector && initialize_display_connector && eval "$DISPLAY_SERVICE_INSTALLER"
+    rm -rf "${HOME}/display_connector"
+    initialize_display_connector
+    eval "$DISPLAY_SERVICE_INSTALLER"
 }
 
 initialize_display_connector() {
     if [ ! -d "${HOME}/display_connector" ]; then
         git clone -b "$current_branch" "${DISPLAY_CONNECTOR_REPO}" "${DISPLAY_CONNECTOR_DIR}"
-        echo -e "${G}Initialized repository for Touch-Screen Display Service.${NC}"
+        printf '%b\n' "${G}Initialized repository for Touch-Screen Display Service.${NC}"
     fi
-    # Call moonraker_update_manager
     moonraker_update_manager "display"
 }
 
 reboot_system() {
     sync
     clear_screen
-    echo -e "${C}$OPENNEPT4UNE_ART${NC}"
-    echo ""
+    printf '%b\n' "${C}${OPENNEPT4UNE_ART}${NC}"
+    printf '\n'
+    local REBOOT_CHOICE=""
     if [ $auto_yes = false ]; then
-        printf "${Y}The system needs to be rebooted to continue. Reboot now? (y/n).${NC}\n\n"
-        read -r -p "${M}Enter your choice (highly advised)${NC}: " REBOOT_CHOICE
+        printf '%s\n\n' "${Y}The system needs to be rebooted to continue. Reboot now? (y/n).${NC}"
+        read -r -p "$(printf '%b' "${M}Enter your choice (highly advised)${NC}: ")" REBOOT_CHOICE
     fi
+
     if [[ "$REBOOT_CHOICE" =~ ^[Yy]$ || $auto_yes = true ]]; then
-        echo ""
-        printf "${G}System will reboot now.${NC}\n"
+        printf '\n%s\n' "${G}System will reboot now.${NC}"
         sleep 1
         sudo reboot
     else
-        printf "${Y}Reboot canceled.${NC}\n"
+        printf '%s\n' "${Y}Reboot canceled.${NC}"
         sleep 1
     fi
 }
@@ -776,66 +759,63 @@ Options:
   -y, --yes                  Automatically confirm all prompts (non-interactive mode).
   --printer_model=MODEL      Specify the printer model (e.g., n4, n4pro, n4plus / n4max).
   --motor_current=VALUE      Specify the stepper motor current (e.g., 0.8, 1.2).
-  --pcb_version=VALUE        Specify the PCB version (e.g., 1.0, 1.1).
   -h, --help                 Display this help message and exit.
 
 Commands:
   install_printer_cfg        Install or update the OpenNept4une Printer.cfg and other configurations.
-  usb_auto_mount             Enable USB storage auto-mount feature.
+  install_configs            Install or update KAMP/Moonraker/fluiddGUI confs, etc.
+  wifi_config                Launch NMTUI for WiFi configuration.
   update_mcu_rpi_fw          Update MCU & Virtual MCU RPi firmware.
   install_screen_service     Install or update the Touch-Screen Display Service (BETA).
+  usb_auto_mount             Enable USB storage auto-mount feature.
   update_repo                Update the OpenNept4une repository to the latest version.
   android_rules              Install Android ADB rules (for klipperscreen).
-  webcam_setup              Install webcam FPS fix.
-  base_image_config          Apply base configuration for ZNP-K1 Compiled Image (Not for release images).
+  webcam_setup               Install webcam FPS fix.
+  base_image_config          Apply base configuration for a freshly compiled Armbian image.
   armbian_resize             Resize the active Armbian partition (for eMMC > 8GB).
 
 EOF
 }
 
-# Function to Print the Main Menu
 print_menu() {
     clear_screen
-    echo -e "${C}$OPENNEPT4UNE_ART${NC}"
-    printf "    Branch:$current_branch | Model:$MODEL_FROM_FLAG | Kernel:$KERNEL_FROM_FLAG\n"
-    echo "=========================================================="
-    echo -e "                OpenNept4une - ${M}Main Menu${NC}       "
-    echo "=========================================================="
-    echo ""
-    echo "1) Install/Update OpenNept4une printer.cfg"
-    echo ""
-    echo "2) Install/Update KAMP/Moonraker/fluiddGUI confs"
-    echo ""
-    echo "3) Configure WiFi"
-    echo ""
-    echo "4) Update MCU & Virtual MCU Firmware"
-    echo ""
-    echo "5) Install/Update Touch-Screen Service (BETA)"
-    echo ""
-    echo "6) Enable USB Storage AutoMount"
-    echo ""
-    echo -e "7) ${M}* Advanced Options Menu *${NC}"
-    echo ""
-    echo -e "(${R} Q ${NC}) Quit"
-    echo "=========================================================="
-    echo "Select an option by entering (1-7 / q):"
+    printf '%b\n' "${C}${OPENNEPT4UNE_ART}${NC}"
+    printf '%s%s%s\n' "    Branch:" "$current_branch" " | Model:$MODEL_FROM_FLAG | Kernel:$KERNEL_FROM_FLAG"
+    printf '%s\n' "=========================================================="
+    printf '%b\n' "                OpenNept4une - ${M}Main Menu${NC}       "
+    printf '%s\n' "=========================================================="
+    printf '\n1) Install/Update OpenNept4une printer.cfg\n\n'
+    printf '2) Install/Update KAMP/Moonraker/fluiddGUI confs\n\n'
+    printf '3) Configure WiFi\n\n'
+    printf '4) Update MCU & Virtual MCU Firmware\n\n'
+    printf '5) Install/Update Touch-Screen Service (BETA)\n\n'
+    printf '6) Enable USB Storage AutoMount\n\n'
+    printf '%b\n' "7) ${M}* Advanced Options Menu *${NC}"
+    printf '\n%b\n' "(${R} Q ${NC}) Quit"
+    printf '%s\n' "=========================================================="
+    printf '%s\n' "Select an option by entering (1-7 / q):"
 }
 
 # Parse Command-Line Arguments
-TEMP=$(getopt -o yh --long yes,help,printer_model:,motor_current:,pcb_version: -n 'OpenNept4une.sh' -- "$@")
-if [ $? != 0 ]; then echo -e "${R}Failed to parse options.${NC}" >&2; exit 1; fi
+# Replace SC2181 check with direct check
+if ! TEMP=$(getopt -o yh --long yes,help,printer_model:,motor_current:,pcb_version: -n 'OpenNept4une.sh' -- "$@"); then
+    printf '%b\n' "${R}Failed to parse options.${NC}" >&2
+    exit 1
+fi
+
 eval set -- "$TEMP"
 
-# Process Options
 while true; do
     case "$1" in
         --printer_model) model_key="$2"; shift 2 ;;
         --motor_current) motor_current="$2"; shift 2 ;;
-        --pcb_version) pcb_version="$2"; shift 2 ;;
+        --pcb_version) # pcb_version="$2" # Uncomment if truly needed
+            shift 2 
+            ;;
         -y|--yes) auto_yes=true; shift ;;
         -h|--help) print_help; exit 0 ;;
         --) shift; break ;;
-        *) echo -e "${R}Invalid option: $1 ${NC}"; exit 1 ;;
+        *) printf '%b\n' "${R}Invalid option: $1 ${NC}"; exit 1 ;;
     esac
 done
 
@@ -847,8 +827,8 @@ if [ -z "$1" ]; then
     
     while true; do
         print_menu
-        echo -e "${G}Enter your choice:${NC}"
-        read choice
+        printf '%b ' "${G}Enter your choice:${NC}"
+        read -r choice
         case $choice in
             1) install_printer_cfg ;;
             2) install_configs ;;
@@ -857,14 +837,13 @@ if [ -z "$1" ]; then
             5) install_screen_service ;;
             6) usb_auto_mount ;;
             7) advanced_more ;;
-            q) clear; echo -e "${G}Goodbye...${NC}"; sleep 2; exit 0 ;;
-            *) echo -e "${R}Invalid choice. Please try again.${NC}" ;;
+            q) clear; printf '%b\n' "${G}Goodbye...${NC}"; sleep 2; exit 0 ;;
+            *) printf '%b\n' "${R}Invalid choice. Please try again.${NC}" ;;
         esac
     done
 else
     run_fixes
-    # Direct command execution
-    COMMAND=$1;
+    COMMAND=$1
     case $COMMAND in
         install_printer_cfg) install_printer_cfg ;;
         install_configs) install_configs ;;
@@ -877,6 +856,6 @@ else
         webcam_setup) webcam_setup ;;
         base_image_config) base_image_config ;;
         armbian_resize) armbian_resize ;;
-        *) echo -e "${G}Invalid command. Please try again.${NC}" ;;
+        *) printf '%b\n' "${G}Invalid command. Please try again.${NC}" ;;
     esac
 fi
