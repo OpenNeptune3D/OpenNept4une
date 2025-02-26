@@ -145,7 +145,7 @@ update_repo() {
         fi
     fi
 
-    if [ -d "${HOME}/display_firmware" ]; then
+    if [ -d "${HOME}/display_firmware/venv" ]; then
         process_repo_update "$DISPLAY_FIRMWARE_DIR" "Display Firmware"
         moonraker_update_manager "display_firmware"
     else
