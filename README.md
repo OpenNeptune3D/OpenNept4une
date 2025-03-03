@@ -24,6 +24,11 @@ Phillip Thelen, barrenechea, SQUIRRELYMOOSE, DanDonut & Jaerax
 
 </div>
 
+**NOTE:** While the latest release file may appear outdated, this project is actively maintained and updated regularly. The main Linux image within the release includes a built-in updater that continuously pulls the latest changes directly from the project’s various GitHub repositories. This ensures that you always have the most recent updates, even if the release file itself hasn’t been changed in a while. Check the commit history for the latest improvements and fixes:
+
+- [OpenNeptune3D/OpenNept4une commits](https://github.com/OpenNeptune3D/OpenNept4une/commits/dev)
+- [OpenNeptune3D/display_connector commits](https://github.com/OpenNeptune3D/display_connector/commits/dev)
+
 ---
 ### Image Features
 - Support for all Neptune 4 series models 
