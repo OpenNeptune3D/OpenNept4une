@@ -39,7 +39,7 @@ Phillip Thelen, barrenechea, SQUIRRELYMOOSE, DanDonut & Jaerax
 - All Elegoo Services Removed (No Z-Axis Issues)
 - Orca Slicer Profiles Provided
 - Adaptive Meshing Configured
-- Easy WiFi config
+- Easy WiFi config for USB WiFi adapters 
 - Simplified and highly modified printer.cfg
 - Preconfigured LED, Bed Leveling & PID Calibration Macros
 - Screws Tilt Adjust Configured 
@@ -47,8 +47,7 @@ Phillip Thelen, barrenechea, SQUIRRELYMOOSE, DanDonut & Jaerax
 - Firmware Retraction configured
 - Linux Host CPU & MCU temperature monitoring in Fluidd
 - Improved mainboard cooling/fan control
-- Crowsnest V4.X (Main) w/ ustreamer (Webcam service)
-  
+- Simple mjpg-streamer webcam configuration script for MJPG & YUYV webcams
 ---
 
 <div style="text-align: center;">
