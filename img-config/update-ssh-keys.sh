@@ -23,10 +23,13 @@ sync
 # Check if ssh config is correct before restarting the service
 sudo sshd -t
 if [[ $? -ne 0 ]]; then
-    echo "sshd configuration check failed after key regeneration, old keys are in $OLD_DIR ."
-    echo "Please check the sshd configuration and restore the old keys if necessary."
-    echo "To restore the old keys, run the following commands:"
-    echo "sudo mv $OLD_DIR/*key /etc/ssh/"
+    cp -R $OLD_DIR/* /etc/ssh/
+
+    echo "sshd configuration check failed after key regeneration, we have tried to restore the old keys."
+    echo "Please check the sshd configuration before rebooting the system."
+    echo "Command to check the sshd configuration: sudo sshd -t"
+    echo "You should have no errors."
+    echo "You can find the old keys backed up in $OLD_DIR ."
     exit 1
 fi
 
