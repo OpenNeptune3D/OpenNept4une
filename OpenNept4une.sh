@@ -9,6 +9,7 @@ ANDROID_RULE_INSTALLER="${HOME}/OpenNept4une/img-config/adb-automount.sh"
 UPDATED_DISPLAY_FIRMWARE_INSTALLER="${HOME}/display_firmware/screen-firmware.sh"
 WEBCAM_SETUP_INSTALLER="${HOME}/OpenNept4une/img-config/webcam-setup.sh"
 BASE_IMAGE_INSTALLER="${HOME}/OpenNept4une/img-config/base_image_configuration.sh"
+SSH_KEY_INSTALLER="${HOME}/OpenNept4une/img-config/update-ssh-keys.sh"
 
 FLAG_FILE="/boot/.OpenNept4une.txt"
 MODEL_FROM_FLAG=$(grep -E '^N4|^n4' "$FLAG_FILE")
@@ -31,11 +32,11 @@ auto_yes=false
 
 # ASCII art for OpenNept4une
 OPENNEPT4UNE_ART=$(cat <<'EOF'
-  ____                _  __         __  ____              
- / __ \___  ___ ___  / |/ /__ ___  / /_/ / /__ _____  ___ 
+  ____                _  __         __  ____
+ / __ \___  ___ ___  / |/ /__ ___  / /_/ / /__ _____  ___
 / /_/ / _ \/ -_) _ \/    / -_) _ \/ __/_  _/ // / _ \/ -_)
-\____/ .__/\__/_//_/_/|_/\__/ .__/\__/ /_/ \_,_/_//_/\__/ 
-    /_/                    /_/                            
+\____/ .__/\__/_//_/_/|_/\__/ .__/\__/ /_/ \_,_/_//_/\__/
+    /_/                    /_/
 
 EOF
 )
@@ -88,7 +89,7 @@ run_fixes() {
         if ! sudo ln -s "$SCRIPT" "$SYMLINK_PATH"; then
             printf '%s\n' "${R}Failed to create symlink at $SYMLINK_PATH${NC}"
         fi
-    fi  
+    fi
 
     # Add /bin/sync to crontab if not present
     if ! (crontab -l 2>/dev/null | grep -q "/bin/sync"); then
@@ -289,7 +290,8 @@ advanced_more() {
         printf '\n5) Flash/Update Display Firmware (Alpha)\n\n'
         printf '6) Switch Git repo between main/dev\n\n'
         printf '7) Base ZNP-K1 Compiled Image Config (NOT for OpenNept4une)\n\n'
-        printf '8) Change Machine Model / Board Version / Motor Current\n'
+        printf '8) Change Machine Model / Board Version / Motor Current\n\n'
+        printf '9) Update SSH server keys\n\n'
         printf '%b\n' "----------------------------------------------------------${NC}"
         printf '\n%b\n' "(${Y} B ${NC}) Back to Main Menu"
         printf '%s\n' "=========================================================="
@@ -305,11 +307,12 @@ advanced_more() {
             6) toggle_branch;;
             7) base_image_config;;
             8) "${HOME}/OpenNept4une/img-config/set-printer-model.sh"; exit 0;;
+            9) update_ssh_keys;;
             b) return;;  # Return to the main menu
             *) printf '%b\n' "${R}Invalid choice, please try again.${NC}";;
         esac
 
-        read -r -p "$(printf '%b' "${G}Press enter to continue...${NC}")" 
+        read -r -p "$(printf '%b' "${G}Press enter to continue...${NC}")"
     done
 }
 
@@ -363,6 +366,10 @@ webcam_setup() {
 
 base_image_config() {
     install_feature "Base Ambian Image Confifg" "$BASE_IMAGE_INSTALLER" "Do you want to configure a base/fresh armbian image that you compiled?"
+}
+
+update_ssh_keys() {
+    install_feature "SSH Key Update" "$SSH_KEY_INSTALLER" "Do you want to update the SSH server keys?"
 }
 
 armbian_resize() {
@@ -810,7 +817,7 @@ while true; do
         --printer_model) model_key="$2"; shift 2 ;;
         --motor_current) motor_current="$2"; shift 2 ;;
         --pcb_version) # pcb_version="$2" # Uncomment if truly needed
-            shift 2 
+            shift 2
             ;;
         -y|--yes) auto_yes=true; shift ;;
         -h|--help) print_help; exit 0 ;;
@@ -824,7 +831,7 @@ if [ -z "$1" ]; then
     run_fixes
     set_current_branch
     update_repo
-    
+
     while true; do
         print_menu
         printf '%b ' "${G}Enter your choice:${NC}"
