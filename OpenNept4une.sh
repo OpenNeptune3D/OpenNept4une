@@ -228,46 +228,60 @@ moonraker_update_manager() {
 
     if [ "$update_selection" = "OpenNept4une" ]; then
         current_ON_branch=$(git -C "$OPENNEPT4UNE_DIR" symbolic-ref --short HEAD 2>/dev/null)
-        new_lines="[update_manager $update_selection]\n\
-type: git_repo\n\
-primary_branch: $current_ON_branch\n\
-path: $OPENNEPT4UNE_DIR\n\
-is_system_service: False\n\
-origin: $OPENNEPT4UNE_REPO"
+        read -r -d '' new_lines <<EOF
+[update_manager $update_selection]
+type: git_repo
+primary_branch: $current_ON_branch
+path: $OPENNEPT4UNE_DIR
+is_system_service: False
+origin: $OPENNEPT4UNE_REPO
+EOF
 
     elif [ "$update_selection" = "display" ]; then
         current_display_branch=$(git -C "$DISPLAY_CONNECTOR_DIR" symbolic-ref --short HEAD 2>/dev/null)
-        new_lines="[update_manager $update_selection]\n\
-type: git_repo\n\
-primary_branch: $current_display_branch\n\
-path: $DISPLAY_CONNECTOR_DIR\n\
-virtualenv: $DISPLAY_CONNECTOR_DIR/venv\n\
-requirements: requirements.txt\n\
-origin: $DISPLAY_CONNECTOR_REPO"
+        read -r -d '' new_lines <<EOF
+[update_manager $update_selection]
+type: git_repo
+primary_branch: $current_display_branch
+path: $DISPLAY_CONNECTOR_DIR
+virtualenv: $DISPLAY_CONNECTOR_DIR/venv
+requirements: requirements.txt
+origin: $DISPLAY_CONNECTOR_REPO
+EOF
 
     elif [ "$update_selection" = "display_firmware" ]; then
         current_firmware_branch=$(git -C "$DISPLAY_FIRMWARE_DIR" symbolic-ref --short HEAD 2>/dev/null)
-        new_lines="[update_manager $update_selection]\n\
-type: git_repo\n\
-primary_branch: $current_firmware_branch\n\
-path: $DISPLAY_FIRMWARE_DIR\n\
-is_system_service: False\n\
-virtualenv: $DISPLAY_FIRMWARE_DIR/venv\n\
-requirements: requirements.txt\n\
-origin: $DISPLAY_FIRMWARE_REPO"
+        read -r -d '' new_lines <<EOF
+[update_manager $update_selection]
+type: git_repo
+primary_branch: $current_firmware_branch
+path: $DISPLAY_FIRMWARE_DIR
+is_system_service: False
+virtualenv: $DISPLAY_FIRMWARE_DIR/venv
+requirements: requirements.txt
+origin: $DISPLAY_FIRMWARE_REPO
+EOF
+
     else
-        printf '%b\n' "${R}Invalid argument. Please specify either 'OpenNept4une' or 'display_connector' or 'display_firmware'.${NC}"
+        printf '%b\n' "${R}Invalid argument. Please specify either 'OpenNept4une', 'display', or 'display_firmware'.${NC}"
         return 1
     fi
-
-    # Check if the lines exist in the config file
+    # Escape section name for safe regex
+    escaped_section=$(printf '%s' "$update_selection" | sed 's/[][(){}.*+?^$|\\]/\\&/g')
+    # Update or append block
     if grep -qF "[update_manager $update_selection]" "$config_file"; then
-        # Lines exist, update them with Perl
-        perl -pi.bak -e "BEGIN{undef $/;} s|\[update_manager $update_selection\].*?((?:\r*\n){2}\|$)|$new_lines\$1|gs" "$config_file"
+        # Export new_lines as an env var to safely use in Perl
+        export NEW_LINES="$new_lines"
+        perl -pi.bak -e '
+            BEGIN { undef $/; $nl = $ENV{"NEW_LINES"}; }
+            s/\[update_manager '"$escaped_section"'\].*?((?:\r?\n){2}|\z)/$nl$1/s
+        ' "$config_file"
         sync
     else
-        # Append them to the end of the file
-        printf '\n%s\n' "$new_lines" >> "$config_file"
+        if [ -s "$config_file" ] && [ "$(tail -c1 "$config_file")" != $'\n' ]; then
+            echo >> "$config_file"
+        fi
+        printf "\n%s" "$new_lines" >> "$config_file"
     fi
 }
 
