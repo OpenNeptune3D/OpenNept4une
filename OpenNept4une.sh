@@ -60,6 +60,24 @@ run_fixes() {
         printf '%s\n' "${R}Failed to add user 'mks' to groups 'gpio' and 'spiusers'${NC}"
     fi
 
+    # Ensure NetworkManager override for Wi‑Fi power‑save exists ===
+    NM_CONF_DIR="/etc/NetworkManager/conf.d"
+    NM_PS_FILE="${NM_CONF_DIR}/zz-20-override-wifi-powersave-disable.conf"
+    if [ ! -f "$NM_PS_FILE" ]; then
+        if ! sudo mkdir -p "$NM_CONF_DIR"; then
+            printf '%s\n' "${R}Failed to create $NM_CONF_DIR${NC}"
+        elif ! sudo tee "$NM_PS_FILE" >/dev/null <<'EOF'
+[connection]
+wifi.powersave = 2
+EOF
+        then
+            printf '%s\n' "${R}Failed to create $NM_PS_FILE${NC}"
+        else
+            # Reload NetworkManager so the new setting takes effect immediately
+            sudo systemctl restart NetworkManager >/dev/null 2>&1
+        fi
+    fi
+
     # Remove obsolete GPIO script if it exists
     if [ -f "/usr/local/bin/set_gpio.sh" ]; then
         if ! sudo rm -f "/usr/local/bin/set_gpio.sh"; then
