@@ -14,6 +14,17 @@ apply_minimal_config() {
     make olddefconfig
 }
 
+# Get current git branch from $KLIPPER_DIR
+cd "$KLIPPER_DIR" || exit 1
+current_branch=$(git rev-parse --abbrev-ref HEAD)
+
+# Check for detached HEAD status
+if [[ "$current_branch" == "HEAD" ]]; then
+    echo "Warning: Detached HEAD state detected!"
+    sleep 30
+    exit 1
+fi
+
 # Prompt user for MCU if not passed as argument
 if [[ -z $1 ]]; then
     echo ""
@@ -33,7 +44,27 @@ else
 fi
 
 # Update Klipper
-cd "$KLIPPER_DIR" && git pull origin master
+cd "$KLIPPER_DIR" || exit 1
+pull_output=$(git pull origin "$current_branch" 2>&1)
+pull_exit=$?
+
+# Check for git pull errors
+if [[ $pull_exit -ne 0 ]]; then
+    echo -e "\n❌ Git pull failed for '$current_branch'!"
+    echo "$pull_output"
+    sleep 30
+    exit 1
+fi
+
+# Generate and show response message
+if echo "$pull_output" | grep -iq "already up to date"; then
+    echo -e "\nℹ️ Branch '$current_branch' is already up to date."
+    sleep 30
+else
+    echo -e "\n✅ Git pull successful for '$current_branch':"
+    echo "$pull_output"
+    sleep 30
+fi
 
 ### STM32 MCU UPDATE ###
 if [[ "$mcu_choice" == "STM32" || "$mcu_choice" == "All" ]]; then
