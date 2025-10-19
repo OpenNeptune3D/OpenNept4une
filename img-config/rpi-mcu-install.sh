@@ -14,21 +14,14 @@ apply_minimal_config() {
     make olddefconfig
 }
 
-# Check if Klipper or Kalico is used
+# Get current git branch from $KLIPPER_DIR
 cd "$KLIPPER_DIR" || exit 1
 current_branch=$(git rev-parse --abbrev-ref HEAD)
-
-if [[ "${current_branch,,}" == "master" ]]; then
-    firmware="KLIPPER"
-elif [[ "${current_branch,,}" == "main" ]]; then
-    firmware="KALICO"
-else
-    firmware="UNKNOWN"
-fi
 
 # Check for detached HEAD status
 if [[ "$current_branch" == "HEAD" ]]; then
     echo "Warning: Detached HEAD state detected!"
+    sleep 30
     exit 1
 fi
 
@@ -52,28 +45,25 @@ fi
 
 # Update Klipper
 cd "$KLIPPER_DIR" || exit 1
+pull_output=$(git pull origin "$current_branch" 2>&1)
+pull_exit=$?
 
-if [[ "$firmware" != "UNKNOWN" ]]; then
-    # Git pull ausführen, Output in Variable speichern
-    pull_output=$(git pull origin "$current_branch" 2>&1)
-    pull_exit=$?
-
-    if [[ $pull_exit -ne 0 ]]; then
-        echo -e "\n❌ Git pull failed for '$current_branch'!"
-        echo "$pull_output"
-        exit 1
-    fi
-
-    # Prüfen, ob Updates durchgeführt wurden
-    if echo "$pull_output" | grep -iq "already up to date"; then
-        echo -e "\nℹ️ Branch '$current_branch' is already up to date."
-    else
-        echo -e "\n✅ Git pull successful for '$current_branch':"
-        echo "$pull_output"
-    fi
-else
-    echo -e "\nFirmware branch unknown! Aborting now."
+# Check for git pull errors
+if [[ $pull_exit -ne 0 ]]; then
+    echo -e "\n❌ Git pull failed for '$current_branch'!"
+    echo "$pull_output"
+    sleep 30
     exit 1
+fi
+
+# Generate and show response message
+if echo "$pull_output" | grep -iq "already up to date"; then
+    echo -e "\nℹ️ Branch '$current_branch' is already up to date."
+    sleep 30
+else
+    echo -e "\n✅ Git pull successful for '$current_branch':"
+    echo "$pull_output"
+    sleep 30
 fi
 
 ### STM32 MCU UPDATE ###
