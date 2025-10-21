@@ -52,18 +52,18 @@ pull_exit=$?
 if [[ $pull_exit -ne 0 ]]; then
     echo -e "\n❌ Git pull failed for '$current_branch'!"
     echo "$pull_output"
-    sleep 30
+    sleep 20
     exit 1
 fi
 
 # Generate and show response message
 if echo "$pull_output" | grep -iq "already up to date"; then
     echo -e "\nℹ️ Branch '$current_branch' is already up to date."
-    sleep 30
+    sleep 5
 else
     echo -e "\n✅ Git pull successful for '$current_branch':"
     echo "$pull_output"
-    sleep 30
+    sleep 5
 fi
 
 ### STM32 MCU UPDATE ###
