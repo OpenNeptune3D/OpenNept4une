@@ -74,7 +74,7 @@ if [[ "$mcu_choice" == "STM32" || "$mcu_choice" == "All" ]]; then
     apply_minimal_config "${HOME}/OpenNept4une/mcu-firmware/mcu.config"
     make
 
-    if grep -q "/usr/local/bin/gpio_set.sh" "/etc/rc.local"; then
+    if grep -q "/usr/local/bin/gpio_set.sh" "/etc/rc.local" 2>/dev/null; then
         echo "Detected MCU running the Alternative method! Running headless flash..."
         if [ -f "$MCU_SWFLASH_ALT" ]; then
             "$MCU_SWFLASH_ALT"
@@ -140,7 +140,12 @@ if [[ "$mcu_choice" == "Pico-based USB Accelerometer" || "$mcu_choice" == "All" 
     done
 
     if [[ "$pico_skipped" == false ]]; then
-        sudo apt install -y python3-numpy python3-matplotlib libatlas-base-dev libopenblas-dev
+        echo "Installing Python packages for Pico..."
+        for pkg in python3-numpy python3-matplotlib libatlas-base-dev libatlas3-base libopenblas-dev; do
+            sudo apt install -y "$pkg" &>/dev/null || true
+        done
+
+        echo "Installing numpy in Klipper environment..."
         ~/klippy-env/bin/pip install -v numpy
 
         apply_minimal_config "${HOME}/OpenNept4une/mcu-firmware/pico_usb.config"
@@ -158,20 +163,38 @@ if [[ "$mcu_choice" == "Virtual RPi" || "$mcu_choice" == "All" ]]; then
     clear
     echo "Proceeding with Virtual MCU RPi Update..."
 
-    sudo apt install -y python3-numpy python3-matplotlib libatlas-base-dev libopenblas-dev
-    ~/klippy-env/bin/pip install -v numpy
-    sudo cp ./scripts/klipper-mcu.service /etc/systemd/system/
-    sudo systemctl enable klipper-mcu.service
-    sudo service klipper stop
+    echo "Installing required packages (this may take a moment)..."
+    for pkg in python3-numpy python3-matplotlib libatlas-base-dev libatlas3-base libopenblas-dev; do
+        sudo apt install -y "$pkg" &>/dev/null || true
+    done
+    echo "Package installation complete."
 
-    if grep -iq "mks" /boot/.OpenNept4une.txt; then
-        echo "Skipping kernel patch for MKS systems..."
-    elif grep -iq "dec 11" /boot/.OpenNept4une.txt; then 
-        echo "kernel.sched_rt_runtime_us = -1" | sudo tee -a /etc/sysctl.d/10-disable-rt-group-limit.conf
+    echo "Installing numpy in Klipper environment..."
+    ~/klippy-env/bin/pip install -v numpy || { echo "Numpy installation failed, continuing..."; }
+
+    echo "Copying klipper-mcu.service..."
+    sudo cp ./scripts/klipper-mcu.service /etc/systemd/system/ || { echo "Failed to copy service file"; exit 1; }
+    
+    echo "Enabling klipper-mcu.service..."
+    sudo systemctl enable klipper-mcu.service || { echo "Failed to enable service"; exit 1; }
+    
+    echo "Stopping klipper service..."
+    sudo service klipper stop || true
+
+    if [[ -f /boot/.OpenNept4une.txt ]]; then
+        if grep -iq "mks" /boot/.OpenNept4une.txt; then
+            echo "Skipping kernel patch for MKS systems..."
+        elif grep -iq "dec 11" /boot/.OpenNept4une.txt; then 
+            echo "Applying kernel patch..."
+            echo "kernel.sched_rt_runtime_us = -1" | sudo tee -a /etc/sysctl.d/10-disable-rt-group-limit.conf
+        fi
     fi
 
+    echo "Applying Virtual MCU configuration..."
     apply_minimal_config "${HOME}/OpenNept4une/mcu-firmware/virtualmcu.config"
-    make flash
+    
+    echo "Flashing Virtual MCU..."
+    make flash || { echo "Failed to flash Virtual MCU"; exit 1; }
 
     echo ""
     echo "Virtual MCU update completed."
