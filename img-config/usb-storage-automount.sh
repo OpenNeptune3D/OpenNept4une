@@ -65,16 +65,16 @@ sudo tee "$RULE_PATH" >/dev/null <<RULES
 # Automount a single USB filesystem to a fixed path for user ${USER_NAME}
 
 # FAT-like filesystems (uid/gid effective)
-ACTION=="add", SUBSYSTEM=="block", ENV{ID_BUS}=="usb", ENV{DEVTYPE}=="partition", ENV{ID_FS_USAGE}=="filesystem", ENV{ID_FS_TYPE}=="vfat",    RUN+="${SYSMOUNT_BIN} --no-block --automount=yes ${timeout_arg} --collect --options=${fatlike_opts} %E{DEVNAME} ${MOUNT_POINT}"
-ACTION=="add", SUBSYSTEM=="block", ENV{ID_BUS}=="usb", ENV{DEVTYPE}=="partition", ENV{ID_FS_USAGE}=="filesystem", ENV{ID_FS_TYPE}=="exfat",   RUN+="${SYSMOUNT_BIN} --no-block --automount=yes ${timeout_arg} --collect --options=${fatlike_opts} %E{DEVNAME} ${MOUNT_POINT}"
-ACTION=="add", SUBSYSTEM=="block", ENV{ID_BUS}=="usb", ENV{DEVTYPE}=="partition", ENV{ID_FS_USAGE}=="filesystem", ENV{ID_FS_TYPE}=="ntfs",    RUN+="${SYSMOUNT_BIN} --no-block --automount=yes ${timeout_arg} --collect --options=${fatlike_opts} %E{DEVNAME} ${MOUNT_POINT}"
-ACTION=="add", SUBSYSTEM=="block", ENV{ID_BUS}=="usb", ENV{DEVTYPE}=="partition", ENV{ID_FS_USAGE}=="filesystem", ENV{ID_FS_TYPE}=="ntfs-3g", RUN+="${SYSMOUNT_BIN} --no-block --automount=yes ${timeout_arg} --collect --options=${fatlike_opts} %E{DEVNAME} ${MOUNT_POINT}"
+ACTION=="add", SUBSYSTEM=="block", ENV{ID_BUS}=="usb", ENV{DEVTYPE}=="partition", ENV{ID_FS_USAGE}=="filesystem", ENV{ID_FS_TYPE}=="vfat",    RUN+="${SYSMOUNT_BIN} --no-block ${timeout_arg} --collect --options=${fatlike_opts} %E{DEVNAME} ${MOUNT_POINT}"
+ACTION=="add", SUBSYSTEM=="block", ENV{ID_BUS}=="usb", ENV{DEVTYPE}=="partition", ENV{ID_FS_USAGE}=="filesystem", ENV{ID_FS_TYPE}=="exfat",   RUN+="${SYSMOUNT_BIN} --no-block ${timeout_arg} --collect --options=${fatlike_opts} %E{DEVNAME} ${MOUNT_POINT}"
+ACTION=="add", SUBSYSTEM=="block", ENV{ID_BUS}=="usb", ENV{DEVTYPE}=="partition", ENV{ID_FS_USAGE}=="filesystem", ENV{ID_FS_TYPE}=="ntfs",    RUN+="${SYSMOUNT_BIN} --no-block ${timeout_arg} --collect --options=${fatlike_opts} %E{DEVNAME} ${MOUNT_POINT}"
+ACTION=="add", SUBSYSTEM=="block", ENV{ID_BUS}=="usb", ENV{DEVTYPE}=="partition", ENV{ID_FS_USAGE}=="filesystem", ENV{ID_FS_TYPE}=="ntfs-3g", RUN+="${SYSMOUNT_BIN} --no-block ${timeout_arg} --collect --options=${fatlike_opts} %E{DEVNAME} ${MOUNT_POINT}"
 
 # POSIX filesystems (ownership from FS)
 ACTION=="add", SUBSYSTEM=="block", ENV{ID_BUS}=="usb", ENV{DEVTYPE}=="partition", ENV{ID_FS_USAGE}=="filesystem", ENV{ID_FS_TYPE}!="vfat", ENV{ID_FS_TYPE}!="exfat", ENV{ID_FS_TYPE}!="ntfs", ENV{ID_FS_TYPE}!="ntfs-3g", RUN+="${SYSMOUNT_BIN} --no-block --automount=yes ${timeout_arg} --collect --options=${posix_opts} %E{DEVNAME} ${MOUNT_POINT}"
 
 # Unmount on removal
-ACTION=="remove", SUBSYSTEM=="block", ENV{ID_BUS}=="usb", ENV{DEVTYPE}=="partition", RUN+="${SYSMOUNT_BIN} --no-block --umount ${MOUNT_POINT}"
+ACTION=="remove", SUBSYSTEM=="block", ENV{ID_BUS}=="usb", RUN+="${SYSMOUNT_BIN} --no-block --umount ${MOUNT_POINT}"
 RULES
 
 # Permissions on rule file
