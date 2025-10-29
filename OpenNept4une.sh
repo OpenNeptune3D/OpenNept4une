@@ -125,10 +125,9 @@ Description=Power Cut Monitor and Safe Shutdown
 
 [Service]
 Type=simple
-ExecStart=${HOME}/OpenNept4une/img-config/power_monitor.sh
+ExecStart=/home/mks/OpenNept4une/img-config/power_monitor.sh
 User=root
-Restart=on-failure
-RestartSec=5s
+Restart=no
 
 [Install]
 WantedBy=multi-user.target
