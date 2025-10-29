@@ -142,7 +142,9 @@ if [[ "$mcu_choice" == "Pico-based USB Accelerometer" || "$mcu_choice" == "All" 
     if [[ "$pico_skipped" == false ]]; then
         echo "Installing Python packages for Pico..."
         for pkg in python3-numpy python3-matplotlib libatlas-base-dev libatlas3-base libopenblas-dev; do
-            sudo apt install -y "$pkg" &>/dev/null || true
+            if ! sudo apt install -y "$pkg" 2>&1 | grep -v "already installed"; then
+                echo "Warning: failed to install $pkg"
+            fi
         done
 
         echo "Installing numpy in Klipper environment..."
