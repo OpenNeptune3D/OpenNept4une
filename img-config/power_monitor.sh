@@ -58,7 +58,7 @@ if [ "$DEBUG" = "true" ]; then
     log_message "[DEBUG] Would execute: gpioset ${CHIP} ${LINE_SUPERCAP}=1"
 else
     if [ "$USE_V2" = "true" ]; then
-        gpioset -c "$CHIP" "${LINE_SUPERCAP}=1"
+        gpioset -c "$CHIP" --daemonize "${LINE_SUPERCAP}=1"
     else
         gpioset "$CHIP" "${LINE_SUPERCAP}=1"
     fi
@@ -145,8 +145,7 @@ if [ "$STATE_PWRLOSS" = "0" ] && [ "$STATE_PWRGOOD" = "1" ]; then
         exit 0
     else
         if [ "$USE_V2" = "true" ]; then
-            gpiomon --edges=rising "$CHIP" "$LINE_PWRLOSS" &
-            gpiomon --edges=falling "$CHIP" "$LINE_PWRGOOD" &
+            gpiomon -c "$CHIP" --edges=both -n 1 "$LINE_PWRLOSS" "$LINE_PWRGOOD"
         else
             gpiomon --num-events=1 --rising-edge "$CHIP" "$LINE_PWRLOSS" &
             gpiomon --num-events=1 --falling-edge "$CHIP" "$LINE_PWRGOOD" &
@@ -172,8 +171,7 @@ else
         exit 0
     else
         if [ "$USE_V2" = "true" ]; then
-            gpiomon -c "$CHIP" --edges=rising -n 1 -T "$LINE_PWRLOSS" &
-            gpiomon -c "$CHIP" --edges=falling -n 1 -T "$LINE_PWRGOOD" &
+            gpiomon -c "$CHIP" --edges=both -n 1 "$LINE_PWRLOSS" "$LINE_PWRGOOD"
         else
             gpiomon --num-events=1 --rising-edge "$CHIP" "$LINE_PWRLOSS" &
             gpiomon --num-events=1 --falling-edge "$CHIP" "$LINE_PWRGOOD" &
