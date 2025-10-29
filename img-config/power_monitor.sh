@@ -1,5 +1,5 @@
 #!/bin/bash
-# file: /usr/local/sbin/power_monitor.sh
+# file: power_monitor.sh
 # Purpose: Monitor power loss via GPIO lines and safely shut down system.
 
 set -euo pipefail
@@ -172,8 +172,8 @@ else
         exit 0
     else
         if [ "$USE_V2" = "true" ]; then
-            gpiomon --edges=rising "$CHIP" "$LINE_PWRLOSS" &
-            gpiomon --edges=falling "$CHIP" "$LINE_PWRGOOD" &
+            gpiomon -c "$CHIP" --edges=rising -n 1 -T "$LINE_PWRLOSS" &
+            gpiomon -c "$CHIP" --edges=falling -n 1 -T "$LINE_PWRGOOD" &
         else
             gpiomon --num-events=1 --rising-edge "$CHIP" "$LINE_PWRLOSS" &
             gpiomon --num-events=1 --falling-edge "$CHIP" "$LINE_PWRGOOD" &
