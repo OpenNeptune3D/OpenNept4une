@@ -167,7 +167,10 @@ if [[ "$mcu_choice" == "Virtual RPi" || "$mcu_choice" == "All" ]]; then
 
     echo "Installing required packages (this may take a moment)..."
     for pkg in python3-numpy python3-matplotlib libatlas-base-dev libatlas3-base libopenblas-dev; do
-        sudo apt install -y "$pkg" &>/dev/null || true
+        if ! output=$(sudo apt install -y "$pkg" 2>&1); then
+            echo "Warning: Failed to install $pkg. Error output:" >&2
+            echo "$output" >&2
+        fi
     done
     echo "Package installation complete."
 
