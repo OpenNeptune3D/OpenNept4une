@@ -74,7 +74,7 @@ sleep 2
 # ===== Read initial GPIO states =====
 if [ "$DEBUG" = "true" ]; then
     if [ "$USE_V2" = "true" ]; then
-        INITIAL_STATES='"'"${LINE_PWRLOSS}"'"=inactive "'"${LINE_PWRGOOD}"'"=active'
+        INITIAL_STATES="\"${LINE_PWRLOSS}\"=inactive \"${LINE_PWRGOOD}\"=active"
     else
         INITIAL_STATES="0 1"
     fi
