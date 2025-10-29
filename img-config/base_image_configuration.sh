@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/bin/bash
 # file: opennept4une-setup.sh
 # Purpose: Prepare Armbian host for Klipper/Fluidd using sudo (not root $HOME)
 
