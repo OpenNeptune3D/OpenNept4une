@@ -141,7 +141,7 @@ if [[ "$mcu_choice" == "Pico-based USB Accelerometer" || "$mcu_choice" == "All" 
 
     if [[ "$pico_skipped" == false ]]; then
         echo "Installing Python packages for Pico..."
-        for pkg in python3-numpy python3-matplotlib libatlas-base-dev libatlas3-base libopenblas-dev; do
+        for pkg in python3-numpy python3-matplotlib libatlas3-base libopenblas-dev; do
             if ! sudo apt install -y "$pkg" 2>&1 | grep -v "already installed"; then
                 echo "Warning: failed to install $pkg"
             fi
@@ -166,7 +166,7 @@ if [[ "$mcu_choice" == "Virtual RPi" || "$mcu_choice" == "All" ]]; then
     echo "Proceeding with Virtual MCU RPi Update..."
 
     echo "Installing required packages (this may take a moment)..."
-    for pkg in python3-numpy python3-matplotlib libatlas-base-dev libatlas3-base libopenblas-dev; do
+    for pkg in python3-numpy python3-matplotlib libatlas3-base libopenblas-dev; do
         if ! output=$(sudo apt install -y "$pkg" 2>&1); then
             echo "Warning: Failed to install $pkg. Error output:" >&2
             echo "$output" >&2
