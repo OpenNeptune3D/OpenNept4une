@@ -20,7 +20,9 @@
 <div align="center">
   
 ### Credits: (Community Members)  
-Phillip Thelen, barrenechea, SQUIRRELYMOOSE, DanDonut & Jaerax
+Phillip Thelen, barrenechea, SQUIRRELYMOOSE, DanDonut & Jaerax  
+And our GitHub [Contributors](https://github.com/OpenNeptune3D/OpenNept4une/graphs/contributors)
+
 
 </div>
 
@@ -32,14 +34,14 @@ Phillip Thelen, barrenechea, SQUIRRELYMOOSE, DanDonut & Jaerax
 ---
 ### Image Features
 - Support for all Neptune 4 series models 
-- Custom Armbian Image (24.2.0 Bookworm with Linux kernel 6.1.67) ([Credit](https://github.com/halfmanbear/Armbian-ZNP-K1-build))
-- Klipper v0.12 installed + Easy MCU flash 
+- Custom Armbian Image (25.11 trixie with Linux kernel 6.16.12) ([Credit](https://github.com/redrathnure/armbian-mkspi.git)) ([Credit](https://github.com/halfmanbear/Armbian-ZNP-K1-build))
+- Klipper v0.13 installed + Easy MCU flash 
 - Updatable services, packages & firmware (No need for Elegoo Firmware Updates going forward)
 - TouchScreen Support BETA (More responsive)
 - All Elegoo Services Removed (No Z-Axis Issues)
 - Orca Slicer Profiles Provided
 - Adaptive Meshing Configured
-- Easy WiFi config for USB WiFi adapters 
+- Support for many for USB WiFi adapters 
 - Simplified and highly modified printer.cfg
 - Preconfigured LED, Bed Leveling & PID Calibration Macros
 - Screws Tilt Adjust Configured 
@@ -58,7 +60,8 @@ Phillip Thelen, barrenechea, SQUIRRELYMOOSE, DanDonut & Jaerax
 ---
 
 ### Included Projects: 
-  - [Armbian](https://github.com/armbian/build)
+  - [armbian](https://github.com/armbian/build)
+  - [(Fork) armbian-mkspi](https://github.com/redrathnure/armbian-mkspi.git)
   - [(Fork) Armbian-ZNP-K1-build base image](https://github.com/OpenNeptune3D/Armbian-ZNP-K1-build)
   - [display_connector](https://github.com/OpenNeptune3D/display_connector)
   - [KAMP (Klipper-Adaptive-Meshing-Purging)](https://github.com/kyleisah/Klipper-Adaptive-Meshing-Purging)
@@ -67,7 +70,6 @@ Phillip Thelen, barrenechea, SQUIRRELYMOOSE, DanDonut & Jaerax
   - [moonraker](https://github.com/Arksine/moonraker)
   - [fluidd:](https://github.com/fluidd-core/fluidd)
   - [mainsail](https://github.com/mainsail-crew/mainsail)
-  - [crowsnest](https://github.com/mainsail-crew/crowsnest)
   - [mobileraker](https://github.com/Clon1998/mobileraker)
 
 
