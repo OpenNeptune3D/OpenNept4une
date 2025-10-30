@@ -12,8 +12,8 @@ BASE_IMAGE_INSTALLER="${HOME}/OpenNept4une/img-config/base_image_configuration.s
 SSH_KEY_INSTALLER="${HOME}/OpenNept4une/img-config/update-ssh-keys.sh"
 
 FLAG_FILE="/boot/.OpenNept4une.txt"
-MODEL_FROM_FLAG=$(grep -E '^N4|^n4' "$FLAG_FILE")
-KERNEL_FROM_FLAG=$(grep 'Linux' "$FLAG_FILE" | awk '{split($3,a,"-"); print a[1]}')
+MODEL_FROM_FLAG=$(grep -E '^N4|^n4' "$FLAG_FILE" 2>/dev/null)
+KERNEL_FROM_FLAG=$(grep 'Linux' "$FLAG_FILE" 2>/dev/null | awk '{split($3,a,"-"); print a[1]}')
 
 OPENNEPT4UNE_REPO="https://github.com/OpenNeptune3D/OpenNept4une.git"
 OPENNEPT4UNE_DIR="${HOME}/OpenNept4une"
@@ -28,7 +28,7 @@ current_branch=""
 model_key=""
 motor_current=""
 pcb_version=""
-auto_yes=false
+auto_yes="false"
 
 # ASCII art for OpenNept4une
 OPENNEPT4UNE_ART=$(cat <<'EOF'
@@ -55,12 +55,15 @@ clear_screen() {
 }
 
 run_fixes() {
-    # Add user 'mks' to 'gpio' and 'spiusers' groups for GPIO and SPI access
-    if ! sudo usermod -aG gpio,spiusers mks &>/dev/null; then
-        printf '%s\n' "${R}Failed to add user 'mks' to groups 'gpio' and 'spiusers'${NC}"
+    # Get current user dynamically instead of hardcoding 'mks'
+    CURRENT_USER="${USER:-$(whoami)}"
+    
+    # Add current user to 'gpio' and 'spiusers' groups for GPIO and SPI access
+    if ! sudo usermod -aG gpio,spiusers "$CURRENT_USER" &>/dev/null; then
+        printf '%s\n' "${R}Failed to add user '$CURRENT_USER' to groups 'gpio' and 'spiusers'${NC}"
     fi
 
-    # Ensure NetworkManager override for Wi‑Fi power‑save exists ===
+    # Ensure NetworkManager override for Wi‑Fi power‑save exists
     NM_CONF_DIR="/etc/NetworkManager/conf.d"
     NM_PS_FILE="${NM_CONF_DIR}/zz-20-override-wifi-powersave-disable.conf"
     if [ ! -f "$NM_PS_FILE" ]; then
@@ -92,19 +95,19 @@ EOF
 
     # Append system information to the flag file if not already present
     SYSTEM_INFO=$(uname -a)
-    if ! sudo grep -qF "$SYSTEM_INFO" "$FLAG_FILE"; then
+    if ! sudo grep -qF "$SYSTEM_INFO" "$FLAG_FILE" 2>/dev/null; then
         if ! echo "$SYSTEM_INFO" | sudo tee -a "$FLAG_FILE" >/dev/null; then
             printf '%s\n' "${R}Failed to append system info to $FLAG_FILE${NC}"
         fi
     fi
 
     # Create a symbolic link for OpenNept4une Logo in fluidd
-    ln -s "${HOME}/OpenNept4une/pictures/logo_opennept4une.svg" "${HOME}/fluidd/logo_opennept4une.svg" > /dev/null 2>&1
+    ln -sf "${HOME}/OpenNept4une/pictures/logo_opennept4une.svg" "${HOME}/fluidd/logo_opennept4une.svg" > /dev/null 2>&1
 
     # Create a symbolic link to the main script if it doesn't exist
     SYMLINK_PATH="/usr/local/bin/opennept4une"
     if [ ! -L "$SYMLINK_PATH" ]; then
-        if ! sudo ln -s "$SCRIPT" "$SYMLINK_PATH"; then
+        if ! sudo ln -sf "$SCRIPT" "$SYMLINK_PATH"; then
             printf '%s\n' "${R}Failed to create symlink at $SYMLINK_PATH${NC}"
         fi
     fi
@@ -124,8 +127,7 @@ Description=Power Cut Monitor and Safe Shutdown
 Type=simple
 ExecStart=/home/mks/OpenNept4une/img-config/power_monitor.sh
 User=root
-Restart=on-failure
-RestartSec=5s
+Restart=no
 
 [Install]
 WantedBy=multi-user.target
@@ -148,11 +150,12 @@ update_repo() {
     moonraker_update_manager "OpenNept4une"
 
     if [ -d "${HOME}/OpenNept4une/display/venv" ]; then
-        printf '%b\n' "${Y}The Touch-Screen Display Service was moved to a different directory. Do you want to run the automatic migration?${NC} (Y/n): "
+        printf '%b' "${Y}The Touch-Screen Display Service was moved to a different directory. Do you want to run the automatic migration?${NC} (Y/n): "
         read -r user_input
-        if [[ $user_input =~ ^[Yy]$ ]]; then
-            initialize_display_connector && eval "$DISPLAY_SERVICE_INSTALLER"
-            rm -r "${HOME}/OpenNept4une/display"
+        if [[ $user_input =~ ^[Yy]$|^$ ]]; then
+            if initialize_display_connector && eval "$DISPLAY_SERVICE_INSTALLER"; then
+                rm -rf "${HOME}/OpenNept4une/display"
+            fi
         else
             printf '%b\n' "${Y}Skipping migration. ${R}The Display Service will not work until the migration is completed.${NC}"
             sleep 2
@@ -175,8 +178,11 @@ update_repo() {
 }
 
 process_repo_update() {
-    repo_dir=$1
-    name=$2
+    local repo_dir="$1"
+    local name="$2"
+    local update_branch
+    local REPLY=""
+    
     update_branch=$(git -C "$repo_dir" branch --show-current 2>/dev/null)
 
     if [ ! -d "$repo_dir" ]; then
@@ -206,21 +212,30 @@ process_repo_update() {
         if [ "$auto_yes" != "true" ]; then
             printf '%s' "Would you like to update ${G}● ${name}?${NC} (y/n): "
             read -r REPLY
+        else
+            REPLY="y"
         fi
 
-        if [[ $REPLY =~ ^[Yy]$ || $auto_yes = "true" ]]; then
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
             printf '%s\n' "Updating..."
             # Attempt to pull and capture any errors
-            UPDATE_OUTPUT=$(git -C "$repo_dir" pull origin "$current_branch" --force 2>&1) || true
-
-            # Check for the specific divergent branches error message
-            if echo "$UPDATE_OUTPUT" | grep -q "divergent branches"; then
-                printf '%b\n' "${R}Divergent branches detected, performing a hard reset to origin/${current_branch}...${NC}"
-                sleep 1
-                # SC2015 fix: rewrite the chaining so any failure triggers the block
-                if ! git -C "$repo_dir" reset --hard "origin/${update_branch}" ||
-                   ! git -C "$repo_dir" clean -fd; then
-                    printf '%b\n' "${R}Failed to hard reset ${name}.${NC}"
+            if ! UPDATE_OUTPUT=$(git -C "$repo_dir" pull origin "$update_branch" 2>&1); then
+                # Check for the specific divergent branches error message
+                if echo "$UPDATE_OUTPUT" | grep -q "divergent branches"; then
+                    printf '%b\n' "${R}Divergent branches detected, performing a hard reset to origin/${update_branch}...${NC}"
+                    sleep 1
+                    if ! git -C "$repo_dir" reset --hard "origin/${update_branch}"; then
+                        printf '%b\n' "${R}Failed to hard reset ${name}.${NC}"
+                        sleep 1
+                        return 1
+                    fi
+                    if ! git -C "$repo_dir" clean -fd; then
+                        printf '%b\n' "${R}Failed to clean ${name}.${NC}"
+                        sleep 1
+                        return 1
+                    fi
+                else
+                    printf '%b\n' "${R}Failed to update ${name}: $UPDATE_OUTPUT${NC}"
                     sleep 1
                     return 1
                 fi
@@ -241,12 +256,14 @@ process_repo_update() {
 }
 
 moonraker_update_manager() {
-    update_selection="$1"
-    config_file="$HOME/printer_data/config/moonraker.conf"
+    local update_selection="$1"
+    local config_file="$HOME/printer_data/config/moonraker.conf"
+    local new_lines=""
 
     if [ "$update_selection" = "OpenNept4une" ]; then
+        local current_ON_branch
         current_ON_branch=$(git -C "$OPENNEPT4UNE_DIR" symbolic-ref --short HEAD 2>/dev/null)
-        read -r -d '' new_lines <<EOF
+        new_lines=$(cat <<EOF
 [update_manager $update_selection]
 type: git_repo
 primary_branch: $current_ON_branch
@@ -254,10 +271,12 @@ path: $OPENNEPT4UNE_DIR
 is_system_service: False
 origin: $OPENNEPT4UNE_REPO
 EOF
+)
 
     elif [ "$update_selection" = "display" ]; then
+        local current_display_branch
         current_display_branch=$(git -C "$DISPLAY_CONNECTOR_DIR" symbolic-ref --short HEAD 2>/dev/null)
-        read -r -d '' new_lines <<EOF
+        new_lines=$(cat <<EOF
 [update_manager $update_selection]
 type: git_repo
 primary_branch: $current_display_branch
@@ -266,10 +285,12 @@ virtualenv: $DISPLAY_CONNECTOR_DIR/venv
 requirements: requirements.txt
 origin: $DISPLAY_CONNECTOR_REPO
 EOF
+)
 
     elif [ "$update_selection" = "display_firmware" ]; then
+        local current_firmware_branch
         current_firmware_branch=$(git -C "$DISPLAY_FIRMWARE_DIR" symbolic-ref --short HEAD 2>/dev/null)
-        read -r -d '' new_lines <<EOF
+        new_lines=$(cat <<EOF
 [update_manager $update_selection]
 type: git_repo
 primary_branch: $current_firmware_branch
@@ -279,27 +300,40 @@ virtualenv: $DISPLAY_FIRMWARE_DIR/venv
 requirements: requirements.txt
 origin: $DISPLAY_FIRMWARE_REPO
 EOF
+)
 
     else
         printf '%b\n' "${R}Invalid argument. Please specify either 'OpenNept4une', 'display', or 'display_firmware'.${NC}"
         return 1
     fi
+    
     # Escape section name for safe regex
+    local escaped_section
     escaped_section=$(printf '%s' "$update_selection" | sed 's/[][(){}.*+?^$|\\]/\\&/g')
+    
     # Update or append block
-    if grep -qF "[update_manager $update_selection]" "$config_file"; then
-        # Export new_lines as an env var to safely use in Perl
-        export NEW_LINES="$new_lines"
-        perl -pi.bak -e '
-            BEGIN { undef $/; $nl = $ENV{"NEW_LINES"}; }
-            s/\[update_manager '"$escaped_section"'\].*?((?:\r?\n){2}|\z)/$nl$1/s
-        ' "$config_file"
-        sync
+    if grep -qF "[update_manager $update_selection]" "$config_file" 2>/dev/null; then
+        # Use awk for safer in-place editing
+        local temp_file
+        temp_file=$(mktemp)
+        awk -v section="[update_manager $update_selection]" -v new_content="$new_lines" '
+        BEGIN { in_section=0; printed=0 }
+        $0 == section { in_section=1; print new_content; printed=1; next }
+        in_section && /^\[/ { in_section=0 }
+        !in_section { print }
+        ' "$config_file" > "$temp_file"
+        
+        if [ -s "$temp_file" ]; then
+            mv "$temp_file" "$config_file"
+            sync
+        else
+            rm -f "$temp_file"
+        fi
     else
-        if [ -s "$config_file" ] && [ "$(tail -c1 "$config_file")" != $'\n' ]; then
+        if [ -s "$config_file" ] && [ "$(tail -c1 "$config_file" 2>/dev/null)" != $'\n' ]; then
             echo >> "$config_file"
         fi
-        printf "\n%s" "$new_lines" >> "$config_file"
+        printf "\n%s\n" "$new_lines" >> "$config_file"
     fi
 }
 
@@ -340,7 +374,7 @@ advanced_more() {
             7) base_image_config;;
             8) "${HOME}/OpenNept4une/img-config/set-printer-model.sh"; exit 0;;
             9) update_ssh_keys;;
-            b) return;;  # Return to the main menu
+            b|B) return;;  # Return to the main menu
             *) printf '%b\n' "${R}Invalid choice, please try again.${NC}";;
         esac
 
@@ -366,9 +400,19 @@ install_feature() {
         printf '\n'
     fi
 
-    if [[ $user_input =~ ^[Yy]$ || -z $user_input || $auto_yes = "true" ]]; then
+    if [[ $user_input =~ ^[Yy]$|^$ ]] || [ "$auto_yes" = "true" ]; then
         printf '%s\n\n' "Running $feature_name Installer..."
-        if [[ -f "$action" || -n "$action" ]]; then
+        
+        # Check if action is a file (script) or a command
+        if [[ -f "$action" ]]; then
+            if bash "$action"; then
+                printf '%b\n' "${G}$feature_name Installer ran successfully.${NC}"
+                sleep 2
+            else
+                printf '%b\n' "${R}$feature_name Installer encountered an error.${NC}"
+                sleep 1
+            fi
+        elif [[ -n "$action" ]]; then
             if eval "$action"; then
                 printf '%b\n' "${G}$feature_name Installer ran successfully.${NC}"
                 sleep 2
@@ -397,7 +441,7 @@ webcam_setup() {
 }
 
 base_image_config() {
-    install_feature "Base Ambian Image Confifg" "$BASE_IMAGE_INSTALLER" "Do you want to configure a base/fresh armbian image that you compiled?"
+    install_feature "Base Armbian Image Config" "$BASE_IMAGE_INSTALLER" "Do you want to configure a base/fresh armbian image that you compiled?"
 }
 
 update_ssh_keys() {
@@ -429,6 +473,7 @@ toggle_branch() {
     if [ -d "$OPENNEPT4UNE_DIR" ]; then
         if [ -n "$current_branch" ]; then
             printf '%s' "You are currently on the ${G}'$current_branch'${NC} branch. "
+            local target_branch
             if [ "$current_branch" = "main" ]; then
                 target_branch="dev"
             else
@@ -470,8 +515,12 @@ display_firmware() {
     fi
 
     if [ ! -d "$DISPLAY_FIRMWARE_DIR" ]; then
-        git clone -b "$current_branch" "${DISPLAY_FIRMWARE_REPO}" "${DISPLAY_FIRMWARE_DIR}"
-        printf '%b\n' "${G}Initialized repository for Display Firmware Scripts.${NC}"
+        if git clone -b "$current_branch" "${DISPLAY_FIRMWARE_REPO}" "${DISPLAY_FIRMWARE_DIR}"; then
+            printf '%b\n' "${G}Initialized repository for Display Firmware Scripts.${NC}"
+        else
+            printf '%b\n' "${R}Failed to clone Display Firmware repository.${NC}"
+            return 1
+        fi
     fi
 
     install_feature "Flash/Update Display Firmware (Alpha)" "$UPDATED_DISPLAY_FIRMWARE_INSTALLER" "Do you want to run Flash/Update Display Firmware (Alpha)?"
@@ -480,8 +529,13 @@ display_firmware() {
 check_and_set_printer_model() {
     if [ -z "$MODEL_FROM_FLAG" ]; then
         printf '%s\n' "Model Flag is empty. Running Set Model script..."
-        "${HOME}/OpenNept4une/img-config/set-printer-model.sh"
-        MODEL_FROM_FLAG=$(grep '^N4' "$FLAG_FILE")
+        if [ -f "${HOME}/OpenNept4une/img-config/set-printer-model.sh" ]; then
+            "${HOME}/OpenNept4une/img-config/set-printer-model.sh"
+        else
+            printf '%b\n' "${R}Error: set-printer-model.sh not found.${NC}"
+            return 1
+        fi
+        MODEL_FROM_FLAG=$(grep -E '^N4|^n4' "$FLAG_FILE" 2>/dev/null)
         if [ -z "$MODEL_FROM_FLAG" ]; then
             printf '%s\n' "Failed to set Model Flag. Exiting."
             return 1
@@ -490,7 +544,7 @@ check_and_set_printer_model() {
         fi
         return 0
     else
-        printf '%s\n' "Model Detected"
+        printf '%s\n' "Model Detected: $MODEL_FROM_FLAG"
         return 0
     fi
 }
@@ -506,7 +560,9 @@ install_printer_cfg() {
     printf '%b\n' "${C}${OPENNEPT4UNE_ART}${NC}"
     printf '\n'
 
-    check_and_set_printer_model
+    if ! check_and_set_printer_model; then
+        return 1
+    fi
     sleep 1
 
     extract_model_and_motor
@@ -518,9 +574,17 @@ install_printer_cfg() {
 
     # Build config based on user selection
     if [[ $model_key == "n4" || $model_key == "n4pro" ]]; then
-        python3 "${HOME}/OpenNept4une/printer-confs/generate_conf.py" "${model_key}" "${motor_current}" >/dev/null 2>&1 && sync
+        if ! python3 "${HOME}/OpenNept4une/printer-confs/generate_conf.py" "${model_key}" "${motor_current}" >/dev/null 2>&1; then
+            printf '%b\n' "${R}Failed to generate printer configuration.${NC}"
+            return 1
+        fi
+        sync
     else
-        python3 "${HOME}/OpenNept4une/printer-confs/generate_conf.py" "${model_key}" >/dev/null 2>&1 && sync
+        if ! python3 "${HOME}/OpenNept4une/printer-confs/generate_conf.py" "${model_key}" >/dev/null 2>&1; then
+            printf '%b\n' "${R}Failed to generate printer configuration.${NC}"
+            return 1
+        fi
+        sync
     fi
     sleep 1
 
@@ -539,7 +603,7 @@ install_printer_cfg() {
 
         DIFF_OUTPUT=$(diff -y --suppress-common-lines --width=58 \
             "${HOME}/OpenNept4une/printer-confs/output.cfg" \
-            "${HOME}/printer_data/config/printer.cfg"
+            "${HOME}/printer_data/config/printer.cfg" 2>/dev/null
         )
 
         if [[ -z "$DIFF_OUTPUT" ]]; then
@@ -572,8 +636,9 @@ install_printer_cfg() {
 }
 
 apply_configuration() {
-    backup_count=0
-    BACKUP_PRINTER_CFG_FILE="$PRINTER_CFG_DEST/backup-printer.cfg.bak$backup_count"
+    local backup_count=1
+    local BACKUP_PRINTER_CFG_FILE="$PRINTER_CFG_DEST/backup-printer.cfg.bak$backup_count"
+    
     while [[ -f "$BACKUP_PRINTER_CFG_FILE" ]]; do
         ((backup_count++))
         BACKUP_PRINTER_CFG_FILE="$PRINTER_CFG_DEST/backup-printer.cfg.bak$backup_count"
@@ -618,16 +683,16 @@ install_configs() {
         ["Klipper DEBUG Addon"]="klipper_debug.cfg"
     )
 
-    local install_configs="$auto_yes"
+    local install_configs_var="$auto_yes"
     if [ "$auto_yes" != "true" ]; then
         printf '%s\n\n' "The latest configurations include updated settings and features for your printer."
         printf '%s\n\n' "${Y}It's recommended to update configurations during initial installs or when resetting to default configurations.${NC}"
         printf '%b' "${M}Select latest configurations to install?${NC} (y/N): "
         read -r choice
-        [[ $choice =~ ^[Yy]$ ]] && install_configs="true"
+        [[ $choice =~ ^[Yy]$ ]] && install_configs_var="true"
     fi
 
-    if [ "$install_configs" = "true" ]; then
+    if [ "$install_configs_var" = "true" ]; then
         PS3="Enter the number of the configuration to install (or 'Exit' to finish): "
         options=("All" "Fluidd web interface Conf" "Moonraker Conf" "KAMP Conf" "Mainsail web interface Conf" "Pico USB-C ADXL Conf" "Klipper DEBUG Addon" "Exit")
 
@@ -657,9 +722,9 @@ install_configs() {
                     return 0
                     ;;
                 2|3|4|5|6|7)
-                    opt_name="${options[$((opt-1))]}"
+                    local opt_name="${options[$((opt-1))]}"
                     printf '%s\n' "Installing ${opt_name}..."
-                    file=${config_files[$opt_name]}
+                    local file="${config_files[$opt_name]}"
 
                     printf '\n%s\n\n' "${G}Would you like to compare/diff your current ${opt_name} with the latest? (y/n).${NC}"
                     read -r -p "$(printf '%b' "${M}Enter your choice ${NC}: ")" DIFF_CHOICE
@@ -674,11 +739,11 @@ install_configs() {
                         if [[ $file == "data.mdb" ]]; then
                             DIFF_OUTPUT=$(diff -y --suppress-common-lines --width=58 \
                                 "${HOME}/OpenNept4une/img-config/printer-data/$file" \
-                                "${HOME}/printer_data/database/$file")
+                                "${HOME}/printer_data/database/$file" 2>/dev/null)
                         else
                             DIFF_OUTPUT=$(diff -y --suppress-common-lines --width=58 \
                                 "${HOME}/OpenNept4une/img-config/printer-data/$file" \
-                                "${HOME}/printer_data/config/$file")
+                                "${HOME}/printer_data/config/$file" 2>/dev/null)
                         fi
 
                         if [[ -z "$DIFF_OUTPUT" ]]; then
@@ -756,14 +821,22 @@ install_screen_service() {
 
 run_install_screen_service_with_setup() {
     rm -rf "${HOME}/display_connector"
-    initialize_display_connector
-    eval "$DISPLAY_SERVICE_INSTALLER"
+    if initialize_display_connector && [ -f "$DISPLAY_SERVICE_INSTALLER" ]; then
+        bash "$DISPLAY_SERVICE_INSTALLER"
+    else
+        printf '%b\n' "${R}Failed to initialize display connector or installer not found.${NC}"
+        return 1
+    fi
 }
 
 initialize_display_connector() {
     if [ ! -d "${HOME}/display_connector" ]; then
-        git clone -b "$current_branch" "${DISPLAY_CONNECTOR_REPO}" "${DISPLAY_CONNECTOR_DIR}"
-        printf '%b\n' "${G}Initialized repository for Touch-Screen Display Service.${NC}"
+        if git clone -b "$current_branch" "${DISPLAY_CONNECTOR_REPO}" "${DISPLAY_CONNECTOR_DIR}"; then
+            printf '%b\n' "${G}Initialized repository for Touch-Screen Display Service.${NC}"
+        else
+            printf '%b\n' "${R}Failed to clone Display Connector repository.${NC}"
+            return 1
+        fi
     fi
     moonraker_update_manager "display"
 }
@@ -774,12 +847,14 @@ reboot_system() {
     printf '%b\n' "${C}${OPENNEPT4UNE_ART}${NC}"
     printf '\n'
     local REBOOT_CHOICE=""
-    if [ $auto_yes = false ]; then
+    if [ "$auto_yes" != "true" ]; then
         printf '%s\n\n' "${Y}The system needs to be rebooted to continue. Reboot now? (y/n).${NC}"
         read -r -p "$(printf '%b' "${M}Enter your choice (highly advised)${NC}: ")" REBOOT_CHOICE
+    else
+        REBOOT_CHOICE="y"
     fi
 
-    if [[ "$REBOOT_CHOICE" =~ ^[Yy]$ || $auto_yes = true ]]; then
+    if [[ "$REBOOT_CHOICE" =~ ^[Yy]$ ]]; then
         printf '\n%s\n' "${G}System will reboot now.${NC}"
         sleep 1
         sudo reboot
@@ -836,7 +911,6 @@ print_menu() {
 }
 
 # Parse Command-Line Arguments
-# Replace SC2181 check with direct check
 if ! TEMP=$(getopt -o yh --long yes,help,printer_model:,motor_current:,pcb_version: -n 'OpenNept4une.sh' -- "$@"); then
     printf '%b\n' "${R}Failed to parse options.${NC}" >&2
     exit 1
@@ -848,10 +922,8 @@ while true; do
     case "$1" in
         --printer_model) model_key="$2"; shift 2 ;;
         --motor_current) motor_current="$2"; shift 2 ;;
-        --pcb_version) # pcb_version="$2" # Uncomment if truly needed
-            shift 2
-            ;;
-        -y|--yes) auto_yes=true; shift ;;
+        --pcb_version) pcb_version="$2"; shift 2 ;;
+        -y|--yes) auto_yes="true"; shift ;;
         -h|--help) print_help; exit 0 ;;
         --) shift; break ;;
         *) printf '%b\n' "${R}Invalid option: $1 ${NC}"; exit 1 ;;
@@ -876,14 +948,14 @@ if [ -z "$1" ]; then
             5) install_screen_service ;;
             6) usb_auto_mount ;;
             7) advanced_more ;;
-            q) clear; printf '%b\n' "${G}Goodbye...${NC}"; sleep 2; exit 0 ;;
+            q|Q) clear; printf '%b\n' "${G}Goodbye...${NC}"; sleep 2; exit 0 ;;
             *) printf '%b\n' "${R}Invalid choice. Please try again.${NC}" ;;
         esac
     done
 else
     run_fixes
-    COMMAND=$1
-    case $COMMAND in
+    COMMAND="$1"
+    case "$COMMAND" in
         install_printer_cfg) install_printer_cfg ;;
         install_configs) install_configs ;;
         wifi_config) wifi_config ;;
@@ -895,6 +967,6 @@ else
         webcam_setup) webcam_setup ;;
         base_image_config) base_image_config ;;
         armbian_resize) armbian_resize ;;
-        *) printf '%b\n' "${G}Invalid command. Please try again.${NC}" ;;
+        *) printf '%b\n' "${R}Invalid command. Please try again.${NC}" ;;
     esac
 fi
