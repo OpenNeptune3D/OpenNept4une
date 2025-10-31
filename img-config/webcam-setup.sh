@@ -321,6 +321,7 @@ EOL
     echo "Framerate:  $selected_fps"
     echo "Format:     $selected_format"
     echo "Stream URL: http://$LOCAL_IP:$STREAM_PORT/?action=stream"
+    echo "Snapshot URL: http://$LOCAL_IP:$STREAM_PORT/?action=snapshot"
 done
 
 echo ""
