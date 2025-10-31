@@ -189,7 +189,7 @@ if [[ "$mcu_choice" == "Virtual RPi" || "$mcu_choice" == "All" ]]; then
     if [[ -f /boot/.OpenNept4une.txt ]]; then
         if grep -iq "mks" /boot/.OpenNept4une.txt; then
             echo "Skipping kernel patch for MKS systems..."
-        elif grep -iq "dec 11" /boot/.OpenNept4une.txt; then 
+        elif grep -Eqi "dec 11|oct 12" /boot/.OpenNept4une.txt; then 
             echo "Applying kernel patch..."
             echo "kernel.sched_rt_runtime_us = -1" | sudo tee -a /etc/sysctl.d/10-disable-rt-group-limit.conf
         fi
