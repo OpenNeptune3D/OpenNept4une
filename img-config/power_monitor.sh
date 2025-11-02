@@ -10,8 +10,8 @@ LINE_SUPERCAP="${LINE_SUPERCAP:-21}"
 LINE_PWRLOSS="${LINE_PWRLOSS:-10}"   # rising = loss
 LINE_PWRGOOD="${LINE_PWRGOOD:-19}"   # falling = loss
 LOG_TAG="${LOG_TAG:-power_monitor}"
-VERIFY_SAMPLES="${VERIFY_SAMPLES:-5}"      # why: reject glitches
-VERIFY_INTERVAL_MS="${VERIFY_INTERVAL_MS:-40}"  # why: small, HW-friendly
+VERIFY_SAMPLES="${VERIFY_SAMPLES:-5}"
+VERIFY_INTERVAL_MS="${VERIFY_INTERVAL_MS:-40}"
 
 # ===== Helpers =====
 log() { echo "$1" | systemd-cat -t "$LOG_TAG" -p info; echo "$1"; }
@@ -39,13 +39,16 @@ fi
 
 # Track background processes for cleanup
 MON_PIDS=()
-SET_HOLDER_PID=""
+SUPERCAP_PID=""
 
 cleanup() {
-  # why: ensure no orphan monitors hold lines
-  for p in "${MON_PIDS[@]:-}"; do kill "$p" >/dev/null 2>&1 || true; done
-  if [ -n "${SET_HOLDER_PID}" ] && kill -0 "$SET_HOLDER_PID" >/dev/null 2>&1; then
-    kill "$SET_HOLDER_PID" >/dev/null 2>&1 || true
+  # Kill monitors on exit
+  for p in "${MON_PIDS[@]:-}"; do 
+    kill "$p" >/dev/null 2>&1 || true
+  done
+  # Kill supercap holder if it exists
+  if [ -n "${SUPERCAP_PID}" ] && kill -0 "$SUPERCAP_PID" >/dev/null 2>&1; then
+    kill "$SUPERCAP_PID" >/dev/null 2>&1 || true
   fi
 }
 trap cleanup EXIT
@@ -56,16 +59,20 @@ enable_supercap() {
     log "[DEBUG] gpioset ${CHIP} ${LINE_SUPERCAP}=1 (no-op)"
     return
   fi
+  
   if $USE_V2; then
-    # why: keep line asserted for charging; background holder process
+    # v2: daemonize mode keeps the line held
     gpioset -c "$CHIP" --daemonize "${LINE_SUPERCAP}=1"
-    # best-effort grab the newest gpioset holder (optional)
-    SET_HOLDER_PID="$(pgrep -n -f "gpioset -c $CHIP .*${LINE_SUPERCAP}=1" || true)"
+    sleep 0.2  # Give daemon time to fork
+    # Try to find PID (best-effort for cleanup)
+    SUPERCAP_PID="$(pgrep -n -x gpioset || true)"
+    log "Super-capacitor charging enabled (GPIO ${LINE_SUPERCAP} HIGH) [v2 daemonized]"
   else
-    # v1: many builds don't have a daemon mode; set best-effort and hope pin default keeps it high.
-    gpioset "$CHIP" "${LINE_SUPERCAP}=1" || true
+    # v1: Run gpioset in background to HOLD the line (like your working script)
+    gpioset "$CHIP" "${LINE_SUPERCAP}=1" &
+    SUPERCAP_PID=$!
+    log "Super-capacitor charging enabled (GPIO ${LINE_SUPERCAP} HIGH) [v1, pid=${SUPERCAP_PID}]"
   fi
-  log "Super-capacitor charging enabled (GPIO ${LINE_SUPERCAP} HIGH)"
 }
 
 # ===== Read states =====
@@ -75,18 +82,26 @@ read_states() {
     if $USE_V2; then out="\"${LINE_PWRLOSS}\"=inactive \"${LINE_PWRGOOD}\"=active"
     else out="0 1"; fi
   else
-    if $USE_V2; then out="$(gpioget -c "$CHIP" "$LINE_PWRLOSS" "$LINE_PWRGOOD")"
+    if $USE_V2; then out="$(gpioget -c "$CHIP" "$LINE_PWRLOSS" "$LINE_PWRGOOD" 2>&1)"
     else out="$(gpioget "$CHIP" "$LINE_PWRLOSS" "$LINE_PWRGOOD")"; fi
   fi
 
   local pl pg
   if $USE_V2; then
-    if   echo "$out" | grep -q "\"${LINE_PWRLOSS}\"=active";   then pl=1
-    elif echo "$out" | grep -q "\"${LINE_PWRLOSS}\"=inactive"; then pl=0
-    else pl=2; fi
-    if   echo "$out" | grep -q "\"${LINE_PWRGOOD}\"=active";   then pg=1
-    elif echo "$out" | grep -q "\"${LINE_PWRGOOD}\"=inactive"; then pg=0
-    else pg=2; fi
+    # Handle both "LINE"=state and chip LINE=state formats
+    if echo "$out" | grep -Eq "(\"${LINE_PWRLOSS}\"|${CHIP}[[:space:]]+${LINE_PWRLOSS})=active"; then pl=1
+    elif echo "$out" | grep -Eq "(\"${LINE_PWRLOSS}\"|${CHIP}[[:space:]]+${LINE_PWRLOSS})=inactive"; then pl=0
+    else 
+      log "WARNING: Could not parse PWRLOSS from: $out"
+      pl=2
+    fi
+    
+    if echo "$out" | grep -Eq "(\"${LINE_PWRGOOD}\"|${CHIP}[[:space:]]+${LINE_PWRGOOD})=active"; then pg=1
+    elif echo "$out" | grep -Eq "(\"${LINE_PWRGOOD}\"|${CHIP}[[:space:]]+${LINE_PWRGOOD})=inactive"; then pg=0
+    else 
+      log "WARNING: Could not parse PWRGOOD from: $out"
+      pg=2
+    fi
   else
     read -r pl pg <<<"$out"
   fi
@@ -103,12 +118,27 @@ start_monitors() {
   fi
 
   if $USE_V2; then
-    # why: v2 cannot set per-line edges in a single invocation; run two
-    gpiomon -c "$CHIP" --edges=rising -n 1 "$LINE_PWRLOSS" & MON_PIDS+=("$!")
-    gpiomon -c "$CHIP" --edges=falling -n 1 "$LINE_PWRGOOD" & MON_PIDS+=("$!")
+    # v2: separate invocations for different edge directions
+    gpiomon -c "$CHIP" --edges=rising -n 1 "$LINE_PWRLOSS" &
+    local pid1=$!
+    MON_PIDS+=("$pid1")
+    
+    gpiomon -c "$CHIP" --edges=falling -n 1 "$LINE_PWRGOOD" &
+    local pid2=$!
+    MON_PIDS+=("$pid2")
+    
+    # Verify monitors started
+    sleep 0.1
+    if ! kill -0 "$pid1" 2>/dev/null || ! kill -0 "$pid2" 2>/dev/null; then
+      die "Failed to start v2 monitors"
+    fi
+    
+    log "Monitors started: PWRLOSS(${LINE_PWRLOSS}↑ pid=$pid1) PWRGOOD(${LINE_PWRGOOD}↓ pid=$pid2)"
   else
-    gpiomon --num-events=1 --rising-edge  "$CHIP" "$LINE_PWRLOSS"  & MON_PIDS+=("$!")
-    gpiomon --num-events=1 --falling-edge "$CHIP" "$LINE_PWRGOOD"  & MON_PIDS+=("$!")
+    # v1: classic syntax (like your working script)
+    gpiomon --num-events=1 --rising-edge "$CHIP" "$LINE_PWRLOSS" & MON_PIDS+=("$!")
+    gpiomon --num-events=1 --falling-edge "$CHIP" "$LINE_PWRGOOD" & MON_PIDS+=("$!")
+    log "Monitors started: PWRLOSS(${LINE_PWRLOSS}↑) and PWRGOOD(${LINE_PWRGOOD}↓), PIDs: ${MON_PIDS[*]}"
   fi
 }
 
@@ -116,8 +146,10 @@ wait_any_event() {
   if $DEBUG; then
     log "[DEBUG] simulate waiting 30s"; sleep 30; return 0
   fi
+  
+  # Wait for ANY monitor to finish
   if [ "${BASH_VERSINFO[0]}" -ge 5 ] || { [ "${BASH_VERSINFO[0]}" -eq 4 ] && [ "${BASH_VERSINFO[1]}" -ge 3 ]; }; then
-    wait -n
+    wait -n "${MON_PIDS[@]}"
   else
     wait
   fi
@@ -126,49 +158,58 @@ wait_any_event() {
 # ===== Verify event (simple debounce/confirm) =====
 verify_loss() {
   local ok=0 cnt=0
+  log "Verifying power loss condition..."
+  
   while [ "$cnt" -lt "$VERIFY_SAMPLES" ]; do
     read -r pl pg < <(read_states)
-    # loss if PWRLOSS==1 or PWRGOOD==0
-    if { [ "$pl" = "1" ] || [ "$pg" = "0" ]; }; then
+    # Loss if PWRLOSS==1 or PWRGOOD==0
+    if [ "$pl" = "1" ] || [ "$pg" = "0" ]; then
       ok=$((ok+1))
     fi
     cnt=$((cnt+1))
-    ms_sleep "$VERIFY_INTERVAL_MS"
+    [ "$cnt" -lt "$VERIFY_SAMPLES" ] && ms_sleep "$VERIFY_INTERVAL_MS"
   done
-  # require majority true
+  
+  log "Verification: ${ok}/${VERIFY_SAMPLES} samples confirmed loss"
+  # Require majority true
   [ "$ok" -ge $(( (VERIFY_SAMPLES+1)/2 )) ]
 }
 
 handle_power_cut() {
   log "Power loss verified. Initiating safe shutdown..."
   if $DEBUG; then
-    log "[DEBUG] Would execute: systemctl poweroff"; exit 0
+    log "[DEBUG] Would execute: systemctl poweroff"
   else
     systemctl poweroff
   fi
+  # Don't exit in real mode - let systemd handle it
+  $DEBUG && exit 0
 }
 
 # ===== Main =====
 enable_supercap
 
+# Give supercap a moment to stabilize
+sleep 0.5
+
 read -r pl pg < <(read_states)
 log "Initial states — PowerLoss(${LINE_PWRLOSS})=${pl}, PowerGood(${LINE_PWRGOOD})=${pg}"
 
 if [ "$pl" = "0" ] && [ "$pg" = "1" ]; then
-  log "Pins in expected stable state. Waiting for PWRLOSS↑ or PWRGOOD↓."
+  log "Pins in expected stable state. Starting monitors."
 else
-  log "WARNING: Unexpected initial state. Continuing anyway."
+  log "WARNING: Unexpected initial state (PWRLOSS=${pl}, PWRGOOD=${pg}). Continuing anyway."
 fi
 
-while true; do
-  start_monitors
-  wait_any_event
-  # Stop any remaining monitor from spurious firing later
-  cleanup
+# Start monitors once and wait (like your working script)
+start_monitors
+wait_any_event
 
-  if verify_loss; then
-    handle_power_cut
-  else
-    log "Glitch ignored (failed verification). Re-arming monitors."
-  fi
-done
+# An event occurred - verify it
+if verify_loss; then
+  handle_power_cut
+else
+  log "Glitch detected and ignored. Restarting monitors."
+  # Only loop if it was a false alarm
+  exec "$0" "$@"
+fi
