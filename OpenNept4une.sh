@@ -63,7 +63,7 @@ run_fixes() {
         printf '%s\n' "${R}Failed to add user '$CURRENT_USER' to groups 'gpio' and 'spiusers'${NC}"
     fi
 
-    # Ensure NetworkManager override for Wi‑Fi power‑save exists
+    # Ensure NetworkManager override for Wi-Fi power-save exists
     NM_CONF_DIR="/etc/NetworkManager/conf.d"
     NM_PS_FILE="${NM_CONF_DIR}/zz-20-override-wifi-powersave-disable.conf"
     if [ ! -f "$NM_PS_FILE" ]; then
@@ -76,7 +76,6 @@ EOF
         then
             printf '%s\n' "${R}Failed to create $NM_PS_FILE${NC}"
         else
-            # Reload NetworkManager so the new setting takes effect immediately
             sudo systemctl restart NetworkManager >/dev/null 2>&1
         fi
     fi
@@ -135,6 +134,18 @@ EOF
         sudo systemctl daemon-reload > /dev/null 2>&1
         sudo systemctl enable power_monitor.service > /dev/null 2>&1
         sudo systemctl start power_monitor.service > /dev/null 2>&1
+    fi
+
+    # Make systemd-logind ignore power key / long press (silent, idempotent)
+    LOGIND_CONF="/etc/systemd/logind.conf"
+    if [ -f "$LOGIND_CONF" ]; then
+        if ! sudo grep -q '^HandlePowerKey=ignore$' "$LOGIND_CONF" || \
+           ! sudo grep -q '^HandlePowerKeyLongPress=ignore$' "$LOGIND_CONF"; then
+            sudo cp "$LOGIND_CONF" "${LOGIND_CONF}.bak" 2>/dev/null || true
+            sudo sed -i 's/^[#]*HandlePowerKey=.*/HandlePowerKey=ignore/' "$LOGIND_CONF" 2>/dev/null || true
+            sudo sed -i 's/^[#]*HandlePowerKeyLongPress=.*/HandlePowerKeyLongPress=ignore/' "$LOGIND_CONF" 2>/dev/null || true
+            sudo systemctl restart systemd-logind >/dev/null 2>&1 || true
+        fi
     fi
 }
 
