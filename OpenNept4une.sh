@@ -318,10 +318,6 @@ EOF
         return 1
     fi
     
-    # Escape section name for safe regex
-    local escaped_section
-    escaped_section=$(printf '%s' "$update_selection" | sed 's/[][(){}.*+?^$|\\]/\\&/g')
-    
     # Update or append block
     if grep -qF "[update_manager $update_selection]" "$config_file" 2>/dev/null; then
         # Use awk for safer in-place editing
