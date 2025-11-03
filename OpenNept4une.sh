@@ -63,7 +63,7 @@ run_fixes() {
         printf '%s\n' "${R}Failed to add user '$CURRENT_USER' to groups 'gpio' and 'spiusers'${NC}"
     fi
 
-    # Ensure NetworkManager override for Wi‑Fi power‑save exists
+    # Ensure NetworkManager override for Wi-Fi power-save exists
     NM_CONF_DIR="/etc/NetworkManager/conf.d"
     NM_PS_FILE="${NM_CONF_DIR}/zz-20-override-wifi-powersave-disable.conf"
     if [ ! -f "$NM_PS_FILE" ]; then
@@ -76,7 +76,6 @@ EOF
         then
             printf '%s\n' "${R}Failed to create $NM_PS_FILE${NC}"
         else
-            # Reload NetworkManager so the new setting takes effect immediately
             sudo systemctl restart NetworkManager >/dev/null 2>&1
         fi
     fi
@@ -135,6 +134,18 @@ EOF
         sudo systemctl daemon-reload > /dev/null 2>&1
         sudo systemctl enable power_monitor.service > /dev/null 2>&1
         sudo systemctl start power_monitor.service > /dev/null 2>&1
+    fi
+
+    # Make systemd-logind ignore power key / long press (silent, idempotent)
+    LOGIND_CONF="/etc/systemd/logind.conf"
+    if [ -f "$LOGIND_CONF" ]; then
+        if ! sudo grep -q '^HandlePowerKey=ignore$' "$LOGIND_CONF" || \
+           ! sudo grep -q '^HandlePowerKeyLongPress=ignore$' "$LOGIND_CONF"; then
+            sudo cp "$LOGIND_CONF" "${LOGIND_CONF}.bak" 2>/dev/null || true
+            sudo sed -i 's/^[#]*HandlePowerKey=.*/HandlePowerKey=ignore/' "$LOGIND_CONF" 2>/dev/null || true
+            sudo sed -i 's/^[#]*HandlePowerKeyLongPress=.*/HandlePowerKeyLongPress=ignore/' "$LOGIND_CONF" 2>/dev/null || true
+            sudo systemctl restart systemd-logind >/dev/null 2>&1 || true
+        fi
     fi
 }
 
@@ -307,10 +318,6 @@ EOF
         return 1
     fi
     
-    # Escape section name for safe regex
-    local escaped_section
-    escaped_section=$(printf '%s' "$update_selection" | sed 's/[][(){}.*+?^$|\\]/\\&/g')
-    
     # Update or append block
     if grep -qF "[update_manager $update_selection]" "$config_file" 2>/dev/null; then
         # Use awk for safer in-place editing
@@ -466,8 +473,10 @@ toggle_branch() {
             git -C "$repo_dir" clean -fd >/dev/null 2>&1
             if git -C "$repo_dir" checkout "$branch_name" >/dev/null 2>&1; then
                 printf '%b\n' "${G}Switched $repo_dir to $branch_name.${NC}"
+                return 0
             fi
         fi
+        return 1
     }
 
     if [ -d "$OPENNEPT4UNE_DIR" ]; then
@@ -482,12 +491,21 @@ toggle_branch() {
             printf '%b ' "${M}Would you like to switch to the '$target_branch' branch?${NC} (y/n): "
             read -r user_response
             if [[ $user_response =~ ^[Yy]$ ]]; then
-                switch_branch "$target_branch" "$OPENNEPT4UNE_DIR"
-                switch_branch "$target_branch" "$DISPLAY_CONNECTOR_DIR"
-                switch_branch "$target_branch" "$DISPLAY_FIRMWARE_DIR"
-                moonraker_update_manager "OpenNept4une"
-                moonraker_update_manager "display"
-                moonraker_update_manager "display_firmware"
+                # Switch OpenNept4une repo (always present)
+                if switch_branch "$target_branch" "$OPENNEPT4UNE_DIR"; then
+                    moonraker_update_manager "OpenNept4une"
+                fi
+                
+                # Switch display_connector repo only if it exists
+                if switch_branch "$target_branch" "$DISPLAY_CONNECTOR_DIR"; then
+                    moonraker_update_manager "display"
+                fi
+                
+                # Switch display_firmware repo only if it exists and has venv (indicating it's installed)
+                if [ -d "${DISPLAY_FIRMWARE_DIR}/venv" ] && switch_branch "$target_branch" "$DISPLAY_FIRMWARE_DIR"; then
+                    moonraker_update_manager "display_firmware"
+                fi
+                
                 printf '%b\n' "${G}Branch switch operation completed.${NC}"
                 sync
                 sudo service moonraker restart
