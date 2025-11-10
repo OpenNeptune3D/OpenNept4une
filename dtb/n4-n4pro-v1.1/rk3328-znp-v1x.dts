@@ -595,7 +595,6 @@
 
 			power-domain@5 {
 				reg = <0x05>;
-				status = "disabled";
 				#power-domain-cells = <0x00>;
 			};
 
@@ -1253,7 +1252,7 @@
 		clock-names = "aclk\0iface";
 		#iommu-cells = <0x00>;
 		power-domains = <0x44 0x05>;
-                status = "disabled";
+        status = "disabled";
 		phandle = <0x47>;
 	};
 
@@ -1313,7 +1312,6 @@
 		clock-names = "axi\0ahb";
 		power-domains = <0x44 0x05>;
 		iommus = <0x4a>;
-                status = "disabled";
 		phandle = <0x9c>;
 	};
 
@@ -1326,7 +1324,7 @@
 		clock-names = "aclk\0iface";
 		power-domains = <0x44 0x05>;
 		#iommu-cells = <0x00>;
-                status = "disabled";
+        status = "disabled";
 		phandle = <0x4a>;
 	};
 
