@@ -87,6 +87,7 @@ echo "Removing leftover MJPG-streamer services from any previous runs..."
 sudo systemctl stop mjpg-streamer-webcam*.service > /dev/null 2>&1
 sudo systemctl disable mjpg-streamer-webcam*.service > /dev/null 2>&1
 sudo rm -f /etc/systemd/system/mjpg-streamer-webcam*.service
+sudo rm -f /usr/local/bin/start-mjpg-webcam*.sh
 sudo systemctl daemon-reload
 
 ###############################################################################
@@ -130,6 +131,7 @@ fi
 # 8. Detect USB webcams
 ###############################################################################
 valid_video_devices=()
+declare -A device_names  # Store the human-readable device names
 
 # This looks for any line containing 'usb', then the next lines for /dev/video*
 usb_devices=$(v4l2-ctl --list-devices | grep -A 9999 'usb' | grep -E '/dev/video' | awk '{print $1}')
@@ -140,8 +142,11 @@ for device in $usb_devices; do
         # Check if the output contains 'MJPG' or 'YUYV'
         if echo "$FORMATS_OUTPUT" | grep -q -E 'MJPG|YUYV'; then
             valid_video_devices+=("$device")
+            # Get the device name for identification
+            DEVICE_NAME=$(v4l2-ctl --list-devices | grep -B 1 "$device" | head -1 | sed 's/^\s*//' | sed 's/ (usb.*//')
+            device_names["$device"]="$DEVICE_NAME"
             echo ""
-            echo "Valid video device found: $device"
+            echo "Valid video device found: $device ($DEVICE_NAME)"
         else
             echo ""
             echo "Device $device does not support MJPG or YUYV. Ignoring."
@@ -189,6 +194,10 @@ for (( i=1; i<=num_webcams; i++ )); do
 
     echo ""
     echo "Selected video device: $VIDEO_DEVICE for webcam $i"
+    
+    # Store the device name pattern for dynamic detection
+    DEVICE_NAME_PATTERN="${device_names[$VIDEO_DEVICE]}"
+    echo "Device name pattern: $DEVICE_NAME_PATTERN"
 
     # Remove the chosen device from the array to avoid duplicates in next iteration
     unset "valid_video_devices[$((device_choice-1))]"
@@ -287,13 +296,46 @@ for (( i=1; i<=num_webcams; i++ )); do
     # Assign a unique port (8080 for first, 8081 for second, etc.)
     STREAM_PORT=$((8080 + i - 1))
 
+    # Create the startup script with dynamic device detection
+    STARTUP_SCRIPT="/usr/local/bin/start-mjpg-webcam$i.sh"
+    sudo bash -c "cat > $STARTUP_SCRIPT" <<EOL
+#!/bin/bash
+
+# Find the webcam device dynamically by name pattern
+WEBCAM_DEVICE=\$(v4l2-ctl --list-devices 2>/dev/null | grep -A 10 "$DEVICE_NAME_PATTERN" | grep "/dev/video" | head -1 | awk '{print \$1}')
+
+# Fallback: if name-based detection fails, try to find any USB webcam with MJPG/YUYV support
+if [[ -z "\$WEBCAM_DEVICE" ]]; then
+    echo "Warning: Could not find webcam by name pattern. Searching for any compatible USB webcam..."
+    USB_DEVICES=\$(v4l2-ctl --list-devices 2>/dev/null | grep -A 9999 'usb' | grep -E '/dev/video' | awk '{print \$1}')
+    for device in \$USB_DEVICES; do
+        FORMATS=\$(v4l2-ctl --device="\$device" --list-formats-ext 2>/dev/null)
+        if echo "\$FORMATS" | grep -q -E 'MJPG|YUYV'; then
+            WEBCAM_DEVICE="\$device"
+            break
+        fi
+    done
+fi
+
+# If still not found, exit with error
+if [[ -z "\$WEBCAM_DEVICE" ]]; then
+    echo "Error: Webcam not found! Device pattern: $DEVICE_NAME_PATTERN"
+    exit 1
+fi
+
+echo "Starting MJPG Streamer on \$WEBCAM_DEVICE (port $STREAM_PORT)"
+/usr/local/bin/mjpg_streamer -i "input_uvc.so -d \$WEBCAM_DEVICE -r $selected_resolution -f $selected_fps $video_format" -o "output_http.so -w /www/webcam -p $STREAM_PORT"
+EOL
+    sudo chmod +x "$STARTUP_SCRIPT"
+
+    # Create the systemd service file
     sudo bash -c "cat > $SERVICE_FILE" <<EOL
 [Unit]
 Description=MJPG Streamer Service for Webcam $i
 After=network.target
 
 [Service]
-ExecStart=/usr/local/bin/mjpg_streamer -i "input_uvc.so -d $VIDEO_DEVICE -r $selected_resolution -f $selected_fps $video_format" -o "output_http.so -w /www/webcam -p $STREAM_PORT"
+ExecStart=$STARTUP_SCRIPT
 Restart=always
 User=$(whoami)
 
@@ -317,6 +359,7 @@ EOL
 
     echo ""
     echo "Service for webcam $i updated and restarted successfully."
+    echo "Device name pattern: $DEVICE_NAME_PATTERN"
     echo "Resolution: $selected_resolution"
     echo "Framerate:  $selected_fps"
     echo "Format:     $selected_format"
