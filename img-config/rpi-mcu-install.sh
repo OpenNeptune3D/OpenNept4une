@@ -148,7 +148,7 @@ if [[ "$mcu_choice" == "Pico-based USB Accelerometer" || "$mcu_choice" == "All" 
         done
 
         echo "Installing numpy in Klipper environment..."
-        ~/klippy-env/bin/pip install -v numpy
+        ~/klippy-env/bin/pip install numpy
 
         apply_minimal_config "${HOME}/OpenNept4une/mcu-firmware/pico_usb.config"
         make
@@ -167,15 +167,15 @@ if [[ "$mcu_choice" == "Virtual RPi" || "$mcu_choice" == "All" ]]; then
 
     echo "Installing required packages (this may take a moment)..."
     for pkg in python3-numpy python3-matplotlib libatlas3-base libopenblas-dev; do
-        if ! output=$(sudo apt install -y "$pkg" 2>&1); then
-            echo "Warning: Failed to install $pkg. Error output:" >&2
-            echo "$output" >&2
+        echo "Installing $pkg..."
+        if ! sudo apt install -y "$pkg"; then
+            echo "Warning: Failed to install $pkg." >&2
         fi
     done
     echo "Package installation complete."
 
     echo "Installing numpy in Klipper environment..."
-    ~/klippy-env/bin/pip install -v numpy || { echo "Numpy installation failed, continuing..."; }
+    ~/klippy-env/bin/pip install numpy || { echo "Numpy installation failed, continuing..."; }
 
     echo "Copying klipper-mcu.service..."
     sudo cp ./scripts/klipper-mcu.service /etc/systemd/system/ || { echo "Failed to copy service file"; exit 1; }
