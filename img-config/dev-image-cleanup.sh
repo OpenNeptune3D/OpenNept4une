@@ -42,66 +42,53 @@ fi
 # ------------------------------------
 # 1) Reset Git repos to latest default branch (main/master)
 # ------------------------------------
-reset_repo_to_default_branch() {
+checkout_main_and_pull_latest() {
   local repo="$1"
+  local remote="origin"
+  local branch="main"
 
   if [[ ! -d "$repo" ]]; then
     echo "   Skipping $repo (dir missing)"
     return 0
   fi
 
-  if git -C "$repo" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-    echo "-- Hard resetting repo: $repo --"
-
-    local remote="origin"
-    if ! git -C "$repo" remote get-url origin >/dev/null 2>&1; then
-      remote="$(git -C "$repo" remote 2>/dev/null | head -n1 || true)"
-    fi
-    if [[ -z "$remote" ]]; then
-      echo "   No remote found, skipping fetch/reset."
-      return 0
-    fi
-
-    if ! git -C "$repo" fetch --prune "$remote"; then
-      echo "   Fetch failed (offline?). Skipping reset for $repo"
-      return 0
-    fi
-
-    local branch=""
-    branch="$(git -C "$repo" symbolic-ref --quiet --short "refs/remotes/$remote/HEAD" 2>/dev/null \
-              | sed "s#^$remote/##")"
-
-    if [[ -z "$branch" ]]; then
-      if git -C "$repo" show-ref --verify --quiet "refs/remotes/$remote/main"; then
-        branch="main"
-      elif git -C "$repo" show-ref --verify --quiet "refs/remotes/$remote/master"; then
-        branch="master"
-      else
-        echo "   Can't determine default branch on $remote, skipping."
-        return 0
-      fi
-    fi
-
-    if git -C "$repo" show-ref --verify --quiet "refs/heads/$branch"; then
-      git -C "$repo" checkout "$branch"
-    else
-      git -C "$repo" checkout -B "$branch" "$remote/$branch"
-    fi
-
-    git -C "$repo" reset --hard "$remote/$branch"
-    git -C "$repo" clean -fdx
-
-    if [[ -f "$repo/.gitmodules" ]]; then
-      git -C "$repo" submodule sync --recursive
-      git -C "$repo" submodule update --init --recursive --force
-    fi
-  else
+  if ! git -C "$repo" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
     echo "   Skipping $repo (not a git repo)"
+    return 0
   fi
+
+  echo "-- Checkout $branch and pull latest: $repo --"
+
+  # Ensure we have a usable remote (prefer origin)
+  if ! git -C "$repo" remote get-url "$remote" >/dev/null 2>&1; then
+    remote="$(git -C "$repo" remote | head -n1 || true)"
+    if [[ -z "$remote" ]]; then
+      echo "   No remote found, skipping."
+      return 0
+    fi
+  fi
+
+  # Fetch so remote/main is up to date
+  if ! git -C "$repo" fetch --prune "$remote"; then
+    echo "   Fetch failed (offline?). Skipping pull for $repo"
+    return 0
+  fi
+
+  # Checkout main (create it tracking remote/main if missing locally)
+  if git -C "$repo" show-ref --verify --quiet "refs/heads/$branch"; then
+    git -C "$repo" checkout "$branch"
+  else
+    git -C "$repo" checkout -b "$branch" --track "$remote/$branch" \
+      || { echo "   Remote branch $remote/$branch not found, skipping."; return 0; }
+  fi
+
+  # Pull latest changes (fast-forward only to avoid unwanted merges)
+  git -C "$repo" pull --ff-only "$remote" "$branch" \
+    || echo "   Pull failed (local commits/divergence?) in $repo"
 }
 
-reset_repo_to_default_branch "$USER_HOME/display_connector"
-reset_repo_to_default_branch "$USER_HOME/OpenNept4une"
+checkout_main_and_pull_latest "$USER_HOME/display_connector"
+checkout_main_and_pull_latest "$USER_HOME/OpenNept4une"
 
 # -----------------------------
 # 2) Personalised files cleanup
