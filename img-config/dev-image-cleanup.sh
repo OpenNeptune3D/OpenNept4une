@@ -109,6 +109,8 @@ reset_repo_to_default_branch "$USER_HOME/OpenNept4une"
 echo "-- Removing personal/app-specific files --"
 
 rm -f "$USER_HOME/printer_data/configs/printer.cfg" || true
+: > "$USER_HOME/printer_data/config/user_settings.cfg"
+
 
 # Remove N4* model line from OpenNept4une file (txt or cfg), keep backup
 for OPENNEP_FILE in /boot/.OpenNept4une.txt /boot/.OpenNept4une.cfg; do
