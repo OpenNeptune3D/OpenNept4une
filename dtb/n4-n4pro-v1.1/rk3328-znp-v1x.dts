@@ -360,32 +360,32 @@
 
 		opp-408000000 {
 			opp-hz = <0x00 0x18519600>;
-			opp-microvolt = <0xe7ef0>;
+			opp-microvolt = <0xf4240>;
 			clock-latency-ns = <0x9c40>;
 			opp-suspend;
 		};
 
 		opp-600000000 {
 			opp-hz = <0x00 0x23c34600>;
-			opp-microvolt = <0xe7ef0>;
+			opp-microvolt = <0xf4240>;
 			clock-latency-ns = <0x9c40>;
 		};
 
 		opp-816000000 {
 			opp-hz = <0x00 0x30a32c00>;
-			opp-microvolt = <0xf4240>;
+			opp-microvolt = <0x100590>;
 			clock-latency-ns = <0x9c40>;
 		};
 
 		opp-1008000000 {
 			opp-hz = <0x00 0x3c14dc00>;
-			opp-microvolt = <0x10c8e0>;
+			opp-microvolt = <0x118c30>;
 			clock-latency-ns = <0x9c40>;
 		};
 
 		opp-1200000000 {
 			opp-hz = <0x00 0x47868c00>;
-			opp-microvolt = <0x12b128>;
+			opp-microvolt = <0x137478>;
 			clock-latency-ns = <0x9c40>;
 		};
 
@@ -393,6 +393,7 @@
 			opp-hz = <0x00 0x4d3f6400>;
 			opp-microvolt = <0x13d620>;
 			clock-latency-ns = <0x9c40>;
+			status = "disabled";
 		};
 	};
 
@@ -430,7 +431,7 @@
 		simple-audio-card,format = "i2s";
 		simple-audio-card,mclk-fs = <0x80>;
 		simple-audio-card,name = "HDMI";
-		status = "okay";
+		status = "disabled";
 		phandle = <0x77>;
 
 		simple-audio-card,cpu {
@@ -594,7 +595,6 @@
 
 			power-domain@5 {
 				reg = <0x05>;
-				clocks = <0x02 0x8b 0x02 0x142 0x02 0x41 0x02 0x42>;
 				#power-domain-cells = <0x00>;
 			};
 
@@ -693,8 +693,8 @@
 		pmic@18 {
 			compatible = "rockchip,rk805";
 			reg = <0x18>;
-			interrupt-parent = <0x29>;
-			interrupts = <0x18 0x08>;
+			interrupt-parent = <0x71>;
+			interrupts = <0x06 0x08>;
 			#clock-cells = <0x01>;
 			clock-output-names = "xin32k\0rk805-clkout2";
 			gpio-controller;
@@ -1072,25 +1072,24 @@
 
 		opp-786000000 {
 			opp-hz = <0x00 0x2ed96880>;
-			opp-microvolt = <0x106738 0x106738 0xb71b00>;
+			opp-microvolt = <0x112a88 0x112a88 0xb71b00>;
 			status = "disable";
 		};
 
 		opp-798000000 {
 			opp-hz = <0x00 0x2f908380>;
-			opp-microvolt = <0x106738 0x106738 0xb71b00>;
+			opp-microvolt = <0x112a88 0x112a88 0xb71b00>;
 			status = "disable";
 		};
 
 		opp-840000000 {
 			opp-hz = <0x00 0x32116200>;
-			opp-microvolt = <0x106738 0x106738 0xb71b00>;
-			status = "disable";
+			opp-microvolt = <0x112a88 0x112a88 0xb71b00>;
 		};
 
 		opp-924000000 {
 			opp-hz = <0x00 0x37131f00>;
-			opp-microvolt = <0x10c8e0 0x10c8e0 0xb71b00>;
+			opp-microvolt = <0x118c30 0x118c30 0xb71b00>;
 		};
 
 		opp-1068000000 {
@@ -1241,6 +1240,7 @@
 		power-domains = <0x44 0x05>;
 		resets = <0x02 0xa6 0x02 0xa4 0x02 0xa8 0x02 0xa9 0x02 0xa5 0x02 0xa7>;
 		reset-names = "video_h\0video_a\0video_core\0video_cabac\0niu_a\0niu_h";
+		status = "disabled";
 		phandle = <0x99>;
 	};
 
@@ -1252,6 +1252,7 @@
 		clock-names = "aclk\0iface";
 		#iommu-cells = <0x00>;
 		power-domains = <0x44 0x05>;
+        status = "disabled";
 		phandle = <0x47>;
 	};
 
@@ -1323,6 +1324,7 @@
 		clock-names = "aclk\0iface";
 		power-domains = <0x44 0x05>;
 		#iommu-cells = <0x00>;
+        status = "disabled";
 		phandle = <0x4a>;
 	};
 
@@ -1339,7 +1341,7 @@
 		pinctrl-0 = <0x4c 0x4d 0x4e>;
 		rockchip,grf = <0x3f>;
 		#sound-dai-cells = <0x00>;
-		status = "okay";
+		status = "disabled";
 		phandle = <0x0f>;
 
 		ports {
@@ -1593,6 +1595,8 @@
 		assigned-clocks = <0x02 0x65>;
 		assigned-clock-rate = <0x2faf080>;
 		assigned-clock-parents = <0x02 0x54>;
+                tx_delay = <0x24>;
+                rx_delay = <0x18>;
 		phandle = <0xa7>;
 
 		mdio {
