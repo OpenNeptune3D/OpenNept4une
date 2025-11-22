@@ -152,10 +152,9 @@ $SUDO rm -f /var/lib/systemd/resolved/* 2>/dev/null || true
 echo "-- Removing machine identity and SSH host keys --"
 
 $SUDO rm -f /etc/machine-id /var/lib/dbus/machine-id || true
-$SUDO truncate -s 0 /etc/machine-id || true
-$SUDO ln -sf /etc/machine-id /var/lib/dbus/machine-id || true
 
 $SUDO rm -f /etc/ssh/ssh_host_* || true
+$SUDO ssh-keygen -A
 
 # ------------------------------------
 # 5) Free space/package cleanup
