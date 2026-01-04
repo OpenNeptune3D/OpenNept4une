@@ -24,13 +24,13 @@ if [[ $create_backup == "y" ]]; then
     fi
     # Enable bootloader mode
     echo "Enabling bootloader mode..."
-    sudo gpioset gpiochip1 15=0
+    sudo gpioset -t0 -c gpiochip1 15=0
     sleep 0.5
-    sudo gpioset gpiochip1 14=1
+    sudo gpioset -t0 -c gpiochip1 14=1
     sleep 0.5
-    sudo gpioset gpiochip1 15=1
+    sudo gpioset -t0 -c gpiochip1 15=1
     sleep 0.5
-    sudo gpioset gpiochip1 14=0
+    sudo gpioset -t0 -c gpiochip1 14=0
     echo "Backing up current firmware to $BACKUP_FILE..."
     stm32flash -r "$BACKUP_FILE" -g 0x0 /dev/ttyS0
 else
@@ -39,20 +39,20 @@ fi
 
 # Enable bootloader mode again
 echo "Enabling bootloader mode..."
-sudo gpioset gpiochip1 15=0
+sudo gpioset -t0 -c gpiochip1 15=0
 sleep 0.5
-sudo gpioset gpiochip1 14=1
+sudo gpioset -t0 -c gpiochip1 14=1
 sleep 0.5
-sudo gpioset gpiochip1 15=1
+sudo gpioset -t0 -c gpiochip1 15=1
 sleep 0.5
-sudo gpioset gpiochip1 14=0
+sudo gpioset -t0 -c gpiochip1 14=0
 
 # Flash the new firmware
 echo "Flashing new firmware to STM32..."
 stm32flash -w ~/klipper/out/klipper.bin -v -S 0x08008000 -g 0x08000000 /dev/ttyS0
 
 echo "Flashing complete"
-gpioset gpiochip1 15=0; sleep 0.5; gpioset gpiochip1 15=1; sleep 1
+gpioset -t0 -c gpiochip1 15=0; sleep 0.5; gpioset -t0 -c gpiochip1 15=1; sleep 1
 # Starting the Klipper service
 echo "Starting the Klipper service..."
 sudo service klipper start
