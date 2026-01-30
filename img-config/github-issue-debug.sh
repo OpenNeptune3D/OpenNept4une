@@ -440,7 +440,7 @@ collect_system_info() {
 
         echo "=== Display Connector Service Status ==="
         if command -v systemctl >/dev/null 2>&1; then
-            systemctl status display --no-pager -l 2>&1 || echo "display_connector service not found"
+            { systemctl status display --no-pager -l 2>&1 && echo -e "\n=== Full Journal (last 100) ===" && journalctl -u display -n 100 --no-pager; } || echo "display service not found"
         else
             echo "systemctl not available"
         fi
@@ -448,7 +448,7 @@ collect_system_info() {
 
         echo "=== Affinity Connector Service Status ==="
         if command -v systemctl >/dev/null 2>&1; then
-            systemctl status affinity --no-pager -l 2>&1 || echo "affinity service not found"
+            { systemctl status affinity --no-pager -l 2>&1 && echo -e "\n=== Full Journal (last 100) ===" && journalctl -u affinity -n 100 --no-pager; } || echo "affinity service not found"
         else
             echo "systemctl not available"
         fi
@@ -505,6 +505,15 @@ collect_system_info() {
         else
             echo "klippy-env not found"
         fi
+		echo ""
+		echo "=== DMESG ==="
+		if command -v journalctl &>/dev/null; then
+		    journalctl -k -n 1000 --no-pager 2>/dev/null || echo "journalctl -k failed (check systemd-journal group membership)"
+		else
+		    echo "journalctl not available"
+		fi
+		echo ""
+		echo "=== EOF ==="
 
     } > "$SYSTEM_INFO_FILE"
 }
