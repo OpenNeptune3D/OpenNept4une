@@ -366,6 +366,7 @@ advanced_more() {
         printf '8) Change Machine Model / Board Version / Motor Current\n\n'
         printf '9) Update SSH server keys\n\n'
         printf '%b\n' "----------------------------------------------------------${NC}"
+        printf '10) Create Github Issue Zip\n\n'
         printf '\n%b\n' "(${Y} B ${NC}) Back to Main Menu"
         printf '%s\n' "=========================================================="
         printf '%b' "${G}Enter your choice:${NC} "
@@ -381,6 +382,7 @@ advanced_more() {
             7) base_image_config;;
             8) "${HOME}/OpenNept4une/img-config/set-printer-model.sh"; exit 0;;
             9) update_ssh_keys;;
+            10) "${HOME}/OpenNept4une/img-config/github-issue-debug.sh"; exit 0;;
             b|B) return;;  # Return to the main menu
             *) printf '%b\n' "${R}Invalid choice, please try again.${NC}";;
         esac
