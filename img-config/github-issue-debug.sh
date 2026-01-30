@@ -604,9 +604,9 @@ main() {
         log_info "====================================="
         log_info "Debug collection complete!"
         log_info "Archive created: $zip_file"
-        log_info "Please upload this file with your GitHub issue."
+		log_info "Please download this Zip file via fluidd > Configuration Tab > debug_files > ON_debug_*_*.zip"
+        log_info "Please upload the latest zip file with your GitHub issue."
         echo ""
-        echo "$zip_file"
     else
         exit 1
     fi
