@@ -295,6 +295,7 @@ path: $DISPLAY_CONNECTOR_DIR
 virtualenv: $DISPLAY_CONNECTOR_DIR/venv
 requirements: requirements.txt
 origin: $DISPLAY_CONNECTOR_REPO
+managed_services: display
 EOF
 )
 
