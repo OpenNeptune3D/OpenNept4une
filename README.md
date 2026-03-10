@@ -10,7 +10,7 @@
 
 | 📥 Download | ⚙️ Installation | 💬 Discord Server |
 |---------------------------------------------|---------------------------------------------|--------------------------------------------|
-| [Releases](https://github.com/OpenNeptune3D/OpenNept4une/releases/) | [Wiki](https://github.com/OpenNeptune3D/OpenNept4une/wiki) | [Discord](https://discord.com/invite/X6kwchT6WM) |
+| [Releases](https://github.com/OpenNeptune3D/OpenNept4une/releases/) | [Wiki](https://github.com/OpenNeptune3D/OpenNept4une/wiki) | [Discord](https://discord.gg/zX35xfvA2W) |
 
 </div>
 
