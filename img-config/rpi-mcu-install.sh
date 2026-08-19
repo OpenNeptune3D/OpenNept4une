@@ -122,8 +122,9 @@ if [[ "$mcu_choice" == "Pico-based USB Accelerometer" || "$mcu_choice" == "All" 
     clear
     echo "Proceeding with Pico-based USB Accelerometer Update..."
 
+    pico_bootloader=$(lsusb | grep -o '2e8a:000[f3]' 2>/dev/null)
     while true; do
-        pico_bootloader=$(lsusb | grep '2e8a:0003' 2>/dev/null)
+        pico_bootloader=$(lsusb | grep -o '2e8a:000[f3]' 2>/dev/null)
         if [[ -z "$pico_bootloader" ]]; then
             echo ""
             read -n 1 -p "Please put your Pico in bootloader mode. Press any key to retry, or (s) to skip..." key
@@ -152,7 +153,7 @@ if [[ "$mcu_choice" == "Pico-based USB Accelerometer" || "$mcu_choice" == "All" 
 
         apply_minimal_config "${HOME}/OpenNept4une/mcu-firmware/pico_usb.config"
         make
-        make flash FLASH_DEVICE=2e8a:0003
+        make flash FLASH_DEVICE=$pico_bootloader
 
         echo ""
         echo "Pico-based Accelerometer update completed."
