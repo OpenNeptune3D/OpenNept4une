@@ -148,7 +148,9 @@ def generate_conf(printer_model, current, toolhead='ribbon'):
             line_pattern = r'[ \t]*{{\s*' + re.escape(key) + r'\s*}}[ \t]*\n'
             base_conf = re.sub(line_pattern, '', base_conf)
         pattern = r'{{\s*' + re.escape(key) + r'\s*}}'
-        base_conf = re.sub(pattern, value, base_conf)
+        # Use a function so backslashes in values are inserted literally
+        # (a plain replacement string would treat e.g. '\\d' as a regex escape).
+        base_conf = re.sub(pattern, lambda _m, v=value: v, base_conf)
 
     # Sections whose normal per-model file is replaced by a toolhead-specific
     # snippet for this variant (e.g. fan layout changes for usb-c).
@@ -174,7 +176,7 @@ def generate_conf(printer_model, current, toolhead='ribbon'):
                 with open(section_path, 'r') as f:
                     section_conf = f.read().strip()
                 pattern = r'{{\s*' + re.escape(section_name) + r'\s*}}'
-                base_conf = re.sub(pattern, section_conf, base_conf)
+                base_conf = re.sub(pattern, lambda _m, v=section_conf: v, base_conf)
             except (FileNotFoundError, IOError):
                 print(f"Warning: '{fname}' was not found or unreadable; skipping.")
 
@@ -184,12 +186,15 @@ def generate_conf(printer_model, current, toolhead='ribbon'):
             with open(section_path, 'r') as f:
                 section_conf = f.read().strip()
             pattern = r'{{\s*' + re.escape(section_name) + r'\s*}}'
-            base_conf = re.sub(pattern, section_conf, base_conf)
+            base_conf = re.sub(pattern, lambda _m, v=section_conf: v, base_conf)
         except (FileNotFoundError, IOError):
             print(f"Warning: '{section_path}' was not found or unreadable; skipping.")
 
     # Remove any leftover lines containing unreplaced placeholders
     unreplaced = variable_regex.findall(base_conf)
+    if unreplaced:
+        print("Note: no value for placeholder(s) " + ", ".join(sorted(set(unreplaced)))
+              + " - removing those lines.")
     for placeholder in unreplaced:
         pattern = rf'^.*{{{{\s*{re.escape(placeholder)}\s*}}}}.*\n?'
         base_conf = re.sub(pattern, '', base_conf, flags=re.MULTILINE)

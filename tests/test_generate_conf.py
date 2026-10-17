@@ -126,6 +126,20 @@ class GenerateConfSmoke(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("ERROR:", result.stdout + result.stderr)
 
+    def test_backslashes_in_values_are_literal(self) -> None:
+        # Values must be inserted verbatim, not interpreted as re.sub escapes.
+        original = generate_conf.get_printer_conf
+
+        def patched(model, current):
+            return original(model, current) + ["x_hold_current=0.5 ; a\\d\\1 b\n"]
+
+        generate_conf.get_printer_conf = patched
+        try:
+            out = generate("n4pro", "0.8")
+        finally:
+            generate_conf.get_printer_conf = original
+        self.assertIn("a\\d\\1 b", out)
+
 
 if __name__ == "__main__":
     unittest.main()
