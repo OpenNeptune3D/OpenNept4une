@@ -1,6 +1,6 @@
 # shellcheck shell=bash
 # One-off system fixes applied on every run.
-# Sourced by OpenNept4une.sh; defines functions only.
+# Sourced by OpenNept4une.sh; defines functions (and the constants they use) only.
 
 run_fixes() {
     # Get current user dynamically instead of hardcoding 'mks'
@@ -94,5 +94,55 @@ EOF
             sudo sed -i 's/^[#]*HandlePowerKeyLongPress=.*/HandlePowerKeyLongPress=ignore/' "$LOGIND_CONF" 2>/dev/null || true
             sudo systemctl restart systemd-logind >/dev/null 2>&1 || true
         fi
+    fi
+
+    install_uart_dma_fix
+}
+
+# U-Boot fixup that disables DMA on the Klipper MCU UART (OpenNept4une#444).
+UART_DMA_FIX_SRC="${HOME}/OpenNept4une/img-config/uart-dma-fix/fixup.scr"
+UART_DMA_FIX_DEST="/boot/fixup.scr"
+UART_DMA_FIX_BOOT_SCR="/boot/boot.scr"
+UART_DMA_FIX_NODE="/proc/device-tree/serial@ff110000"
+UART_DMA_FIX_MARKER="OpenNept4une UART DMA fix"
+
+# Linux 6.14-6.17 can deadlock UART TX DMA; 6.18.y and 7.0+ carry the upstream fix.
+uart_dma_deadlock_kernel() {
+    local ver major minor
+    ver=$(uname -r)
+    major=${ver%%.*}
+    minor=${ver#*.}
+    minor=${minor%%.*}
+    [[ "$major" =~ ^[0-9]+$ && "$minor" =~ ^[0-9]+$ ]] || return 1
+    [ "$major" -eq 6 ] && [ "$minor" -ge 14 ] && [ "$minor" -le 17 ]
+}
+
+install_uart_dma_fix() {
+    uart_dma_deadlock_kernel || return 0
+    [ -f "$UART_DMA_FIX_SRC" ] || return 0
+
+    local action="installed"
+    if [ -f "$UART_DMA_FIX_DEST" ]; then
+        cmp -s "$UART_DMA_FIX_SRC" "$UART_DMA_FIX_DEST" && return 0
+        if ! grep -aqF "$UART_DMA_FIX_MARKER" "$UART_DMA_FIX_DEST"; then
+            printf '%b\n' "${Y}${UART_DMA_FIX_DEST} belongs to something else; UART DMA fix for MCU disconnects (#444) not installed.${NC}"
+            return 0
+        fi
+        action="updated"
+    elif [ ! -e "$UART_DMA_FIX_NODE/dma-names" ]; then
+        # DMA is already off on this UART (e.g. a patched DTB), nothing to fix
+        return 0
+    fi
+
+    if ! grep -aqF "fixup.scr" "$UART_DMA_FIX_BOOT_SCR" 2>/dev/null; then
+        printf '%b\n' "${Y}${UART_DMA_FIX_BOOT_SCR} does not load a fixup script; UART DMA fix for MCU disconnects (#444) not installed.${NC}"
+        return 0
+    fi
+
+    if sudo cp "$UART_DMA_FIX_SRC" "$UART_DMA_FIX_DEST" && sync; then
+        printf '%b\n' "${G}UART DMA fix for MCU disconnects (#444) ${action}. Reboot to apply.${NC}"
+        sleep 2
+    else
+        printf '%b\n' "${R}Failed to install ${UART_DMA_FIX_DEST}.${NC}"
     fi
 }
