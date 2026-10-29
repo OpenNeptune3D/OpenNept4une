@@ -165,7 +165,7 @@ update_repo() {
         printf '%b' "${Y}The Touch-Screen Display Service was moved to a different directory. Do you want to run the automatic migration?${NC} (Y/n): "
         read -r user_input
         if [[ $user_input =~ ^[Yy]$|^$ ]]; then
-            if initialize_display_connector && eval "$DISPLAY_SERVICE_INSTALLER"; then
+            if initialize_display_connector && bash "$DISPLAY_SERVICE_INSTALLER"; then
                 rm -rf "${HOME}/OpenNept4une/display"
             fi
         else
@@ -174,8 +174,14 @@ update_repo() {
         fi
     else
         if [ -d "$DISPLAY_CONNECTOR_DIR" ]; then
+            local display_before display_after
+            display_before=$(git -C "$DISPLAY_CONNECTOR_DIR" rev-parse HEAD 2>/dev/null)
             process_repo_update "$DISPLAY_CONNECTOR_DIR" "Display Connector"
             moonraker_update_manager "display"
+            display_after=$(git -C "$DISPLAY_CONNECTOR_DIR" rev-parse HEAD 2>/dev/null)
+            if [ -n "$display_before" ] && [ "$display_before" != "$display_after" ]; then
+                apply_display_connector_update "$display_before" "$display_after"
+            fi
         fi
     fi
 
@@ -189,19 +195,40 @@ update_repo() {
     printf '%s\n' "=========================================================="
 }
 
+# Moonraker reinstalls requirements and restarts the service when it updates the
+# repo; do the same after a pull made by this script.
+apply_display_connector_update() {
+    local before="$1"
+    local after="$2"
+    local pip_bin="$DISPLAY_CONNECTOR_DIR/venv/bin/pip"
+
+    if ! git -C "$DISPLAY_CONNECTOR_DIR" diff --quiet "$before" "$after" -- requirements.txt && [ -x "$pip_bin" ]; then
+        printf '%b\n' "${Y}Display Connector requirements changed, updating virtualenv...${NC}"
+        if ! "$pip_bin" install --prefer-binary -r "$DISPLAY_CONNECTOR_DIR/requirements.txt"; then
+            printf '%b\n' "${R}Failed to update Display Connector requirements. Re-run the Touch-Screen Service install if the display stops working.${NC}"
+            sleep 2
+        fi
+    fi
+
+    if systemctl is-enabled --quiet display.service 2>/dev/null; then
+        printf '%s\n' "Restarting display.service..."
+        sudo systemctl restart display.service || printf '%b\n' "${R}Failed to restart display.service.${NC}"
+    fi
+}
+
 process_repo_update() {
     local repo_dir="$1"
     local name="$2"
     local update_branch
     local REPLY=""
-    
-    update_branch=$(git -C "$repo_dir" branch --show-current 2>/dev/null)
 
     if [ ! -d "$repo_dir" ]; then
         printf '%b\n' "${R}Repository directory not found at $repo_dir!${NC}"
         sleep 5
         return 1
     fi
+
+    update_branch=$(git -C "$repo_dir" branch --show-current 2>/dev/null)
 
     if [ -z "$update_branch" ]; then
         printf '%b\n' "${R}Could not determine the current branch for $repo_dir!${NC}"
@@ -503,6 +530,9 @@ toggle_branch() {
                 # Switch display_connector repo only if it exists
                 if switch_branch "$target_branch" "$DISPLAY_CONNECTOR_DIR"; then
                     moonraker_update_manager "display"
+                elif [ -d "$DISPLAY_CONNECTOR_DIR" ]; then
+                    printf '%b\n' "${R}Could not switch $DISPLAY_CONNECTOR_DIR to $target_branch; it stays on $(git -C "$DISPLAY_CONNECTOR_DIR" branch --show-current 2>/dev/null).${NC}"
+                    sleep 2
                 fi
                 
                 # Switch display_firmware repo only if it exists and has venv (indicating it's installed)
@@ -981,7 +1011,25 @@ install_screen_service() {
 }
 
 run_install_screen_service_with_setup() {
-    rm -rf "${HOME}/display_connector"
+    # Reset an existing checkout to its remote branch instead of re-cloning; only a
+    # broken or detached checkout is removed so initialize_display_connector clones fresh.
+    local display_branch
+    display_branch=$(git -C "$DISPLAY_CONNECTOR_DIR" branch --show-current 2>/dev/null)
+    if [ -n "$display_branch" ]; then
+        if ! git -C "$DISPLAY_CONNECTOR_DIR" fetch origin "$display_branch" --quiet; then
+            printf '%b\n' "${R}Failed to fetch Display Connector updates; leaving $DISPLAY_CONNECTOR_DIR untouched.${NC}"
+            return 1
+        fi
+        if ! git -C "$DISPLAY_CONNECTOR_DIR" reset --hard "origin/$display_branch" --quiet || \
+           ! git -C "$DISPLAY_CONNECTOR_DIR" clean -fd --quiet; then
+            printf '%b\n' "${R}Failed to reset Display Connector to origin/$display_branch.${NC}"
+            return 1
+        fi
+        printf '%b\n' "${G}Reset Display Connector to origin/$display_branch.${NC}"
+    else
+        rm -rf "$DISPLAY_CONNECTOR_DIR"
+    fi
+
     if initialize_display_connector && [ -f "$DISPLAY_SERVICE_INSTALLER" ]; then
         bash "$DISPLAY_SERVICE_INSTALLER"
     else
@@ -992,7 +1040,13 @@ run_install_screen_service_with_setup() {
 
 initialize_display_connector() {
     if [ ! -d "${HOME}/display_connector" ]; then
-        if git clone -b "$current_branch" "${DISPLAY_CONNECTOR_REPO}" "${DISPLAY_CONNECTOR_DIR}"; then
+        # Follow OpenNept4une's branch, falling back to main when display_connector doesn't have it.
+        local clone_branch="${current_branch:-main}"
+        if ! git ls-remote --exit-code --heads "$DISPLAY_CONNECTOR_REPO" "$clone_branch" >/dev/null 2>&1; then
+            printf '%b\n' "${Y}Display Connector has no '$clone_branch' branch, using 'main'.${NC}"
+            clone_branch="main"
+        fi
+        if git clone -b "$clone_branch" "${DISPLAY_CONNECTOR_REPO}" "${DISPLAY_CONNECTOR_DIR}"; then
             printf '%b\n' "${G}Initialized repository for Touch-Screen Display Service.${NC}"
         else
             printf '%b\n' "${R}Failed to clone Display Connector repository.${NC}"
@@ -1122,6 +1176,7 @@ if [ -z "$1" ]; then
     done
 else
     run_fixes
+    set_current_branch
     COMMAND="$1"
     case "$COMMAND" in
         install_printer_cfg) install_printer_cfg ;;
