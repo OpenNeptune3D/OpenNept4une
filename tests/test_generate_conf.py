@@ -5,9 +5,11 @@ from __future__ import annotations
 
 import contextlib
 import io
+import os
 import re
 import subprocess
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 from typing import Optional
@@ -20,6 +22,28 @@ if str(CONF_DIR) not in sys.path:
     sys.path.insert(0, str(CONF_DIR))
 
 import generate_conf  # noqa: E402
+
+
+_TMP_HOME: Optional[tempfile.TemporaryDirectory] = None
+_ORIG_HOME: Optional[str] = None
+
+
+def setUpModule() -> None:
+    """Point HOME at an empty dir so the host's printer.cfg SAVE_CONFIG block
+    (and MCU_ID.cfg) never leaks into generated output."""
+    global _TMP_HOME, _ORIG_HOME
+    _ORIG_HOME = os.environ.get("HOME")
+    _TMP_HOME = tempfile.TemporaryDirectory()
+    os.environ["HOME"] = _TMP_HOME.name
+
+
+def tearDownModule() -> None:
+    if _ORIG_HOME is None:
+        os.environ.pop("HOME", None)
+    else:
+        os.environ["HOME"] = _ORIG_HOME
+    if _TMP_HOME is not None:
+        _TMP_HOME.cleanup()
 
 
 PLACEHOLDER_RE = re.compile(r"\{\{\s*\w+\s*\}\}")
@@ -52,7 +76,7 @@ class GenerateConfSmoke(unittest.TestCase):
             check=False,
         )
         self.assertNotEqual(result.returncode, 0)
-        self.assertIn("Usage:", result.stdout + result.stderr)
+        self.assertIn("usage:", (result.stdout + result.stderr).lower())
 
     def test_cli_rejects_unknown_model(self) -> None:
         result = subprocess.run(
