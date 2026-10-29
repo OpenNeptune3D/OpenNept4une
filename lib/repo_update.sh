@@ -95,10 +95,13 @@ process_repo_update() {
         return 1
     fi
 
-    LOCAL=$(git -C "$repo_dir" rev-parse '@')
-    REMOTE=$(git -C "$repo_dir" rev-parse '@{u}')
+    # Only commits on the remote that are missing locally count as an update. Local
+    # commits not yet pushed (ahead) are not, or every run would offer a no-op pull.
+    local behind ahead
+    behind=$(git -C "$repo_dir" rev-list --count '@..@{u}' 2>/dev/null || echo 0)
+    ahead=$(git -C "$repo_dir" rev-list --count '@{u}..@' 2>/dev/null || echo 0)
 
-    if [ "$LOCAL" != "$REMOTE" ]; then
+    if [ "$behind" -gt 0 ]; then
         printf '%b\n' "${Y}Updates are available for ${name}.${NC}"
         if [ "$auto_yes" != "true" ]; then
             printf '%s' "Would you like to update ${G}● ${name}?${NC} (y/n): "
@@ -138,6 +141,9 @@ process_repo_update() {
             printf '%b\n' "${Y}Update skipped.${NC}"
             sleep 1
         fi
+    elif [ "$ahead" -gt 0 ]; then
+        printf '%b\n\n' "${Y}●${NC} ${name} ${Y}has ${ahead} local commit(s) not on origin/${update_branch}; nothing to update.${NC}"
+        sleep 1
     else
         printf '%b\n\n' "${G}●${NC} ${name} ${G}is already up-to-date.${NC}"
         sleep 1
