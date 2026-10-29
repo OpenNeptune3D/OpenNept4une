@@ -174,6 +174,11 @@ toggle_branch() {
             else
                 target_branch="main"
             fi
+            local dirty
+            dirty=$(git -C "$OPENNEPT4UNE_DIR" status --porcelain 2>/dev/null | wc -l)
+            if [ "$dirty" -gt 0 ]; then
+                printf '\n%b\n' "${R}Warning: ${dirty} locally modified/untracked file(s) in $OPENNEPT4UNE_DIR will be discarded (git reset --hard + clean).${NC}"
+            fi
             printf '%b ' "${M}Would you like to switch to the '$target_branch' branch?${NC} (y/n): "
             read -r user_response
             if [[ $user_response =~ ^[Yy]$ ]]; then

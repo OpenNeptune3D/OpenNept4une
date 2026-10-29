@@ -102,6 +102,18 @@ install_configs() {
         return 0
     fi
 
+    if [[ "$auto_yes" == "true" ]]; then
+        printf '%s\n' "Installing all configurations (non-interactive)..."
+        local key file
+        for key in "${!config_files[@]}"; do
+            for file in ${config_files[$key]}; do
+                install_one "$file" || printf '%b\n' "${R}Failed: ${file}${NC}"
+            done
+        done
+        printf '\n%s\n' "${G}All configurations installed.${NC}"
+        return 0
+    fi
+
     PS3="Enter the number of the configuration to install (or 'Exit' to finish): "
     local options=("All" "Fluidd web interface Conf" "Moonraker Conf" "KAMP Conf" "Mainsail web interface Conf" "Pico USB-C ADXL Conf" "Klipper DEBUG Addon" "Exit")
 

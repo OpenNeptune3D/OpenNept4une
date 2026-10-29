@@ -32,6 +32,8 @@ usb_c_toolhead_detected() {
 }
 
 extract_model_and_motor() {
+    # Values passed on the command line take precedence over the stored flag.
+    local cli_model="$model_key" cli_current="$motor_current"
     model_key=$(echo "$MODEL_FROM_FLAG" | cut -d'-' -f1 | tr '[:upper:]' '[:lower:]')
     pcb_version=$(echo "$MODEL_FROM_FLAG" | sed -E 's/.*-v([0-9.]+).*/\1/')
 
@@ -50,6 +52,16 @@ extract_model_and_motor() {
         usbc) flag_toolhead="usb-c" ;;
         ribbon|"") flag_toolhead="ribbon" ;;
     esac
+
+    if [[ -n "$cli_model" && "$cli_model" != "$model_key" ]]; then
+        printf '%b\n' "${Y}Using --printer_model=${cli_model} (stored flag says ${model_key}).${NC}"
+        model_key="$cli_model"
+    fi
+    if [[ "$model_key" == "n4" || "$model_key" == "n4pro" ]]; then
+        [[ -n "$cli_current" ]] && motor_current="$cli_current"
+    else
+        motor_current=""
+    fi
 }
 
 # Update (or add) the "-tribbon"/"-tusbc" suffix on the persisted model flag
@@ -148,8 +160,11 @@ install_printer_cfg() {
     mkdir -p "$PRINTER_CFG_DEST" "$DATABASE_DEST"
     touch "${HOME}/printer_data/config/user_settings.cfg"
 
-    printf '%s\n\n' "${G}Would you like to compare/diff your current printer.cfg with the latest? (y/n).${NC}"
-    read -r -p "$(printf '%b' "${M}Enter your choice ${NC}: ")" DIFF_CHOICE
+    local DIFF_CHOICE="n"
+    if [[ "$auto_yes" != "true" ]]; then
+        printf '%s\n\n' "${G}Would you like to compare/diff your current printer.cfg with the latest? (y/n).${NC}"
+        read -r -p "$(printf '%b' "${M}Enter your choice ${NC}: ")" DIFF_CHOICE
+    fi
 
     if [[ "$DIFF_CHOICE" =~ ^[Yy]$ ]]; then
         clear_screen
