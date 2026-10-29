@@ -694,8 +694,8 @@
 		pmic@18 {
 			compatible = "rockchip,rk805";
 			reg = <0x18>;
-			interrupt-parent = <0x29>;
-			interrupts = <0x18 0x08>;
+			interrupt-parent = <0x71>;
+			interrupts = <0x06 0x08>;
 			#clock-cells = <0x01>;
 			clock-output-names = "xin32k", "rk805-clkout2";
 			gpio-controller;

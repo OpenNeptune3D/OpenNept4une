@@ -146,11 +146,19 @@ def parse_kv_file(path):
     return values
 
 
+# Keys a toolhead profile is expected to override in the model profiles; replacing
+# these is not reported as a collision.
+TOOLHEAD_OVERRIDES = frozenset({
+    'frame_light_pin',
+    'part_light_pin',
+})
+
+
 def collect_values(printer_model, current, toolhead):
     """
     Build the placeholder -> value map. Toolhead values are applied first and
     win on collision (they describe hardware pinout, which is the more
-    specific layer), but every collision is reported.
+    specific layer). Collisions are reported, except for TOOLHEAD_OVERRIDES.
     """
     toolhead_path = os.path.join(script_dir, 'toolheads', f"{toolhead}.cfg")
     if not os.path.isfile(toolhead_path):
@@ -176,7 +184,7 @@ def collect_values(printer_model, current, toolhead):
     for path, values in sources:
         for key, value in values.items():
             if key in merged:
-                if merged[key] != value:
+                if merged[key] != value and key not in TOOLHEAD_OVERRIDES:
                     warn(f"'{key}' defined in both {origin[key]} and {path}; "
                          f"keeping the value from {origin[key]}")
                 continue

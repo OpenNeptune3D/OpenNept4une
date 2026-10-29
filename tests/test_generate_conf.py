@@ -139,6 +139,30 @@ class GenerateConfSmoke(unittest.TestCase):
         self.assertIn("variable_small_print", n4pro)
         self.assertIn("PID_Tune_Outer_BED", n4pro)
 
+    def test_usb_c_lights_override_quietly(self) -> None:
+        # USB-C lights: frame light on a host GPIO, part light a plain lamp on THR.
+        for model, current in MODELS:
+            with self.subTest(model=model, current=current):
+                err = io.StringIO()
+                with contextlib.redirect_stderr(err):
+                    text = generate_conf.render(model, current, "usb-c")
+                self.assertRegex(text, r"\[output_pin Frame_Light\]\npin: rpi:gpiochip2/gpio2\n")
+                self.assertRegex(text, r"\[output_pin Part_Light\]\npin: THR:PB10\n")
+                self.assertNotIn("[neopixel", text)
+                self.assertNotIn("light_pin", err.getvalue())
+
+    def test_ribbon_lights_unchanged(self) -> None:
+        self.assertIn("pin: PB7", generate_conf.render("n4pro", "1.2", "ribbon"))
+        self.assertIn("pin: rpi:gpiochip2/gpio15", generate_conf.render("n4max", None, "ribbon"))
+
+    def test_usb_c_n4_blowers_follow_m106(self) -> None:
+        for model in ("n4", "n4pro"):
+            with self.subTest(model=model):
+                text = generate_conf.render(model, "1.2", "usb-c")
+                self.assertIn("[multi_pin part_cooling_fans]\npins: THR:PB1, THR:PB11", text)
+                self.assertIn("[fan]\npin: multi_pin:part_cooling_fans", text)
+                self.assertNotIn("[fan_generic fan2]", text)
+
     def test_missing_override_exits(self) -> None:
         result = subprocess.run(
             [sys.executable, str(CONF_DIR / "generate_conf.py"), "n4max", "1.2"],
