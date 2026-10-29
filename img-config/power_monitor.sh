@@ -12,9 +12,11 @@ LINE_PWRGOOD="${LINE_PWRGOOD:-19}"   # falling = loss
 LOG_TAG="${LOG_TAG:-power_monitor}"
 VERIFY_SAMPLES="${VERIFY_SAMPLES:-5}"
 VERIFY_INTERVAL_MS="${VERIFY_INTERVAL_MS:-40}"
+DEBOUNCE="${DEBOUNCE:-20ms}"          # v2 gpiomon only; empty disables
+GLITCH_BACKOFF_MAX="${GLITCH_BACKOFF_MAX:-10}"  # seconds between re-arms after repeated glitches
 
 # ===== Helpers =====
-log() { echo "$1" | systemd-cat -t "$LOG_TAG" -p info; echo "$1"; }
+log() { echo "$1" | systemd-cat -t "$LOG_TAG" -p info; echo "$1" >&2; }
 die() { log "ERROR: $*"; exit 1; }
 need_cmd() { command -v "$1" >/dev/null 2>&1 || die "Required command '$1' not found"; }
 ms_sleep() { python3 - <<PY || sleep 0
@@ -35,6 +37,12 @@ if gpioget --help 2>&1 | grep -q '\-c, \-\-chip'; then
   USE_V2=true; log "Using libgpiod v2 tool syntax"
 else
   USE_V2=false; log "Using libgpiod v1 tool syntax"
+fi
+
+# Debounce filters sub-${DEBOUNCE} pulses that otherwise trigger a verify cycle (v2 only)
+DEBOUNCE_ARGS=()
+if $USE_V2 && [ -n "$DEBOUNCE" ] && gpiomon --help 2>&1 | grep -q -- '--debounce-period'; then
+  DEBOUNCE_ARGS=(--debounce-period "$DEBOUNCE")
 fi
 
 # Track background processes for cleanup
@@ -82,8 +90,9 @@ read_states() {
     if $USE_V2; then out="\"${LINE_PWRLOSS}\"=inactive \"${LINE_PWRGOOD}\"=active"
     else out="0 1"; fi
   else
-    if $USE_V2; then out="$(gpioget -c "$CHIP" "$LINE_PWRLOSS" "$LINE_PWRGOOD" 2>&1)"
-    else out="$(gpioget "$CHIP" "$LINE_PWRLOSS" "$LINE_PWRGOOD")"; fi
+    # A failed read must not abort the script (set -e) or yield an empty result
+    if $USE_V2; then out="$(gpioget -c "$CHIP" "$LINE_PWRLOSS" "$LINE_PWRGOOD" 2>&1)" || true
+    else out="$(gpioget "$CHIP" "$LINE_PWRLOSS" "$LINE_PWRGOOD" 2>&1)" || true; fi
   fi
 
   local pl pg
@@ -103,7 +112,11 @@ read_states() {
       pg=2
     fi
   else
-    read -r pl pg <<<"$out"
+    read -r pl pg <<<"$out" || true
+    if ! [[ "$pl" =~ ^[01]$ && "$pg" =~ ^[01]$ ]]; then
+      log "WARNING: Could not parse pin states from: $out"
+      pl=2; pg=2
+    fi
   fi
 
   echo "$pl $pg"
@@ -119,11 +132,11 @@ start_monitors() {
 
   if $USE_V2; then
     # v2: separate invocations for different edge directions
-    gpiomon -c "$CHIP" --edges=rising -n 1 "$LINE_PWRLOSS" &
+    gpiomon -c "$CHIP" --edges=rising -n 1 "${DEBOUNCE_ARGS[@]}" "$LINE_PWRLOSS" &
     local pid1=$!
     MON_PIDS+=("$pid1")
     
-    gpiomon -c "$CHIP" --edges=falling -n 1 "$LINE_PWRGOOD" &
+    gpiomon -c "$CHIP" --edges=falling -n 1 "${DEBOUNCE_ARGS[@]}" "$LINE_PWRGOOD" &
     local pid2=$!
     MON_PIDS+=("$pid2")
     
@@ -155,6 +168,25 @@ wait_any_event() {
   fi
 }
 
+# The monitor that did not fire still holds its line, and gpioget on it fails with
+# "Device or resource busy". Stop and reap both before sampling the pins.
+stop_monitors() {
+  local p
+  for p in "${MON_PIDS[@]:-}"; do
+    if [ -n "$p" ]; then kill "$p" >/dev/null 2>&1 || true; fi
+  done
+  for p in "${MON_PIDS[@]:-}"; do
+    if [ -n "$p" ]; then wait "$p" 2>/dev/null || true; fi
+  done
+  MON_PIDS=()
+}
+
+# A line that was not in its normal state at startup is ignored, so a board that idles
+# that way (or a line that cannot be read) is never taken as a power cut.
+PL_OK=true
+PG_OK=true
+is_loss() { { $PL_OK && [ "$1" = "1" ]; } || { $PG_OK && [ "$2" = "0" ]; }; }
+
 # ===== Verify event (simple debounce/confirm) =====
 verify_loss() {
   local ok=0 cnt=0
@@ -163,7 +195,7 @@ verify_loss() {
   while [ "$cnt" -lt "$VERIFY_SAMPLES" ]; do
     read -r pl pg < <(read_states)
     # Loss if PWRLOSS==1 or PWRGOOD==0
-    if [ "$pl" = "1" ] || [ "$pg" = "0" ]; then
+    if is_loss "$pl" "$pg"; then
       ok=$((ok+1))
     fi
     cnt=$((cnt+1))
@@ -199,17 +231,39 @@ if [ "$pl" = "0" ] && [ "$pg" = "1" ]; then
   log "Pins in expected stable state. Starting monitors."
 else
   log "WARNING: Unexpected initial state (PWRLOSS=${pl}, PWRGOOD=${pg}). Continuing anyway."
+  [ "$pl" = "0" ] || { PL_OK=false; log "WARNING: Ignoring PWRLOSS(${LINE_PWRLOSS}) for power-loss detection."; }
+  [ "$pg" = "1" ] || { PG_OK=false; log "WARNING: Ignoring PWRGOOD(${LINE_PWRGOOD}) for power-loss detection."; }
 fi
 
-# Start monitors once and wait (like your working script)
-start_monitors
-wait_any_event
+# Re-arm in this process after a glitch. Re-executing would skip the EXIT trap and
+# leave the supercap holder and a monitor holding lines the new instance needs.
+backoff=0
+last_glitch=-1000
+while true; do
+  # An edge between verification and re-arming would be missed; check the level instead
+  read -r pl pg < <(read_states)
+  if ! is_loss "$pl" "$pg"; then
+    start_monitors
+    wait_any_event || true
+    stop_monitors
+  fi
 
-# An event occurred - verify it
-if verify_loss; then
-  handle_power_cut
-else
-  log "Glitch detected and ignored. Restarting monitors."
-  # Only loop if it was a false alarm
-  exec "$0" "$@"
-fi
+  if verify_loss; then
+    handle_power_cut
+    break
+  fi
+
+  # Back off if glitches repeat (e.g. a noisy line firing on every re-arm); the level
+  # check above still catches a real loss that starts during the pause. An isolated
+  # glitch re-arms immediately.
+  [ $(( SECONDS - last_glitch )) -gt 60 ] && backoff=0
+  last_glitch=$SECONDS
+  if [ "$backoff" -gt 0 ]; then
+    log "Glitch detected and ignored. Re-arming monitors in ${backoff}s."
+    sleep "$backoff"
+  else
+    log "Glitch detected and ignored. Re-arming monitors."
+  fi
+  backoff=$(( backoff == 0 ? 1 : backoff * 2 ))
+  [ "$backoff" -gt "$GLITCH_BACKOFF_MAX" ] && backoff=$GLITCH_BACKOFF_MAX
+done
