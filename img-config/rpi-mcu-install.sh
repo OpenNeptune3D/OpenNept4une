@@ -6,7 +6,13 @@ FIRMWARE_DIR="${HOME}/printer_data/config/Firmware"
 MCU_SWFLASH_ALT="${HOME}/OpenNept4une/mcu-firmware/alt-method/mcu-swflash-run.sh"
 USB_TOOLHEAD_CONFIG="${HOME}/OpenNept4une/mcu-firmware/usb_c_toolhead.config"
 USB_TOOLHEAD_SERIAL_GLOB="/dev/serial/by-id/usb-Klipper_stm32f103xe_*"
-USB_TOOLHEAD_HID_VIDPID="1209:BEBA"
+# MKS bootloader on the toolhead, present for about 10 s after power-up (OpenNept4une#417)
+USB_TOOLHEAD_BOOT_GLOB="/dev/serial/by-id/usb-MKS_DRIVER_BOOT_*"
+USB_TOOLHEAD_BOOT_VIDPID="1d50:018a"
+USB_TOOLHEAD_MAX_SIZE=$((96 * 1024))   # application region 0x08008000-0x08020000
+TOOLHEAD_POWER_HELPER="/usr/local/sbin/opennept4une-toolhead-power"
+N4FLASH_SRC="${HOME}/OpenNept4une/mcu-firmware/n4flash/n4flash.c"
+N4FLASH_BIN="${HOME}/.local/lib/opennept4une/n4flash"
 
 # Helper to apply a minimal config and expand it
 apply_minimal_config() {
@@ -52,26 +58,95 @@ print_usb_toolhead_id_hint() {
     echo "ls /dev/serial/by-id/usb-Klipper_stm32f103xe_*"
     echo "Then run OpenNept4une.sh -> Install/Update printer.cfg to regenerate MCU_ID.cfg."
     echo ""
+    return 1
 }
 
-# Request USB serial bootloader entry via 1200 baud + DTR pulse
-request_usb_bootloader() {
-    local device="$1"
+# Build n4flash from the vendored source when missing or older than the source
+ensure_n4flash() {
+    [[ -x "$N4FLASH_BIN" && "$N4FLASH_BIN" -nt "$N4FLASH_SRC" ]] && return 0
+    echo "Building n4flash..."
+    mkdir -p "$(dirname "$N4FLASH_BIN")" && cc -O2 -Wall -o "$N4FLASH_BIN" "$N4FLASH_SRC"
+}
 
-    python3 - "$device" <<'PY'
-import sys, fcntl, termios, struct, time
+# Power-cycle the toolhead so it starts in its bootloader, and print the bootloader's
+# serial path. It stays there about 10 s before booting the application.
+enter_usb_toolhead_bootloader() {
+    local boot=()
+    sudo "$TOOLHEAD_POWER_HELPER" cycle 0.5 >&2 || return 1
+    for _ in {1..20}; do
+        mapfile -t boot < <(compgen -G "$USB_TOOLHEAD_BOOT_GLOB")
+        if (( ${#boot[@]} > 1 )); then
+            echo "More than one toolhead bootloader found: ${boot[*]}" >&2
+            return 1
+        fi
+        if (( ${#boot[@]} == 1 )) && lsusb -d "$USB_TOOLHEAD_BOOT_VIDPID" >/dev/null 2>&1; then
+            echo "${boot[0]}"
+            return 0
+        fi
+        sleep 0.5
+    done
+    return 1
+}
 
-dev = sys.argv[1]
-with open(dev, "rb", buffering=0) as f:
-    fd = f.fileno()
-    fcntl.ioctl(fd, termios.TIOCMBIS, struct.pack("I", termios.TIOCM_DTR))
-    attrs = termios.tcgetattr(fd)
-    attrs[4] = termios.B1200
-    attrs[5] = termios.B1200
-    termios.tcsetattr(fd, termios.TCSANOW, attrs)
-    time.sleep(0.2)
-    fcntl.ioctl(fd, termios.TIOCMBIC, struct.pack("I", termios.TIOCM_DTR))
-PY
+# Build Klipper for the USB-C toolhead and flash it through the MKS bootloader with
+# n4flash. Leaves Klipper stopped when updating "All".
+update_usb_toolhead() {
+    local firmware="$KLIPPER_DIR/out/klipper.bin" size boot_dev
+
+    if [[ ! -x "$TOOLHEAD_POWER_HELPER" ]]; then
+        echo "Skipping the USB-C toolhead: this printer is not set to the USB-C printhead,"
+        echo "so its power (and bootloader entry) is not under OpenNept4une's control."
+        echo "If it has one, select it in OpenNept4une.sh -> Install/Update printer.cfg first."
+        sleep 5
+        return 0
+    fi
+
+    echo "Building USB-C toolhead firmware..."
+    apply_minimal_config "$USB_TOOLHEAD_CONFIG"
+    # The toolhead MCU is a GD32F303 (Cortex-M4) behind an STM32F103 configuration.
+    # Klipper builds STM32F103 for Cortex-M3; the second -mcpu wins. This matches the
+    # build tested on real toolheads.
+    make 'MCU_UPPER=STM32F103xE -mcpu=cortex-m4' || {
+        echo "Failed to build USB-C toolhead firmware."
+        exit 1
+    }
+    size=$(stat -c %s "$firmware") || exit 1
+    if (( size > USB_TOOLHEAD_MAX_SIZE )); then
+        echo "Toolhead firmware is ${size} bytes; the toolhead only has room for ${USB_TOOLHEAD_MAX_SIZE}."
+        exit 1
+    fi
+    ensure_n4flash || {
+        echo "Failed to build n4flash (needs a C compiler: sudo apt install build-essential)."
+        exit 1
+    }
+
+    echo "Stopping Klipper..."
+    sudo service klipper stop || true
+    sleep 2
+
+    echo "Power-cycling the USB-C toolhead into its bootloader..."
+    if ! boot_dev=$(enter_usb_toolhead_bootloader); then
+        echo "USB-C toolhead bootloader ($USB_TOOLHEAD_BOOT_VIDPID) not detected. Skipping flash."
+        [[ "$mcu_choice" != "All" ]] && { sudo service klipper start || true; }
+        sleep 5
+        return 0
+    fi
+
+    echo "Flashing USB-C toolhead via $boot_dev. Do not power off the printer."
+    if ! "$N4FLASH_BIN" "$firmware" "$boot_dev"; then
+        echo "Failed to flash the USB-C toolhead. It stays in its bootloader;"
+        echo "run the USB-C Toolhead update again."
+        sudo service klipper start || true
+        exit 1
+    fi
+
+    # n4flash reports success before the bootloader confirms; the application
+    # re-enumerating is the real confirmation.
+    if print_usb_toolhead_id_hint; then
+        echo "USB-C toolhead update completed."
+    fi
+    [[ "$mcu_choice" != "All" ]] && { sudo service klipper start || true; }
+    sleep 2
 }
 
 # Get current git branch from $KLIPPER_DIR
@@ -175,89 +250,10 @@ if [[ "$mcu_choice" == "STM32" || "$mcu_choice" == "All" ]]; then
 fi
 
 ### USB-C TOOLHEAD MCU ###
-toolhead_skipped=false
 if [[ "$mcu_choice" == "USB-C Toolhead" || "$mcu_choice" == "All" ]]; then
     clear
     echo "Proceeding with USB-C Toolhead MCU Update..."
-
-    while true; do
-        toolhead_device=$(compgen -G "$USB_TOOLHEAD_SERIAL_GLOB" | head -n 1)
-
-        if [[ -n "$toolhead_device" ]] || lsusb -d "$USB_TOOLHEAD_HID_VIDPID" >/dev/null 2>&1; then
-            echo "USB-C toolhead detected. Proceeding..."
-            break
-        fi
-
-        echo ""
-        read -n 1 -p "USB-C toolhead not detected. Press any key to retry, or (s) to skip..." key
-        echo ""
-        if [[ $key == s || $key == S ]]; then
-            toolhead_skipped=true
-            clear
-            break
-        fi
-    done
-
-    if [[ "$toolhead_skipped" == false ]]; then
-        echo "Building USB-C toolhead firmware..."
-        apply_minimal_config "$USB_TOOLHEAD_CONFIG"
-        make || {
-            echo "Failed to build USB-C toolhead firmware."
-            exit 1
-        }
-
-        echo "Stopping Klipper..."
-        sudo service klipper stop || true
-        sleep 2
-
-        if ! lsusb -d "$USB_TOOLHEAD_HID_VIDPID" >/dev/null 2>&1; then
-            if [[ -z "$toolhead_device" || ! -e "$toolhead_device" ]]; then
-                echo "USB-C toolhead serial device disappeared. Skipping flash."
-                if [[ "$mcu_choice" != "All" ]]; then
-                    sudo service klipper start || true
-                fi
-                toolhead_skipped=true
-            else
-                echo "Requesting USB-C toolhead bootloader on $toolhead_device..."
-                request_usb_bootloader "$toolhead_device"
-            fi
-        else
-            echo "USB-C toolhead is already in HID bootloader mode."
-        fi
-
-        if [[ "$toolhead_skipped" == false ]]; then
-            echo "Waiting for USB-C toolhead HID bootloader $USB_TOOLHEAD_HID_VIDPID..."
-            bootloader_found=false
-            for _ in {1..20}; do
-                if lsusb -d "$USB_TOOLHEAD_HID_VIDPID" >/dev/null 2>&1; then
-                    bootloader_found=true
-                    break
-                fi
-                sleep 1
-            done
-
-            if [[ "$bootloader_found" != true ]]; then
-                echo "USB-C toolhead bootloader not detected. Skipping flash."
-                if [[ "$mcu_choice" != "All" ]]; then
-                    sudo service klipper start || true
-                fi
-            else
-                echo "Flashing USB-C toolhead..."
-                make flash FLASH_DEVICE="$USB_TOOLHEAD_HID_VIDPID" || {
-                    echo "Failed to flash USB-C toolhead."
-                    sudo service klipper start || true
-                    exit 1
-                }
-
-                echo "USB-C toolhead update completed."
-                print_usb_toolhead_id_hint
-                if [[ "$mcu_choice" != "All" ]]; then
-                    sudo service klipper start || true
-                fi
-                sleep 2
-            fi
-        fi
-    fi
+    update_usb_toolhead
 fi
 
 ### PICO USB ACCELEROMETER ###

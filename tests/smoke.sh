@@ -80,6 +80,14 @@ else
     echo "SKIP: shellcheck not installed"
 fi
 
+if command -v cc >/dev/null 2>&1; then
+    echo "== n4flash compiles =="
+    cc -fsyntax-only -Wall -Wextra -Werror "$ROOT/mcu-firmware/n4flash/n4flash.c" || fail "n4flash.c does not compile"
+    ok "mcu-firmware/n4flash/n4flash.c"
+else
+    echo "SKIP: no C compiler for n4flash"
+fi
+
 echo "== generate_conf unit tests =="
 python3 -m unittest discover -s "$ROOT/tests" -p 'test_*.py' -v
 ok "unittest suite"
