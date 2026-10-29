@@ -43,6 +43,7 @@ referenced=(
     "$ROOT/img-config/set-printer-model.sh"
     "$ROOT/img-config/github-issue-debug.sh"
     "$ROOT/img-config/power_monitor.sh"
+    "$ROOT/img-config/toolhead-power/opennept4une-toolhead-power.sh"
     "$ROOT/mcu-firmware/alt-method/mcu-swflash-run.sh"
     "$ROOT/mcu-firmware/alt-method/mcu-swflash-install.sh"
     "$ROOT/tests/setup.sh"

@@ -97,6 +97,7 @@ EOF
     fi
 
     install_uart_dma_fix
+    sync_toolhead_power
 }
 
 # U-Boot fixup that disables DMA on the Klipper MCU UART (OpenNept4une#444).
@@ -145,4 +146,71 @@ install_uart_dma_fix() {
     else
         printf '%b\n' "${R}Failed to install ${UART_DMA_FIX_DEST}.${NC}"
     fi
+}
+
+# USB-C toolhead power on GPIO82 (OpenNept4une#417).
+TOOLHEAD_POWER_SRC_DIR="${HOME}/OpenNept4une/img-config/toolhead-power"
+TOOLHEAD_POWER_SERVICE="opennept4une-toolhead-power.service"
+TOOLHEAD_POWER_HELPER="/usr/local/sbin/opennept4une-toolhead-power"
+TOOLHEAD_POWER_UNIT="/etc/systemd/system/${TOOLHEAD_POWER_SERVICE}"
+TOOLHEAD_POWER_DROPIN="/etc/systemd/system/klipper.service.d/opennept4une-toolhead-power.conf"
+
+# The service follows the model flag. GPIO82 is only ever driven on printers set to the
+# USB-C printhead: what the pin does on the other boards is unknown.
+sync_toolhead_power() {
+    if [[ "$MODEL_FROM_FLAG" =~ -tusbc$ ]]; then
+        install_toolhead_power
+    else
+        remove_toolhead_power
+    fi
+}
+
+install_toolhead_power() {
+    local src dest mode changed=false
+    while read -r src dest mode; do
+        if [ ! -f "$src" ]; then
+            printf '%b\n' "${R}Missing ${src}; USB-C toolhead power not installed.${NC}"
+            return 1
+        fi
+        cmp -s "$src" "$dest" && continue
+        if ! sudo install -D -m "$mode" "$src" "$dest"; then
+            printf '%b\n' "${R}Failed to install ${dest}.${NC}"
+            return 1
+        fi
+        changed=true
+    done <<EOF
+${TOOLHEAD_POWER_SRC_DIR}/opennept4une-toolhead-power.sh ${TOOLHEAD_POWER_HELPER} 0755
+${TOOLHEAD_POWER_SRC_DIR}/opennept4une-toolhead-power.service ${TOOLHEAD_POWER_UNIT} 0644
+${TOOLHEAD_POWER_SRC_DIR}/klipper-toolhead-power.conf ${TOOLHEAD_POWER_DROPIN} 0644
+EOF
+
+    $changed && sudo systemctl daemon-reload >/dev/null 2>&1
+    systemctl is-enabled --quiet "$TOOLHEAD_POWER_SERVICE" 2>/dev/null || \
+        sudo systemctl enable "$TOOLHEAD_POWER_SERVICE" >/dev/null 2>&1
+
+    if ! $changed && systemctl is-active --quiet "$TOOLHEAD_POWER_SERVICE"; then
+        return 0
+    fi
+    printf '%s\n' "Switching on USB-C toolhead power (GPIO82), waiting for the toolhead..."
+    # "on" is idempotent, so restarting an active service never drops the toolhead power
+    if ! sudo systemctl restart "$TOOLHEAD_POWER_SERVICE"; then
+        printf '%b\n' "${R}USB-C toolhead power failed to start. See: journalctl -u ${TOOLHEAD_POWER_SERVICE}${NC}"
+        return 1
+    fi
+    if usb_c_toolhead_detected; then
+        printf '%b\n' "${G}USB-C toolhead power is on and the toolhead is connected. Restart Klipper if it reports mcu 'THR' unable to connect.${NC}"
+    else
+        printf '%b\n' "${Y}USB-C toolhead power is on, but no toolhead has appeared yet. Check: sudo opennept4une-toolhead-power status${NC}"
+    fi
+    sleep 1
+}
+
+remove_toolhead_power() {
+    [ -e "$TOOLHEAD_POWER_UNIT" ] || [ -e "$TOOLHEAD_POWER_DROPIN" ] || [ -e "$TOOLHEAD_POWER_HELPER" ] || return 0
+    sudo systemctl disable --now "$TOOLHEAD_POWER_SERVICE" >/dev/null 2>&1
+    sudo rm -f "$TOOLHEAD_POWER_UNIT" "$TOOLHEAD_POWER_DROPIN" "$TOOLHEAD_POWER_HELPER"
+    sudo rmdir --ignore-fail-on-non-empty "$(dirname "$TOOLHEAD_POWER_DROPIN")" 2>/dev/null
+    sudo systemctl daemon-reload >/dev/null 2>&1
+    # Stopping the service leaves GPIO82 as it is; it resets at the next boot
+    printf '%b\n' "${Y}Printhead is set to ribbon; removed the USB-C toolhead power service.${NC}"
 }

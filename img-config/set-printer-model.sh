@@ -4,11 +4,6 @@
 # Define the flag file path
 FLAG_FILE="/boot/.OpenNept4une.txt"
 
-# Check whether a USB-C Klipper toolhead MCU is currently connected
-usb_c_toolhead_detected() {
-    compgen -G "/dev/serial/by-id/usb-Klipper_stm32f103xe_*" > /dev/null
-}
-
 # Function to select an option
 select_option() {
     local -n ref=$1
@@ -54,25 +49,14 @@ else
     fi
 
     # Interactive selection of printhead/toolhead variant (applies to all models)
+    # The USB-C toolhead is not checked for here: it only appears on USB once its
+    # power (GPIO82) is switched on, which happens after the choice is saved.
     if [ -z "$toolhead_variant" ]; then
-        while true; do
-            select_option toolhead_variant "Select your printhead/toolhead type:" "Ribbon-cable printhead (original)" "USB-C Klipper printhead (separate toolhead MCU)"
-            case "$toolhead_variant" in
-                "USB-C Klipper printhead (separate toolhead MCU)")
-                    if usb_c_toolhead_detected; then
-                        toolhead_variant="usb-c"
-                        break
-                    else
-                        echo -e "No USB-C Klipper toolhead detected (expected /dev/serial/by-id/usb-Klipper_stm32f103xe_*). Connect the toolhead and try again, or select the ribbon-cable printhead."
-                        toolhead_variant=""
-                    fi
-                    ;;
-                *)
-                    toolhead_variant="ribbon"
-                    break
-                    ;;
-            esac
-        done
+        select_option toolhead_variant "Select your printhead/toolhead type:" "Ribbon-cable printhead (original)" "USB-C Klipper printhead (separate toolhead MCU)"
+        case "$toolhead_variant" in
+            "USB-C Klipper printhead (separate toolhead MCU)") toolhead_variant="usb-c" ;;
+            *) toolhead_variant="ribbon" ;;
+        esac
     fi
 fi
 
@@ -82,13 +66,6 @@ case "$toolhead_variant" in
     usb-c|usbc) toolhead_variant="usb-c" ;;
     *) toolhead_variant="ribbon" ;;
 esac
-
-# Headless safety check: refuse to persist a usb-c selection if no USB-C
-# toolhead MCU is currently detected.
-if [ "$toolhead_variant" = "usb-c" ] && ! usb_c_toolhead_detected; then
-    echo "ERROR: --toolhead usb-c specified but no USB-C Klipper toolhead detected (expected /dev/serial/by-id/usb-Klipper_stm32f103xe_*)."
-    exit 1
-fi
 
 # Define FLAG_LINE before generating configuration
 if [[ "$model_key" = "n4" || "$model_key" = "n4pro" ]]; then
