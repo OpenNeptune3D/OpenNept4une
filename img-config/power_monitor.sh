@@ -9,6 +9,11 @@ CHIP="${CHIP:-gpiochip1}"
 LINE_SUPERCAP="${LINE_SUPERCAP:-21}"
 LINE_PWRLOSS="${LINE_PWRLOSS:-10}"   # rising = loss
 LINE_PWRGOOD="${LINE_PWRGOOD:-19}"   # falling = loss
+# GPIO1_C3 (line 19) is HOST-PW_DET on the ZNP K1 schematic: the MT_DET1 filament-sensor
+# signal (via R379), not a supply rail. It drops on power loss only because the sensor
+# pull-up loses power, and it also drops on filament runout/unload. Line 10
+# (HOST-BREAK_SAVE_DET) is the optocoupler on the 24 V input and is the real detector.
+WATCH_PWRGOOD="${WATCH_PWRGOOD:-false}"
 LOG_TAG="${LOG_TAG:-power_monitor}"
 VERIFY_SAMPLES="${VERIFY_SAMPLES:-5}"
 VERIFY_INTERVAL_MS="${VERIFY_INTERVAL_MS:-40}"
@@ -126,7 +131,7 @@ read_states() {
 start_monitors() {
   MON_PIDS=()
   if $DEBUG; then
-    log "[DEBUG] would start: gpiomon PWRLOSS(rising), PWRGOOD(falling)"
+    log "[DEBUG] would start: gpiomon PWRLOSS(rising)$($PG_OK && echo ', PWRGOOD(falling)')"
     return
   fi
 
@@ -135,23 +140,28 @@ start_monitors() {
     gpiomon -c "$CHIP" --edges=rising -n 1 "${DEBOUNCE_ARGS[@]}" "$LINE_PWRLOSS" &
     local pid1=$!
     MON_PIDS+=("$pid1")
-    
-    gpiomon -c "$CHIP" --edges=falling -n 1 "${DEBOUNCE_ARGS[@]}" "$LINE_PWRGOOD" &
-    local pid2=$!
-    MON_PIDS+=("$pid2")
-    
+
+    local pid2=""
+    if $PG_OK; then
+      gpiomon -c "$CHIP" --edges=falling -n 1 "${DEBOUNCE_ARGS[@]}" "$LINE_PWRGOOD" &
+      pid2=$!
+      MON_PIDS+=("$pid2")
+    fi
+
     # Verify monitors started
     sleep 0.1
-    if ! kill -0 "$pid1" 2>/dev/null || ! kill -0 "$pid2" 2>/dev/null; then
+    if ! kill -0 "$pid1" 2>/dev/null || { [ -n "$pid2" ] && ! kill -0 "$pid2" 2>/dev/null; }; then
       die "Failed to start v2 monitors"
     fi
-    
-    log "Monitors started: PWRLOSS(${LINE_PWRLOSS}↑ pid=$pid1) PWRGOOD(${LINE_PWRGOOD}↓ pid=$pid2)"
+
+    log "Monitors started: PWRLOSS(${LINE_PWRLOSS}↑ pid=$pid1)$([ -n "$pid2" ] && echo " PWRGOOD(${LINE_PWRGOOD}↓ pid=$pid2)")"
   else
     # v1: classic syntax (like your working script)
     gpiomon --num-events=1 --rising-edge "$CHIP" "$LINE_PWRLOSS" & MON_PIDS+=("$!")
-    gpiomon --num-events=1 --falling-edge "$CHIP" "$LINE_PWRGOOD" & MON_PIDS+=("$!")
-    log "Monitors started: PWRLOSS(${LINE_PWRLOSS}↑) and PWRGOOD(${LINE_PWRGOOD}↓), PIDs: ${MON_PIDS[*]}"
+    if $PG_OK; then
+      gpiomon --num-events=1 --falling-edge "$CHIP" "$LINE_PWRGOOD" & MON_PIDS+=("$!")
+    fi
+    log "Monitors started: PWRLOSS(${LINE_PWRLOSS}↑)$($PG_OK && echo " and PWRGOOD(${LINE_PWRGOOD}↓)"), PIDs: ${MON_PIDS[*]}"
   fi
 }
 
@@ -184,7 +194,7 @@ stop_monitors() {
 # A line that was not in its normal state at startup is ignored, so a board that idles
 # that way (or a line that cannot be read) is never taken as a power cut.
 PL_OK=true
-PG_OK=true
+PG_OK=$WATCH_PWRGOOD
 is_loss() { { $PL_OK && [ "$1" = "1" ]; } || { $PG_OK && [ "$2" = "0" ]; }; }
 
 # ===== Verify event (simple debounce/confirm) =====
@@ -227,12 +237,15 @@ sleep 0.5
 read -r pl pg < <(read_states)
 log "Initial states — PowerLoss(${LINE_PWRLOSS})=${pl}, PowerGood(${LINE_PWRGOOD})=${pg}"
 
-if [ "$pl" = "0" ] && [ "$pg" = "1" ]; then
+$PG_OK || log "PWRGOOD(${LINE_PWRGOOD}) not watched (WATCH_PWRGOOD=false); using PWRLOSS(${LINE_PWRLOSS}) only."
+
+if [ "$pl" = "0" ] && { ! $PG_OK || [ "$pg" = "1" ]; }; then
   log "Pins in expected stable state. Starting monitors."
 else
   log "WARNING: Unexpected initial state (PWRLOSS=${pl}, PWRGOOD=${pg}). Continuing anyway."
   [ "$pl" = "0" ] || { PL_OK=false; log "WARNING: Ignoring PWRLOSS(${LINE_PWRLOSS}) for power-loss detection."; }
-  [ "$pg" = "1" ] || { PG_OK=false; log "WARNING: Ignoring PWRGOOD(${LINE_PWRGOOD}) for power-loss detection."; }
+  if $PG_OK && [ "$pg" != "1" ]; then PG_OK=false; log "WARNING: Ignoring PWRGOOD(${LINE_PWRGOOD}) for power-loss detection."; fi
+  $PL_OK || $PG_OK || log "WARNING: No power-loss line is being watched; safe shutdown is disabled."
 fi
 
 # Re-arm in this process after a glitch. Re-executing would skip the EXIT trap and
