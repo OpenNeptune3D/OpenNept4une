@@ -20,6 +20,8 @@ KIAUH_REPO="${KIAUH_REPO:-https://github.com/dw-0/kiauh.git}"
 FLUIDD_DB_URL="${FLUIDD_DB_URL:-https://raw.githubusercontent.com/OpenNeptune3D/OpenNept4une/main/img-config/printer-data/data.mdb}"
 ARM_ENV_PATH="${ARM_ENV_PATH:-/boot/armbianEnv.txt}"
 RUN_KIAUH="${RUN_KIAUH:-1}"
+# 1 = after KIAUH, run the OpenNept4une steps (configs, USB mount, screen, Virtual RPi MCU)
+RUN_POSTINSTALL="${RUN_POSTINSTALL:-1}"
 NETPLAN_FILE="${NETPLAN_FILE:-/etc/netplan/10-dhcp-all-interfaces.yaml}"
 
 # If your repo with spidev fixes is elsewhere, set SPIDEV_SRC_DIR before running:
@@ -60,32 +62,37 @@ DB_PATH="${PDB_DIR}/data.mdb"
 echo "==> TARGET_USER=${TARGET_USER}"
 echo "==> TARGET_HOME=${TARGET_HOME}"
 
+# Images built with the OpenNept4une userpatches/customize-image.sh and
+# NETWORKING_STACK=network-manager already have the next two steps done at
+# build time. They stay here as fallbacks for other Armbian builds and skip
+# themselves when there is nothing to do.
+
 # ===== Load rk805 PMIC driver at boot (for enabling mainboard power LEDs) =====
-printf "pinctrl-rk805\n" | tee /etc/modules-load.d/rk805.conf >/dev/null
+if [[ -f /etc/modules-load.d/rk805.conf ]]; then
+  echo "rk805 module load already configured"
+else
+  printf "pinctrl-rk805\n" > /etc/modules-load.d/rk805.conf
+  echo "Added /etc/modules-load.d/rk805.conf"
+fi
 
-# ===== Netplan -> NetworkManager (simple & safer) =====
-if [[ -f "$NETPLAN_FILE" ]] && command -v netplan >/dev/null 2>&1; then
-  # Ensure NetworkManager is present/enabled before switching renderer.
-  if systemctl list-unit-files | grep -q '^NetworkManager\.service'; then
-    systemctl enable --now NetworkManager.service
-  else
-    echo "Warning: NetworkManager.service not found; skipping netplan renderer switch" >&2
-  fi
-
-  if grep -qE '^\s*renderer:\s*networkd\s*$' "$NETPLAN_FILE"; then
-    sed -i 's/^\(\s*renderer:\s*\)networkd\s*$/\1NetworkManager/' "$NETPLAN_FILE"
-    echo "Updated renderer to NetworkManager in $NETPLAN_FILE"
-  else
-    echo "No renderer: networkd line found (or already NetworkManager); leaving $NETPLAN_FILE unchanged"
-  fi
+# ===== Netplan -> NetworkManager (only if still on systemd-networkd) =====
+if [[ ! -f "$NETPLAN_FILE" ]] || ! command -v netplan >/dev/null 2>&1; then
+  echo "Warning: netplan not available or $NETPLAN_FILE not found; skipping network changes" >&2
+elif ! grep -qE '^\s*renderer:\s*networkd\s*$' "$NETPLAN_FILE"; then
+  echo "Network already uses NetworkManager; leaving it unchanged"
+elif ! systemctl cat NetworkManager.service >/dev/null 2>&1; then
+  # Switching the renderer without NetworkManager installed would leave no network after reboot.
+  echo "Warning: NetworkManager is not installed; keeping systemd-networkd" >&2
+else
+  systemctl enable --now NetworkManager.service
+  sed -i 's/^\(\s*renderer:\s*\)networkd\s*$/\1NetworkManager/' "$NETPLAN_FILE"
+  echo "Updated renderer to NetworkManager in $NETPLAN_FILE"
 
   netplan generate
   netplan apply
 
   systemctl disable --now systemd-networkd.service systemd-networkd.socket systemd-networkd-wait-online.service NetworkManager-wait-online.service || true
   systemctl mask systemd-networkd-wait-online.service || true
-else
-  echo "Warning: netplan not available or $NETPLAN_FILE not found; skipping netplan/network changes" >&2
 fi
 
 # ===== Directories & ownership =====
@@ -202,6 +209,45 @@ if [[ "${RUN_KIAUH}" = "1" && -x "${KIAUH_DIR}/kiauh.sh" ]]; then
   sudo -u "${TARGET_USER}" "${KIAUH_DIR}/kiauh.sh"
 else
   echo "KIAUH launch disabled or not found at ${KIAUH_DIR}/kiauh.sh; skipping"
+fi
+
+# ===== OpenNept4une setup (after KIAUH installed Klipper + Moonraker) =====
+# Runs as the target user with -H so $HOME is theirs. Inner sudo calls reuse
+# the sudo login used to start this script (asks again only after ~15 min).
+ON4_SH="${TARGET_HOME}/OpenNept4une/OpenNept4une.sh"
+MCU_INSTALLER="${TARGET_HOME}/OpenNept4une/img-config/rpi-mcu-install.sh"
+ON4_STEPS=(install_configs usb_auto_mount install_screen_service)
+
+print_post_kiauh_note() {
+  echo "After installing Klipper, Moonraker, Fluidd (port 80), Mainsail (port 81)"
+  echo "and Fluidd-Config with KIAUH, run as ${TARGET_USER}:"
+  for step in "${ON4_STEPS[@]}"; do
+    echo "  ${ON4_SH} -y ${step}"
+  done
+  echo "  ${MCU_INSTALLER} \"Virtual RPi\"   (reboots when finished)"
+}
+
+if [[ "${RUN_POSTINSTALL}" != "1" ]]; then
+  echo "OpenNept4une setup disabled (RUN_POSTINSTALL=${RUN_POSTINSTALL})."
+  print_post_kiauh_note
+elif ! systemctl cat klipper.service >/dev/null 2>&1 || ! systemctl cat moonraker.service >/dev/null 2>&1; then
+  echo "Warning: Klipper and/or Moonraker are not installed; skipping OpenNept4une setup." >&2
+  print_post_kiauh_note
+elif [[ ! -f "${ON4_SH}" || ! -f "${MCU_INSTALLER}" ]]; then
+  echo "Warning: OpenNept4une not found under ${TARGET_HOME}/OpenNept4une; skipping its setup." >&2
+  print_post_kiauh_note
+else
+  for step in "${ON4_STEPS[@]}"; do
+    echo "==> OpenNept4une: ${step}"
+    sudo -u "${TARGET_USER}" -H -- bash "${ON4_SH}" -y "${step}" \
+      || echo "Warning: ${step} failed; run it again from OpenNept4une.sh" >&2
+  done
+  echo "✅ Done. All user paths are under ${TARGET_HOME}"
+  # Last: the installer reboots the printer when it finishes.
+  echo "==> OpenNept4une: Virtual RPi MCU (the printer reboots when this finishes)"
+  sudo -u "${TARGET_USER}" -H -- bash "${MCU_INSTALLER}" "Virtual RPi" \
+    || echo "Warning: Virtual RPi MCU install failed; run update_mcu_rpi_fw from OpenNept4une.sh" >&2
+  exit 0
 fi
 
 echo "✅ Done. All user paths are under ${TARGET_HOME}"

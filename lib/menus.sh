@@ -21,6 +21,7 @@ advanced_more() {
         printf '9) Update SSH server keys\n\n'
         printf '%b\n' "----------------------------------------------------------${NC}"
         printf '10) Create Github Issue Zip\n\n'
+        printf '11) Free Up Storage Space (safe cleanup)\n\n'
         printf '\n%b\n' "(${Y} B ${NC}) Back to Main Menu"
         printf '%s\n' "=========================================================="
         printf '%b' "${G}Enter your choice:${NC} "
@@ -37,6 +38,7 @@ advanced_more() {
             8) "${HOME}/OpenNept4une/img-config/set-printer-model.sh"; exit 0;;
             9) update_ssh_keys;;
             10) "${HOME}/OpenNept4une/img-config/github-issue-debug.sh"; exit 0;;
+            11) free_storage;;
             b|B) return;;  # Return to the main menu
             *) printf '%b\n' "${R}Invalid choice, please try again.${NC}";;
         esac
@@ -59,6 +61,12 @@ base_image_config() {
 
 update_ssh_keys() {
     install_feature "SSH Key Update" "$SSH_KEY_INSTALLER" "Do you want to update the SSH server keys?"
+}
+
+free_storage() {
+    local action="$FREE_STORAGE_SCRIPT"
+    [ "$auto_yes" = "true" ] && action="bash \"$FREE_STORAGE_SCRIPT\" --yes"
+    install_feature "Free Up Storage" "$action" "Scan for caches, old logs and large files you can remove?"
 }
 
 armbian_resize() {
@@ -125,6 +133,7 @@ Commands:
   webcam_setup               Install webcam FPS fix.
   base_image_config          Apply base configuration for a freshly compiled Armbian image.
   armbian_resize             Resize the active Armbian partition (for eMMC > 8GB).
+  free_storage               Safely free storage (caches, old logs; gcodes/large files only if you pick them).
 
 EOF
 }

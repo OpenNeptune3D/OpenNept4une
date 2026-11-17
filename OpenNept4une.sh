@@ -10,6 +10,7 @@ UPDATED_DISPLAY_FIRMWARE_INSTALLER="${HOME}/display_firmware/screen-firmware.sh"
 WEBCAM_SETUP_INSTALLER="${HOME}/OpenNept4une/img-config/webcam-setup.sh"
 BASE_IMAGE_INSTALLER="${HOME}/OpenNept4une/img-config/base_image_configuration.sh"
 SSH_KEY_INSTALLER="${HOME}/OpenNept4une/img-config/update-ssh-keys.sh"
+FREE_STORAGE_SCRIPT="${HOME}/OpenNept4une/img-config/free-up-storage.sh"
 
 FLAG_FILE="/boot/.OpenNept4une.txt"
 MODEL_FROM_FLAG=$(grep -E '^N4|^n4' "$FLAG_FILE" 2>/dev/null)
@@ -133,6 +134,7 @@ else
         webcam_setup) webcam_setup ;;
         base_image_config) base_image_config ;;
         armbian_resize) armbian_resize ;;
+        free_storage) free_storage ;;
         *) printf '%b\n' "${R}Invalid command. Please try again.${NC}" ;;
     esac
 fi

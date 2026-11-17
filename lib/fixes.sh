@@ -28,6 +28,31 @@ EOF
         fi
     fi
 
+    # Moonraker saves uploads to $TMPDIR (default /tmp). On Armbian /tmp is a RAM
+    # tmpfs capped at half the RAM (~484 MB on 1 GB boards), so large gcode
+    # uploads failed with 502 (OpenNept4une#373). /var/tmp is on the eMMC, on the
+    # same filesystem as gcodes, so finished uploads are renamed, not copied.
+    # A drop-in survives Moonraker updates (they only rewrite moonraker.service).
+    # Takes effect on the next Moonraker restart or reboot; not restarted here
+    # because run_fixes can run during a print.
+    MR_DROPIN_DIR="/etc/systemd/system/moonraker.service.d"
+    MR_TMPDIR_FILE="${MR_DROPIN_DIR}/opennept4une-tmpdir.conf"
+    if [ ! -f "$MR_TMPDIR_FILE" ]; then
+        if ! sudo mkdir -p "$MR_DROPIN_DIR"; then
+            printf '%s\n' "${R}Failed to create $MR_DROPIN_DIR${NC}"
+        elif ! sudo tee "$MR_TMPDIR_FILE" >/dev/null <<'EOF'
+# OpenNept4une: store uploads on the eMMC instead of the RAM-backed /tmp (#373)
+[Service]
+Environment=TMPDIR=/var/tmp
+EOF
+        then
+            printf '%s\n' "${R}Failed to create $MR_TMPDIR_FILE${NC}"
+        else
+            sudo systemctl daemon-reload >/dev/null 2>&1
+            printf '%s\n' "${Y}Large upload fix installed: takes effect after the next reboot or Moonraker restart.${NC}"
+        fi
+    fi
+
     # Remove obsolete GPIO script if it exists
     if [ -f "/usr/local/bin/set_gpio.sh" ]; then
         if ! sudo rm -f "/usr/local/bin/set_gpio.sh"; then
