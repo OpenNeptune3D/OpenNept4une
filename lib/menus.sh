@@ -119,6 +119,13 @@ Options:
   --printer_model=MODEL      Specify the printer model (e.g., n4, n4pro, n4plus / n4max).
   --motor_current=VALUE      Specify the stepper motor current (e.g., 0.8, 1.2).
   --toolhead=TYPE            Specify the printhead variant: ribbon (default) or usb-c.
+  --probe=TYPE               Z probe: stock (default), cartographer, beacon or eddy. Remembered.
+  --probe_offset=X,Y         Probe offset from the nozzle in mm, used to create
+                             ~/printer_data/config/<probe>.cfg if it is missing.
+  --probe_serial=PATH        Probe serial path for that file, if auto-detection finds
+                             several devices (e.g. Eddy plus a Pico accelerometer).
+  --probe_accel=VER          Cartographer version for its accelerometer: v3, v4 or none.
+                             Asked when creating cartographer.cfg if not given.
   -h, --help                 Display this help message and exit.
 
 Commands:

@@ -86,6 +86,118 @@ update_toolhead_flag() {
     fi
 }
 
+# The Z probe is kept on its own "probe=<name>" line in $FLAG_FILE, apart from
+# the model line, so it does not interfere with the "-t..." toolhead suffix.
+read_probe_flag() {
+    grep -m1 '^probe=' "$FLAG_FILE" 2>/dev/null | cut -d= -f2
+}
+
+update_probe_flag() {
+    local new_probe="$1"
+    [ "$(read_probe_flag)" = "$new_probe" ] && return 0
+    sudo sed -i '/^probe=/d' "$FLAG_FILE"
+    echo "probe=${new_probe}" | sudo tee -a "$FLAG_FILE" > /dev/null
+    sync
+}
+
+# Sets probe_variant: --probe on the command line (saved), else the saved
+# value, else ask once (saved). Defaults to the stock probe.
+select_probe_variant() {
+    local stored
+    stored=$(read_probe_flag)
+    if [ -n "$probe_variant" ]; then
+        update_probe_flag "$probe_variant"
+        return 0
+    fi
+    case "$stored" in
+        stock|cartographer|beacon|eddy) probe_variant="$stored"; return 0 ;;
+    esac
+
+    if [[ "$auto_yes" == "true" ]]; then
+        probe_variant="stock"
+        local f
+        for f in cartographer beacon eddy; do
+            if [ -f "${HOME}/printer_data/config/${f}.cfg" ]; then
+                printf '%b\n' "${Y}Found ${f}.cfg but no probe is saved; using the stock probe. Pass --probe=${f} to use it.${NC}"
+            fi
+        done
+    else
+        printf '\n%s\n' "Which Z probe does this machine have?"
+        printf '%s\n' "  1) Stock probe (default)"
+        printf '%s\n' "  2) Cartographer"
+        printf '%s\n' "  3) Beacon"
+        printf '%s\n' "  4) BTT Eddy (USB)"
+        read -r -p "$(printf '%b' "${M}Enter your choice [1-4, default 1] ${NC}: ")" PROBE_CHOICE
+        case "$PROBE_CHOICE" in
+            2) probe_variant="cartographer" ;;
+            3) probe_variant="beacon" ;;
+            4) probe_variant="eddy" ;;
+            *) probe_variant="stock" ;;
+        esac
+    fi
+    update_probe_flag "$probe_variant"
+}
+
+# Cartographer V3 and V4 put the onboard accelerometer on different pins, and
+# the wrong one bootloops the probe, so ask. Sets probe_accel to v3, v4 or
+# none; left empty (headless, no --probe_accel) generate_conf.py decides from
+# the probe's USB name.
+select_cartographer_accel() {
+    [ -n "$probe_accel" ] && return 0
+    [[ "$auto_yes" == "true" ]] && return 0
+
+    local detected="" default_choice="3" dev
+    dev=$(compgen -G "/dev/serial/by-id/usb-Cartographer_*" | head -n 1)
+    case "${dev,,}" in
+        *stm32g431*|*stm32g474*) detected="V4"; default_choice="1" ;;
+        *stm32f042*) detected="V3"; default_choice="2" ;;
+    esac
+
+    printf '\n%s\n' "Which Cartographer is this? (sets up its built-in accelerometer)"
+    [ -n "$detected" ] && printf '%s\n' "  The connected probe reports itself as ${detected}."
+    printf '%s\n' "  1) Cartographer V4"
+    printf '%s\n' "  2) Cartographer V3"
+    printf '%s\n' "  3) Don't set up the probe's accelerometer"
+    read -r -p "$(printf '%b' "${M}Enter your choice [1-3, default ${default_choice}] ${NC}: ")" ACCEL_CHOICE
+    case "${ACCEL_CHOICE:-$default_choice}" in
+        1) probe_accel="v4" ;;
+        2) probe_accel="v3" ;;
+        *) probe_accel="none" ;;
+    esac
+}
+
+# A scanning probe's settings live in ~/printer_data/config/<probe>.cfg, which
+# printer.cfg includes. Create it from the template once if it is missing; an
+# existing file is never touched.
+ensure_probe_cfg() {
+    [ "$probe_variant" = "stock" ] && return 0
+    local probe_cfg="${HOME}/printer_data/config/${probe_variant}.cfg"
+    [ -f "$probe_cfg" ] && return 0
+
+    printf '\n%b\n' "${Y}${probe_cfg} does not exist yet; creating it from the OpenNept4une template.${NC}"
+    if [ -z "$probe_offset" ]; then
+        if [[ "$auto_yes" == "true" ]]; then
+            printf '%b\n' "${R}Pass --probe_offset=X,Y (probe offset from the nozzle in mm) to create it non-interactively.${NC}"
+            return 1
+        fi
+        printf '%s\n' "Enter the probe's offset from the nozzle in mm, as X,Y (depends on your mount, e.g. 0,22)."
+        read -r -p "$(printf '%b' "${M}Probe offset X,Y ${NC}: ")" probe_offset
+    fi
+    local extra_args=()
+    [ -n "$probe_serial" ] && extra_args+=(--probe-serial "$probe_serial")
+    if [ "$probe_variant" = "cartographer" ]; then
+        select_cartographer_accel
+        [ -n "$probe_accel" ] && extra_args+=(--probe-accel "$probe_accel")
+    fi
+    if ! python3 "${HOME}/OpenNept4une/printer-confs/generate_conf.py" "${model_key}" \
+            --probe "${probe_variant}" --seed-probe-cfg --probe-offset "${probe_offset}" \
+            --toolhead "${toolhead_variant}" "${extra_args[@]}"; then
+        printf '%b\n' "${R}Could not create ${probe_cfg}.${NC}"
+        return 1
+    fi
+    printf '%b\n' "${Y}Review ${probe_cfg}, then run Calibrate_Probe_Z_Offset after Klipper restarts.${NC}"
+}
+
 install_printer_cfg() {
     clear_screen
     printf '%b\n' "${C}${OPENNEPT4UNE_ART}${NC}"
@@ -139,15 +251,23 @@ install_printer_cfg() {
         return 1
     fi
 
+    select_probe_variant
+    if ! ensure_probe_cfg; then
+        return 1
+    fi
+    # Lets generate_conf.py fill in or correct the probe's serial in <probe>.cfg.
+    local probe_serial_args=()
+    [ -n "$probe_serial" ] && probe_serial_args=(--probe-serial "$probe_serial")
+
     # Build config based on user selection
     if [[ $model_key == "n4" || $model_key == "n4pro" ]]; then
-        if ! python3 "${HOME}/OpenNept4une/printer-confs/generate_conf.py" "${model_key}" "${motor_current}" --toolhead "${toolhead_variant}"; then
+        if ! python3 "${HOME}/OpenNept4une/printer-confs/generate_conf.py" "${model_key}" "${motor_current}" --toolhead "${toolhead_variant}" --probe "${probe_variant}" "${probe_serial_args[@]}"; then
             printf '%b\n' "${R}Failed to generate printer configuration.${NC}"
             return 1
         fi
         sync
     else
-        if ! python3 "${HOME}/OpenNept4une/printer-confs/generate_conf.py" "${model_key}" --toolhead "${toolhead_variant}"; then
+        if ! python3 "${HOME}/OpenNept4une/printer-confs/generate_conf.py" "${model_key}" --toolhead "${toolhead_variant}" --probe "${probe_variant}" "${probe_serial_args[@]}"; then
             printf '%b\n' "${R}Failed to generate printer configuration.${NC}"
             return 1
         fi
@@ -157,6 +277,28 @@ install_printer_cfg() {
 
     mkdir -p "$PRINTER_CFG_DEST" "$DATABASE_DEST"
     touch "${HOME}/printer_data/config/user_settings.cfg"
+
+    # printer.cfg is rebuilt from the templates, so hand edits in it are lost.
+    # List them first (exit status 2 = some found), so they can be moved to
+    # user_settings.cfg or the probe's include file.
+    if [[ -f "$PRINTER_CFG_FILE" ]]; then
+        local edit_status=0
+        printf '\n'
+        python3 "${HOME}/OpenNept4une/printer-confs/generate_conf.py" --check-edits \
+            "$PRINTER_CFG_FILE" "$PRINTER_CFG_SOURCE" --probe "${probe_variant}" || edit_status=$?
+        if [[ $edit_status -eq 2 ]]; then
+            printf '%b\n' "${Y}The current printer.cfg is kept as a backup-printer.cfg.bak* file either way.${NC}"
+            if [[ "$auto_yes" != "true" ]]; then
+                read -r -p "$(printf '%b' "${M}Continue with the update now? (y/n) ${NC}: ")" EDITS_CHOICE
+                if [[ ! "$EDITS_CHOICE" =~ ^[Yy]$ ]]; then
+                    printf '\n%s\n' "${Y}Update stopped. Move the settings above, then run it again.${NC}"
+                    return 0
+                fi
+            fi
+        elif [[ $edit_status -ne 0 ]]; then
+            printf '%b\n' "${Y}Could not check printer.cfg for hand edits; continuing.${NC}"
+        fi
+    fi
 
     local DIFF_CHOICE="n"
     if [[ "$auto_yes" != "true" ]]; then
@@ -227,6 +369,8 @@ apply_configuration() {
     if [[ -n "$PRINTER_CFG_SOURCE" && -f "$PRINTER_CFG_SOURCE" ]]; then
         if cp "$PRINTER_CFG_SOURCE" "$PRINTER_CFG_FILE"; then
             printf '%s\n\n' "${G}Printer configuration updated from '${PRINTER_CFG_SOURCE}'.${NC}"
+            # Baseline for the next update's hand-edit check (generate_conf.py --check-edits).
+            cp "$PRINTER_CFG_SOURCE" "${HOME}/OpenNept4une/printer-confs/last_applied.cfg" 2>/dev/null || true
             sleep 2
         else
             printf '%s\n' "${R}Error: Failed to update printer configuration from '${PRINTER_CFG_SOURCE}'.${NC}"

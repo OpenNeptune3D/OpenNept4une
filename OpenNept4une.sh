@@ -30,6 +30,10 @@ model_key=""
 motor_current=""
 pcb_version=""
 toolhead_variant=""
+probe_variant=""
+probe_offset=""
+probe_serial=""
+probe_accel=""
 auto_yes="false"
 
 # ASCII art for OpenNept4une
@@ -71,7 +75,7 @@ source "$LIB_DIR/configs.sh" || { printf '%s\n' "Missing $LIB_DIR/configs.sh" >&
 source "$LIB_DIR/menus.sh" || { printf '%s\n' "Missing $LIB_DIR/menus.sh" >&2; exit 1; }
 
 # Parse Command-Line Arguments
-if ! TEMP=$(getopt -o yh --long yes,help,printer_model:,motor_current:,pcb_version:,toolhead: -n 'OpenNept4une.sh' -- "$@"); then
+if ! TEMP=$(getopt -o yh --long yes,help,printer_model:,motor_current:,pcb_version:,toolhead:,probe:,probe_offset:,probe_serial:,probe_accel: -n 'OpenNept4une.sh' -- "$@"); then
     printf '%b\n' "${R}Failed to parse options.${NC}" >&2
     exit 1
 fi
@@ -84,6 +88,10 @@ while true; do
         --motor_current) motor_current="$2"; shift 2 ;;
         --pcb_version) pcb_version="$2"; shift 2 ;;
         --toolhead) toolhead_variant="$2"; shift 2 ;;
+        --probe) probe_variant="$2"; shift 2 ;;
+        --probe_offset) probe_offset="$2"; shift 2 ;;
+        --probe_serial) probe_serial="$2"; shift 2 ;;
+        --probe_accel) probe_accel="$2"; shift 2 ;;
         -y|--yes) auto_yes="true"; shift ;;
         -h|--help) print_help; exit 0 ;;
         --) shift; break ;;
@@ -93,6 +101,16 @@ done
 
 if [[ -n "$toolhead_variant" && "$toolhead_variant" != "ribbon" && "$toolhead_variant" != "usb-c" ]]; then
     printf '%b\n' "${R}Invalid --toolhead value '${toolhead_variant}' (expected 'ribbon' or 'usb-c').${NC}"
+    exit 1
+fi
+
+if [[ -n "$probe_variant" && "$probe_variant" != "stock" && "$probe_variant" != "cartographer" && "$probe_variant" != "beacon" && "$probe_variant" != "eddy" ]]; then
+    printf '%b\n' "${R}Invalid --probe value '${probe_variant}' (expected 'stock', 'cartographer', 'beacon' or 'eddy').${NC}"
+    exit 1
+fi
+
+if [[ -n "$probe_accel" && "$probe_accel" != "v3" && "$probe_accel" != "v4" && "$probe_accel" != "none" ]]; then
+    printf '%b\n' "${R}Invalid --probe_accel value '${probe_accel}' (expected 'v3', 'v4' or 'none').${NC}"
     exit 1
 fi
 
