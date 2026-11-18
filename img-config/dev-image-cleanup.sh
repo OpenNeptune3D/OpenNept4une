@@ -437,11 +437,35 @@ step "5/10 Personal files and credentials"
 for h in "$USER_HOME" /root; do
   remove "$h/.bash_history" "$h/.python_history" "$h/.lesshst" "$h/.wget-hsts" \
          "$h/.viminfo" "$h/.sudo_as_admin_successful" "$h/.Xauthority" \
-         "$h/.gitconfig" "$h/.git-credentials" "$h/.config/gh" \
+         "$h/.gitconfig" "$h/.git-credentials" "$h/.config/gh" "$h/.local/state/gh" \
          "$h/.ssh/authorized_keys" "$h/.ssh/known_hosts" "$h/.ssh/known_hosts.old" \
          "$h/.cache/"* "$h/.local/share/Trash" "$h/.local/share/nano"
 done
 remove /var/run/sudo/ts/*
+# git identity or credentials set per repo (git config without --global)
+for r in "${RELEASE_REPOS[@]}"; do
+  cfg="$USER_HOME/$r/.git/config"
+  [[ -f "$cfg" ]] || continue
+  for s in user credential; do
+    if as_user git config -f "$cfg" --get-regexp "^$s\\." >/dev/null 2>&1; then
+      run as_user git config -f "$cfg" --remove-section "$s" 2>/dev/null || true
+    fi
+  done
+done
+# Safety net: no GitHub token may be left anywhere in either home folder.
+# (In a dry run, files the steps above would remove are not counted.)
+tokens=()
+while IFS= read -r f; do
+  for p in ${REMOVED[@]+"${REMOVED[@]}"}; do
+    [[ "$f" == "$p" || "$f" == "$p/"* ]] && continue 2
+  done
+  tokens+=("$f")
+done < <(grep -rlE --exclude-dir=objects --exclude-dir='*-env' --exclude-dir=venv \
+           'gh[pousr]_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{30,}' "$USER_HOME" /root 2>/dev/null || true)
+if (( ${#tokens[@]} )); then
+  for f in "${tokens[@]}"; do warn "GitHub token in $f"; done
+  [[ "$DRY_RUN" == "true" ]] || die "Remove the GitHub token(s) above, then run this again."
+fi
 
 if [[ "$KEEP_CLAUDE" != "true" ]]; then
   for h in "$USER_HOME" /root; do
