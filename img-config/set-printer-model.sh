@@ -67,6 +67,10 @@ case "$toolhead_variant" in
     *) toolhead_variant="ribbon" ;;
 esac
 
+# Only an answered or --pcb_version PCB may change the boot DTB; the "2.0"
+# default below is a guess and must not move a V2.3 board off its DTB.
+pcb_explicit="$pcb_version"
+
 # Define FLAG_LINE before generating configuration
 if [[ "$model_key" = "n4" || "$model_key" = "n4pro" ]]; then
     FLAG_LINE="${model_key}-${motor_current}A-v${pcb_version}"
@@ -95,6 +99,52 @@ update_flag_file() {
 }
 
 update_flag_file "$FLAG_LINE"
+
+# Point the bootloader at the DTB for this PCB version, on images that ship
+# the ZNP-K1 DTBs (Armbian-ZNP-K1-build). Does nothing on older images:
+# - their fdtfile= is not a rk3328-znp-k1-*.dtb (e.g. the rk3328-roc-cc.dtb
+#   copy-over method), or there is no armbianEnv.txt;
+# - the wanted DTB is not in /boot/dtb/rockchip.
+# A DTB that already suits the PCB (e.g. n4-v1.1 for V1.1) is kept.
+ARMBIAN_ENV="${ARMBIAN_ENV:-/boot/armbianEnv.txt}"
+DTB_DIR="${DTB_DIR:-/boot/dtb/rockchip}"
+set_board_dtb() {
+    local pcb="$1" suitable current current_name wanted f
+    case "$pcb" in
+        1.0) suitable="rk3328-znp-k1-v1x.dtb rk3328-znp-k1-n4-v1.0.dtb" ;;
+        1.1) suitable="rk3328-znp-k1-v1x.dtb rk3328-znp-k1-n4-v1.1.dtb" ;;
+        1.4) suitable="rk3328-znp-k1-n4-v1.4.dtb" ;;
+        2.0) suitable="rk3328-znp-k1-v2x.dtb rk3328-znp-k1-n4plus-n4max.dtb" ;;
+        2.3) suitable="rk3328-znp-k1-n4plus-n4max-v2.3.dtb" ;;
+        *) return 0 ;;
+    esac
+    [ -f "$ARMBIAN_ENV" ] || return 0
+    current=$(sed -n 's/^fdtfile=//p' "$ARMBIAN_ENV" | head -n 1)
+    current_name="${current##*/}"
+    case "$current_name" in
+        rk3328-znp-k1-*.dtb) ;;
+        *) return 0 ;;
+    esac
+    for f in $suitable; do
+        [ "$f" = "$current_name" ] && return 0
+    done
+    wanted="${suitable%% *}"
+    if [ ! -f "$DTB_DIR/$wanted" ]; then
+        echo "Note: $wanted is not in this image; keeping $current_name."
+        return 0
+    fi
+    # Keep the directory prefix (e.g. "rockchip/") of the current value.
+    if sudo sed -i "s|^fdtfile=.*|fdtfile=${current%"$current_name"}${wanted}|" "$ARMBIAN_ENV"; then
+        sync
+        echo -e "\nBoard DTB set for PCB v${pcb}: ${current_name} -> ${wanted}"
+        echo "REBOOT before printing (sudo reboot) so the board uses it."
+        echo "To undo: set fdtfile=${current} in ${ARMBIAN_ENV} and reboot."
+    else
+        echo "Warning: could not update ${ARMBIAN_ENV}; keeping ${current_name}."
+    fi
+    return 0
+}
+[ -n "$pcb_explicit" ] && set_board_dtb "$pcb_explicit"
 
 # Check the contents of the FLAG_FILE
 #echo "DEBUG: Contents of $FLAG_FILE"

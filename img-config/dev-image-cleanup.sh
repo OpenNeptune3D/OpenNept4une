@@ -4,10 +4,12 @@
 # DESTRUCTIVE. Removes everything personal or unique to this machine
 # (Wi-Fi, SSH host keys, machine-id, Moonraker database, gcodes, logs,
 # shell history, git/gh credentials, Claude Code, dev-only packages),
-# expands the root partition and powers off. Image the eMMC after that.
+# uninstalls Mobileraker and the Cartographer plugin (not shipped in the
+# release image), expands the root partition and powers off. Image the eMMC
+# after that.
 #
 # Usage: dev-image-cleanup.sh [-n|--dry-run] [-y|--yes] [--no-poweroff]
-#        [--keep-dev-tools] [--keep-claude] [-h|--help]
+#        [--branch NAME] [--keep-dev-tools] [--keep-claude] [-h|--help]
 
 set -euo pipefail
 shopt -s nullglob dotglob
@@ -19,6 +21,7 @@ AUTO_YES="false"
 POWEROFF="true"
 KEEP_DEV_TOOLS="false"
 KEEP_CLAUDE="false"
+RELEASE_BRANCH="main"   # --branch NAME overrides
 
 # Installed by hand while developing. Checked on 2026-11-17: not called by
 # klipper, moonraker, fluidd, mainsail, mobileraker, kiauh, OpenNept4une,
@@ -27,20 +30,25 @@ KEEP_CLAUDE="false"
 # cmake/g++ stay: webcam-setup.sh needs them. python3-pip stays: installers use it.
 DEV_PACKAGES=(gh shellcheck strace)
 
-# Repos to put back on their default branch before imaging.
+# Repos to put on the release branch before imaging, and their section in
+# moonraker.conf, whose primary_branch must match the checked-out branch.
 RELEASE_REPOS=(display_connector OpenNept4une)
+declare -A MOONRAKER_SECTION=(
+  [display_connector]="update_manager display"
+  [OpenNept4une]="update_manager OpenNept4une"
+)
 
 # Printer services stopped before their data is wiped.
-PRINTER_SERVICES=(display mobileraker moonraker klipper klipper-mcu mjpg-streamer-webcam1)
+PRINTER_SERVICES=(display moonraker klipper klipper-mcu mjpg-streamer-webcam1)
 
 # Top-level entries expected in the user's home on a release image.
 # Anything else is listed at the end (not removed) so you can check it.
 EXPECTED_HOME=(
   .bash_aliases .bash_logout .bashrc .profile .config .local .cache
   printer_data klipper klippy-env moonraker moonraker-env fluidd fluidd-config
-  mainsail kiauh OpenNept4une display_connector display_firmware
-  mobileraker_companion mobileraker-env Klipper-Adaptive-Meshing-Purging
-  katapult cartographer3d-plugin cartographer_firmware mjpg-streamer
+  mainsail mainsail-config kiauh OpenNept4une display_connector display_firmware
+  Klipper-Adaptive-Meshing-Purging
+  katapult mjpg-streamer
 )
 
 usage() {
@@ -52,6 +60,10 @@ Usage: dev-image-cleanup.sh [options]
   -y, --yes          Do not ask for confirmation (headless).
       --no-poweroff  Stay on at the end (printer services are restarted).
                      New SSH logins fail until the next boot (host keys removed).
+      --branch NAME  Release from branch NAME in display_connector and
+                     OpenNept4une, and set it as primary_branch in moonraker.conf.
+                     Default: main. Commits on the current branch that NAME
+                     lacks are listed before anything changes.
       --keep-dev-tools  Do not purge dev-only packages (gh, shellcheck, strace).
       --keep-claude  Do not remove Claude Code (~/.claude and friends).
   -h, --help         Show this help.
@@ -66,6 +78,9 @@ while [[ $# -gt 0 ]]; do
     --no-poweroff) POWEROFF="false" ;;
     --keep-dev-tools) KEEP_DEV_TOOLS="true" ;;
     --keep-claude) KEEP_CLAUDE="true" ;;
+    --branch=?*) RELEASE_BRANCH="${1#--branch=}" ;;
+    --branch) [[ -n "${2:-}" ]] || { printf '%b\n' "${R}--branch needs a branch name${NC}" >&2; exit 1; }
+              RELEASE_BRANCH="$2"; shift ;;
     -h|--help) usage; exit 0 ;;
     *) printf '%b\n' "${R}Unknown option: $1${NC}" >&2; usage; exit 1 ;;
   esac
@@ -74,7 +89,7 @@ done
 
 # Everything below runs as root; user-owned git work runs as the real user.
 if [[ "$EUID" -ne 0 ]]; then
-  exec sudo -- "$0" "${ORIG_ARGS[@]}"
+  exec sudo -- bash "$0" "${ORIG_ARGS[@]}"  # file is not +x in git
 fi
 
 # ------------------------------------------------------------------
@@ -106,6 +121,53 @@ remove() {
 }
 
 as_user() { sudo -u "$USER_NAME" -H -- "$@"; }
+
+# repo_remote REPO: "origin", else the first remote, else nothing.
+repo_remote() {
+  if as_user git -C "$1" remote get-url origin >/dev/null 2>&1; then
+    echo origin
+  else
+    as_user git -C "$1" remote | head -n1
+  fi
+}
+
+# set_primary_branch SECTION BRANCH: point that moonraker.conf section at
+# BRANCH so Moonraker's update manager does not report the repo as invalid.
+set_primary_branch() {
+  local section="$1" branch="$2" conf="$PDATA/config/moonraker.conf" tmp
+  [[ -f "$conf" ]] && grep -qxF "[$section]" "$conf" \
+    || { info "No [$section] in moonraker.conf; skipping"; return 0; }
+  if [[ "$DRY_RUN" == "true" ]]; then
+    printf '   [dry-run] moonraker.conf [%s] primary_branch: %s\n' "$section" "$branch"
+    return 0
+  fi
+  tmp="$(mktemp)"
+  awk -v s="[$section]" -v b="$branch" '
+    /^\[/ { in_s = ($0 == s) }
+    in_s && /^primary_branch[[:space:]]*[:=]/ { print "primary_branch: " b; next }
+    { print }
+  ' "$conf" > "$tmp" && [[ -s "$tmp" ]] && cat "$tmp" > "$conf"  # keeps owner/mode
+  rm -f "$tmp"
+  info "moonraker.conf [$section] primary_branch: $branch"
+}
+
+# remove_conf_section SECTION: delete [SECTION] and its lines (up to the
+# next section) from moonraker.conf.
+remove_conf_section() {
+  local section="$1" conf="$PDATA/config/moonraker.conf" tmp
+  [[ -f "$conf" ]] && grep -qxF "[$section]" "$conf" || return 0
+  if [[ "$DRY_RUN" == "true" ]]; then
+    printf '   [dry-run] remove [%s] from moonraker.conf\n' "$section"
+    return 0
+  fi
+  tmp="$(mktemp)"
+  awk -v s="[$section]" '
+    /^\[/ { skip = ($0 == s) }
+    !skip { print }
+  ' "$conf" > "$tmp" && [[ -s "$tmp" ]] && cat "$tmp" > "$conf"  # keeps owner/mode
+  rm -f "$tmp"
+  info "Removed [$section] from moonraker.conf"
+}
 
 # ------------------------------------------------------------------
 # Resolve the real user
@@ -143,6 +205,31 @@ if (( ${#dirty[@]} )); then
   [[ "$DRY_RUN" == "true" ]] || die "Commit or stash the changes above first."
 fi
 
+# List work on the current branch that the release branch lacks (e.g. dev
+# ahead of main), so it is seen before the RELEASE prompt. Uses the last
+# fetched refs.
+dropped=()
+for r in "${RELEASE_REPOS[@]}"; do
+  repo="$USER_HOME/$r"
+  as_user git -C "$repo" rev-parse --is-inside-work-tree >/dev/null 2>&1 || continue
+  remote="$(repo_remote "$repo")"; [[ -n "$remote" ]] || continue
+  target="$RELEASE_BRANCH"
+  if ! as_user git -C "$repo" show-ref --verify --quiet "refs/remotes/$remote/$target"; then
+    [[ "$DRY_RUN" == "true" ]] || die "$repo has no $remote/$target branch."
+    warn "$repo has no $remote/$target branch"; continue
+  fi
+  current="$(as_user git -C "$repo" symbolic-ref --short HEAD 2>/dev/null || true)"
+  [[ -n "$current" && "$current" != "$target" ]] || continue
+  ahead="$(as_user git -C "$repo" rev-list --count "$remote/$target..HEAD" 2>/dev/null || echo 0)"
+  if (( ahead > 0 )); then
+    dropped+=("$repo: $current has $ahead commit(s) not in $remote/$target")
+  fi
+done
+if (( ${#dropped[@]} )); then
+  for d in "${dropped[@]}"; do warn "$d"; done
+  warn "Those commits will not be in the image (releasing $RELEASE_BRANCH; use --branch to change)."
+fi
+
 # Host keys are deleted below and must be recreated on the user's first boot.
 # Debian's sshd-keygen.service does that when /etc/machine-id is empty.
 systemctl cat sshd-keygen.service >/dev/null 2>&1 \
@@ -160,38 +247,10 @@ if [[ "$AUTO_YES" != "true" && "$DRY_RUN" != "true" ]]; then
 fi
 
 # ------------------------------------------------------------------
-# 1) Repos back on the default branch
+# 1) Safe cleanup (apt cache, journal, rotated logs, pip cache, coredumps)
+#    Runs before step 2: the release branch may not have this helper.
 # ------------------------------------------------------------------
-step "1/10 Update release repos"
-update_repo() {
-  local repo="$1" remote branch
-  if ! as_user git -C "$repo" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-    info "Skipping $repo (not a git repo)"; return 0
-  fi
-  remote="origin"
-  as_user git -C "$repo" remote get-url "$remote" >/dev/null 2>&1 \
-    || remote="$(as_user git -C "$repo" remote | head -n1)"
-  [[ -n "$remote" ]] || { info "Skipping $repo (no remote)"; return 0; }
-  run as_user git -C "$repo" fetch --prune "$remote" \
-    || { warn "Fetch failed for $repo (offline?)"; return 0; }
-  branch="$(as_user git -C "$repo" symbolic-ref --short "refs/remotes/$remote/HEAD" 2>/dev/null || true)"
-  branch="${branch#"$remote"/}"; branch="${branch:-main}"
-  if as_user git -C "$repo" show-ref --verify --quiet "refs/heads/$branch"; then
-    run as_user git -C "$repo" checkout "$branch" || { warn "Checkout failed in $repo"; return 0; }
-  else
-    run as_user git -C "$repo" checkout -b "$branch" --track "$remote/$branch" \
-      || { warn "No $remote/$branch in $repo"; return 0; }
-  fi
-  run as_user git -C "$repo" pull --ff-only "$remote" "$branch" \
-    || warn "Pull failed in $repo (local commits?)"
-  info "$repo -> $branch"
-}
-for r in "${RELEASE_REPOS[@]}"; do update_repo "$USER_HOME/$r"; done
-
-# ------------------------------------------------------------------
-# 2) Safe cleanup (apt cache, journal, rotated logs, pip cache, coredumps)
-# ------------------------------------------------------------------
-step "2/10 Safe storage cleanup (free-up-storage.sh --yes)"
+step "1/10 Safe storage cleanup (free-up-storage.sh --yes)"
 FREE_STORAGE="$SCRIPT_DIR/free-up-storage.sh"
 if [[ -x "$FREE_STORAGE" ]]; then
   if [[ "$DRY_RUN" == "true" ]]; then
@@ -204,23 +263,143 @@ else
 fi
 
 # ------------------------------------------------------------------
+# 2) Repos on the release branch, moonraker.conf to match
+# ------------------------------------------------------------------
+step "2/10 Update release repos ($RELEASE_BRANCH)"
+update_repo() {
+  local repo="$1" remote branch
+  if ! as_user git -C "$repo" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    info "Skipping $repo (not a git repo)"; return 0
+  fi
+  remote="$(repo_remote "$repo")"
+  [[ -n "$remote" ]] || { info "Skipping $repo (no remote)"; return 0; }
+  run as_user git -C "$repo" fetch --prune "$remote" \
+    || { warn "Fetch failed for $repo (offline?)"; return 0; }
+  branch="$RELEASE_BRANCH"
+  if as_user git -C "$repo" show-ref --verify --quiet "refs/heads/$branch"; then
+    run as_user git -C "$repo" checkout "$branch" || { warn "Checkout failed in $repo"; return 0; }
+  else
+    run as_user git -C "$repo" checkout -b "$branch" --track "$remote/$branch" \
+      || { warn "No $remote/$branch in $repo"; return 0; }
+  fi
+  run as_user git -C "$repo" pull --ff-only "$remote" "$branch" \
+    || warn "Pull failed in $repo (local commits?)"
+  info "$repo -> $branch"
+}
+for r in "${RELEASE_REPOS[@]}"; do
+  repo="$USER_HOME/$r"
+  update_repo "$repo"
+  # Match moonraker.conf to the branch actually checked out (in a dry run,
+  # to the branch it would be).
+  if [[ "$DRY_RUN" == "true" ]]; then
+    as_user git -C "$repo" rev-parse --is-inside-work-tree >/dev/null 2>&1 || continue
+    branch="$RELEASE_BRANCH"
+  else
+    branch="$(as_user git -C "$repo" symbolic-ref --short HEAD 2>/dev/null || true)"
+  fi
+  [[ -n "$branch" ]] && set_primary_branch "${MOONRAKER_SECTION[$r]}" "$branch"
+done
+
+# ------------------------------------------------------------------
 # 3) Stop printer services so they don't rewrite what we delete
 # ------------------------------------------------------------------
-step "3/10 Stop printer services"
+step "3/10 Stop printer services, remove Mobileraker and Cartographer"
 for s in "${PRINTER_SERVICES[@]}"; do
   systemctl cat "$s.service" >/dev/null 2>&1 || continue
   run systemctl stop "$s.service" || warn "Could not stop $s"
 done
+
+# Mobileraker is not part of the release image. Its own
+# scripts/remove-mobileraker-companion.sh only drops the service and venv;
+# this also removes the repo, its config, and its moonraker.conf/.asvc entries.
+MR_SERVICE=/etc/systemd/system/mobileraker.service
+if [[ -e "$MR_SERVICE" || -d "$USER_HOME/mobileraker_companion" || -d "$USER_HOME/mobileraker-env" ]]; then
+  if systemctl cat mobileraker.service >/dev/null 2>&1; then
+    run systemctl disable --now mobileraker.service || warn "Could not stop mobileraker"
+  fi
+  remove "$MR_SERVICE" "$USER_HOME/mobileraker_companion" "$USER_HOME/mobileraker-env" \
+         "$PDATA/config/mobileraker.conf"
+  run systemctl daemon-reload || true
+  run systemctl reset-failed mobileraker.service >/dev/null 2>&1 || true
+  info "Mobileraker uninstalled"
+else
+  info "Mobileraker not installed"
+fi
+# Leftover entries even when the rest is already gone.
+remove_conf_section "update_manager mobileraker"
+if [[ -f "$PDATA/moonraker.asvc" ]] && grep -qx 'mobileraker' "$PDATA/moonraker.asvc"; then
+  run sed -i '/^mobileraker$/d' "$PDATA/moonraker.asvc"
+  info "Removed mobileraker from moonraker.asvc"
+fi
+
+# Cartographer plugin: not part of the release image (users who pick the
+# Cartographer probe install it themselves). Undoes everything
+# cartographer3d-plugin/scripts/install.sh does: the pip package in
+# klippy-env, the klippy/{extras,plugins}/cartographer.py stub and its
+# .git/info/exclude line. Then the repo and anything it alone pulled in.
+KLIPPY_PIP="$USER_HOME/klippy-env/bin/pip"
+KLIPPER_DIR="$USER_HOME/klipper"
+CARTO_STUB="from cartographer.extra import *"
+carto_found="false"
+if [[ -x "$KLIPPY_PIP" ]] && as_user "$KLIPPY_PIP" show -q cartographer3d-plugin >/dev/null 2>&1; then
+  carto_found="true"
+  run as_user "$KLIPPY_PIP" uninstall -y cartographer3d-plugin || warn "pip uninstall cartographer3d-plugin failed"
+  # Its only dependency; remove it too when nothing else in klippy-env needs it.
+  if [[ "$DRY_RUN" != "true" ]] \
+     && as_user "$KLIPPY_PIP" show typing_extensions 2>/dev/null | grep -qE '^Required-by:[[:space:]]*$'; then
+    run as_user "$KLIPPY_PIP" uninstall -y typing_extensions || true
+  fi
+fi
+for d in extras plugins; do
+  stub="$KLIPPER_DIR/klippy/$d/cartographer.py"
+  # Only the installer's one-line stub, never a file Klipper itself tracks.
+  if [[ -f "$stub" ]] && [[ "$(cat "$stub")" == "$CARTO_STUB" ]] \
+     && ! as_user git -C "$KLIPPER_DIR" ls-files --error-unmatch "klippy/$d/cartographer.py" >/dev/null 2>&1; then
+    carto_found="true"
+    remove "$stub"
+  fi
+  if [[ -f "$KLIPPER_DIR/.git/info/exclude" ]] \
+     && grep -qx "klippy/$d/cartographer.py" "$KLIPPER_DIR/.git/info/exclude"; then
+    run as_user sed -i "\|^klippy/$d/cartographer\.py\$|d" "$KLIPPER_DIR/.git/info/exclude"
+  fi
+done
+[[ -d "$USER_HOME/cartographer3d-plugin" || -d "$USER_HOME/cartographer_firmware" ]] && carto_found="true"
+remove "$USER_HOME/cartographer3d-plugin" "$USER_HOME/cartographer_firmware"
+remove_conf_section "update_manager cartographer"
+if [[ "$carto_found" == "true" ]]; then info "Cartographer plugin removed"; else info "Cartographer plugin not installed"; fi
 
 # ------------------------------------------------------------------
 # 4) Printer data
 # ------------------------------------------------------------------
 step "4/10 Printer data"
 # printer.cfg is created per model by set-printer-model.sh on first setup.
-remove "$PDATA/config/printer.cfg"
+# Probe configs hold this machine's probe serial; set-printer-model.sh
+# installs the right one when the user picks a probe.
+remove "$PDATA/config/printer.cfg" "$PDATA/config/cartographer.cfg" \
+       "$PDATA/config/beacon.cfg" "$PDATA/config/eddy.cfg" \
+       "$PDATA/config/.moonraker.conf.bkp" "$PDATA/config/fluidd.cfg.bak" \
+       "$PDATA/config/printer-"[0-9]*_[0-9]*.cfg \
+       "$PDATA/config/backup-printer.cfg.bak"* \
+       "$USER_HOME/OpenNept4une/printer-confs/output.cfg" \
+       "$USER_HOME/OpenNept4une/printer-confs/last_applied.cfg"
+# (Klipper SAVE_CONFIG backups; install_printer_cfg's backups, generated
+# printer.cfg and hand-edit baseline. All gitignored, all this printer's.)
 [[ -f "$PDATA/config/user_settings.cfg" ]] && run truncate -s 0 "$PDATA/config/user_settings.cfg"
-remove "$PDATA/gcodes/"* "$PDATA/logs/"* "$PDATA/timelapse" "$PDATA/backup" \
+remove "$PDATA/logs/"* "$PDATA/timelapse" "$PDATA/backup" \
        "$PDATA/comms/"* "$USER_HOME/kiauh_backups"
+
+# gcodes/USB is the USB auto-mount point (usb-storage-automount.sh): keep the
+# empty folder, and never delete into a USB stick that is mounted there.
+USB_MNT="$PDATA/gcodes/USB"
+for g in "$PDATA/gcodes/"*; do
+  [[ "$g" == "$USB_MNT" ]] || remove "$g"
+done
+if mountpoint -q "$USB_MNT" 2>/dev/null; then
+  run umount "$USB_MNT" || warn "Could not unmount the USB stick at $USB_MNT; leaving it alone"
+fi
+if [[ -d "$USB_MNT" ]] && ! mountpoint -q "$USB_MNT" 2>/dev/null; then
+  remove "$USB_MNT/"*   # files copied in while nothing was mounted
+fi
 
 # Moonraker database: holds the API key, print history, Mobileraker push
 # tokens and webcam/UI settings. Reset to the OpenNept4une default; Moonraker
@@ -236,12 +415,17 @@ fi
 # Unique per install; Moonraker writes a new one on start.
 remove "$PDATA/.moonraker.uuid"
 
-# Printer model line: set again by set-printer-model.sh on first setup.
+# Printer model and probe lines: set again by set-printer-model.sh on first
+# setup. A saved probe= line is reused without asking (lib/printer_cfg.sh).
 for f in /boot/.OpenNept4une.txt /boot/.OpenNept4une.cfg; do
   [[ -f "$f" ]] || continue
   if grep -qi '^n4' "$f"; then
     info "Removing model line from $f: $(grep -i '^n4' "$f" | head -n1)"
     run sed -i '/^n4/I d' "$f"
+  fi
+  if grep -q '^probe=' "$f"; then
+    info "Removing probe line from $f: $(grep -m1 '^probe=' "$f")"
+    run sed -i '/^probe=/d' "$f"
   fi
   remove "$f.bak"
 done
@@ -305,7 +489,12 @@ remove /var/lib/apt/lists/* /var/cache/apt/*.bin
 # 7) Network
 # ------------------------------------------------------------------
 step "7/10 Network (Wi-Fi, leases)"
-remove /etc/NetworkManager/system-connections/* /etc/resolv.conf.backup \
+# NetworkManager with the netplan backend saves connections (and Wi-Fi
+# passwords) as /etc/netplan/90-NM-*.yaml instead of system-connections.
+# /run/NetworkManager is left alone: it is tmpfs (gone at power-off) and
+# removing its live connections could drop this SSH session.
+remove /etc/NetworkManager/system-connections/* /etc/netplan/90-NM-*.yaml \
+       /etc/resolv.conf.backup \
        /var/lib/NetworkManager/*.lease /var/lib/NetworkManager/seen-bssids \
        /var/lib/NetworkManager/timestamps /var/lib/NetworkManager/secret_key \
        /var/lib/dhcp/* /var/lib/dhcpcd/* /var/lib/dhcpcd5/* \

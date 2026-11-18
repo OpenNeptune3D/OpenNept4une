@@ -17,6 +17,7 @@ fi
 TARGET_USER="${TARGET_USER:-${SUDO_USER}}"
 KAMP_REPO="${KAMP_REPO:-https://github.com/kyleisah/Klipper-Adaptive-Meshing-Purging.git}"
 KIAUH_REPO="${KIAUH_REPO:-https://github.com/dw-0/kiauh.git}"
+FLUIDD_CONFIG_REPO="${FLUIDD_CONFIG_REPO:-https://github.com/fluidd-core/fluidd-config.git}"
 FLUIDD_DB_URL="${FLUIDD_DB_URL:-https://raw.githubusercontent.com/OpenNeptune3D/OpenNept4une/main/img-config/printer-data/data.mdb}"
 ARM_ENV_PATH="${ARM_ENV_PATH:-/boot/armbianEnv.txt}"
 RUN_KIAUH="${RUN_KIAUH:-1}"
@@ -57,6 +58,8 @@ PDB_DIR="${PDIR}/database"
 KAMP_DIR="${TARGET_HOME}/Klipper-Adaptive-Meshing-Purging"
 KIAUH_DIR="${TARGET_HOME}/kiauh"
 KAMP_LINK="${PCONFIG}/KAMP"
+FLUIDD_CONFIG_DIR="${TARGET_HOME}/fluidd-config"
+FLUIDD_CFG_LINK="${PCONFIG}/fluidd.cfg"
 DB_PATH="${PDB_DIR}/data.mdb"
 
 echo "==> TARGET_USER=${TARGET_USER}"
@@ -113,6 +116,21 @@ if [[ ! -L "${KAMP_LINK}" ]]; then
   ln -s "${KAMP_DIR}/Configuration" "${KAMP_LINK}"
 fi
 
+# ===== fluidd-config clone & link =====
+# Full clone (not --depth=1): Moonraker's update_manager [fluidd-config] updates it.
+if [[ ! -d "${FLUIDD_CONFIG_DIR}/.git" ]]; then
+  sudo -u "${TARGET_USER}" git clone "${FLUIDD_CONFIG_REPO}" "${FLUIDD_CONFIG_DIR}"
+else
+  sudo -u "${TARGET_USER}" git -C "${FLUIDD_CONFIG_DIR}" pull --ff-only || true
+fi
+
+if [[ -e "${FLUIDD_CFG_LINK}" && ! -L "${FLUIDD_CFG_LINK}" ]]; then
+  mv "${FLUIDD_CFG_LINK}" "${FLUIDD_CFG_LINK}.bak"
+  echo "Moved existing ${FLUIDD_CFG_LINK} to ${FLUIDD_CFG_LINK}.bak"
+fi
+sudo -u "${TARGET_USER}" ln -sfn "${FLUIDD_CONFIG_DIR}/fluidd.cfg" "${FLUIDD_CFG_LINK}"
+echo "Linked ${FLUIDD_CFG_LINK} -> ${FLUIDD_CONFIG_DIR}/fluidd.cfg"
+
 # ===== KIAUH clone =====
 if [[ ! -d "${KIAUH_DIR}/.git" ]]; then
   sudo -u "${TARGET_USER}" git clone --depth=1 "${KIAUH_REPO}" "${KIAUH_DIR}"
@@ -131,18 +149,21 @@ fi
 chown -R "${TARGET_USER}:${TARGET_USER}" "${PDB_DIR}"
 
 # ===== Armbian extraargs merge =====
+# net.ifnames=0: classic eth0/wlan0 interface names.
+# rt_group_sched=0: kernels built with CONFIG_RT_GROUP_SCHED=y give every
+#   systemd service a real-time budget of 0, so klipper_mcu -r fails with
+#   "sched_setscheduler: Operation not permitted" (exit 255). Needs kernel
+#   6.16+ and a reboot.
 touch "${ARM_ENV_PATH}"
-if grep -q '^extraargs=' "${ARM_ENV_PATH}"; then
-  if ! grep -q '^extraargs=.*\bnet\.ifnames=0\b' "${ARM_ENV_PATH}"; then
-    sed -i 's/^extraargs=\(.*\)$/extraargs=\1 net.ifnames=0/' "${ARM_ENV_PATH}"
-    echo "Updated ${ARM_ENV_PATH} (added net.ifnames=0)"
+grep -q '^extraargs=' "${ARM_ENV_PATH}" || printf 'extraargs=\n' >> "${ARM_ENV_PATH}"
+for arg in net.ifnames=0 rt_group_sched=0; do
+  if grep -q "^extraargs=\(.* \)\?${arg//./\\.}\( .*\)\?$" "${ARM_ENV_PATH}"; then
+    echo "extraargs already contains ${arg}"
   else
-    echo "extraargs already contains net.ifnames=0"
+    sed -i "s/^extraargs=.*/& ${arg}/; s/^extraargs= /extraargs=/" "${ARM_ENV_PATH}"
+    echo "Updated ${ARM_ENV_PATH} (added ${arg})"
   fi
-else
-  printf 'extraargs=net.ifnames=0\n' >> "${ARM_ENV_PATH}"
-  echo "Added extraargs=net.ifnames=0 to ${ARM_ENV_PATH}"
-fi
+done
 
 # ===== System maintenance (no log wiping) =====
 export DEBIAN_FRONTEND=noninteractive
@@ -191,6 +212,8 @@ udevadm trigger --subsystem-match=spidev --action=add || true
 #done
 
 # ===== Kernel RT budget (left as-is; uncomment if you want RT unlimited) =====
+# Not a fix for klipper_mcu's "sched_setscheduler: Operation not permitted":
+# that is rt_group_sched=0 in extraargs above.
 #SYSCTL_DROPIN="/etc/sysctl.d/10-disable-rt-group-limit.conf"
 #if ! grep -qs '^kernel\.sched_rt_runtime_us' "${SYSCTL_DROPIN}" 2>/dev/null; then
 #  printf 'kernel.sched_rt_runtime_us = -1\n' | tee "${SYSCTL_DROPIN}" >/dev/null
@@ -202,6 +225,20 @@ sysctl --system >/dev/null || true
 # ===== Final ownership & sync =====
 chown -R "${TARGET_USER}:${TARGET_USER}" "${PDIR}"
 sync
+
+# ===== Free port 80 for Fluidd =====
+# nginx is preinstalled in the image, so Debian's default site (listen 80) is
+# enabled. KIAUH reads sites-enabled to decide which ports are taken and only
+# deletes "default" after the port prompt, so Fluidd on 80 is refused as
+# "already in use" on the first run. Remove it before KIAUH starts.
+NGINX_DEFAULT_SITE="/etc/nginx/sites-enabled/default"
+if [[ -e "${NGINX_DEFAULT_SITE}" || -L "${NGINX_DEFAULT_SITE}" ]]; then
+  rm -f "${NGINX_DEFAULT_SITE}"
+  echo "Removed ${NGINX_DEFAULT_SITE} (frees port 80 for Fluidd)"
+  if systemctl is-active --quiet nginx; then
+    systemctl reload nginx || true
+  fi
+fi
 
 # ===== Launch KIAUH as invoking user (optional) =====
 if [[ "${RUN_KIAUH}" = "1" && -x "${KIAUH_DIR}/kiauh.sh" ]]; then
@@ -219,8 +256,8 @@ MCU_INSTALLER="${TARGET_HOME}/OpenNept4une/img-config/rpi-mcu-install.sh"
 ON4_STEPS=(install_configs usb_auto_mount install_screen_service)
 
 print_post_kiauh_note() {
-  echo "After installing Klipper, Moonraker, Fluidd (port 80), Mainsail (port 81)"
-  echo "and Fluidd-Config with KIAUH, run as ${TARGET_USER}:"
+  echo "After installing Klipper, Moonraker, Fluidd (port 80) and Mainsail (port 81)"
+  echo "with KIAUH (fluidd-config is already set up), run as ${TARGET_USER}:"
   for step in "${ON4_STEPS[@]}"; do
     echo "  ${ON4_SH} -y ${step}"
   done
