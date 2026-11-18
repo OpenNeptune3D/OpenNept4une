@@ -21,7 +21,7 @@
 # not zsh: bash make-variant-images.sh ...
 # Needs: mtools; xz with --xz.  macOS: brew install mtools xz
 #
-# Usage: make-variant-images.sh [--out-dir DIR] [--xz] [--force] IMAGE.img [TARGET...]
+# Usage: make-variant-images.sh [--out-dir DIR] [--version VER] [--xz] [--force] IMAGE.img [TARGET...]
 
 set -euo pipefail
 export MTOOLS_SKIP_CHECK=1
@@ -52,6 +52,20 @@ pcb_dtb() {
 model_name() {
   case "$1" in n4) echo N4 ;; n4pro) echo N4Pro ;; n4plus) echo N4Plus ;; n4max) echo N4Max ;; esac
 }
+# Release file names (without .img), as on the GitHub releases page.
+variant_file() {
+  case "$1" in
+    n4) echo "Neptune4+Pro-$2-ZNP-K1-V1.x" ;;
+    n4-v1.4) echo "Neptune4+Pro-$2-ZNP-K1-V1.4-USB-C" ;;
+    n4plus) echo "Neptune4-Plus+Max-$2-ZNP-K1-V2.0" ;;
+    n4plus-v2.3) echo "Neptune4-Plus+Max-$2-ZNP-K1-V2.3-USB-C" ;;
+  esac
+}
+# Toolhead in a model-line file name: ribbon or USB-C.
+toolhead_file() { if [[ "$1" == "usbc" ]]; then echo USB-C; else echo ribbon; fi; }
+model_file_prefix() {
+  case "$1" in n4) echo Neptune4 ;; n4pro) echo Neptune4-Pro ;; n4plus) echo Neptune4-Plus ;; n4max) echo Neptune4-Max ;; esac
+}
 
 usage() {
   cat <<'EOF'
@@ -71,10 +85,16 @@ TARGET is a build variant or a model line; default: all four variants.
     N4Plus-v<2.0|2.3>-t<ribbon|usbc>                  e.g. N4Plus-v2.3-tusbc
     N4Max-v<2.0|2.3>-t<ribbon|usbc>
 
-Each target is written to <out-dir>/<image name>-<target>.img.
+Output names (VER from the IMAGE name, e.g. OpenNept4une-v0.1.8.img -> v0.1.8):
+    n4           Neptune4+Pro-VER-ZNP-K1-V1.x.img
+    n4-v1.4      Neptune4+Pro-VER-ZNP-K1-V1.4-USB-C.img
+    n4plus       Neptune4-Plus+Max-VER-ZNP-K1-V2.0.img
+    n4plus-v2.3  Neptune4-Plus+Max-VER-ZNP-K1-V2.3-USB-C.img
+    model line   e.g. Neptune4-Pro-VER-ZNP-K1-V1.1-1.2A-ribbon.img
 
 Options:
   --out-dir DIR  Where to write the images (default: next to IMAGE).
+  --version VER  Release version for the names (default: the vX.Y.Z in IMAGE).
   --xz           Compress each image with xz (the .img is replaced by .img.xz).
   --force        Overwrite existing output files.
   -h, --help     Show this help.
@@ -122,11 +142,14 @@ OUT_DIR=""
 XZ="false"
 FORCE="false"
 IMAGE=""
+VERSION=""
 TARGETS=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --out-dir) [[ -n "${2:-}" ]] || die "--out-dir needs a directory"; OUT_DIR="$2"; shift ;;
     --out-dir=?*) OUT_DIR="${1#--out-dir=}" ;;
+    --version) [[ -n "${2:-}" ]] || die "--version needs a value, e.g. v0.1.8"; VERSION="$2"; shift ;;
+    --version=?*) VERSION="${1#--version=}" ;;
     --xz) XZ="true" ;;
     --force) FORCE="true" ;;
     -h|--help) usage; exit 0 ;;
@@ -147,6 +170,11 @@ if [[ "$XZ" == "true" ]]; then command -v xz >/dev/null 2>&1 || die "xz not foun
 OUT_DIR="${OUT_DIR:-$(dirname -- "$IMAGE")}"
 mkdir -p -- "$OUT_DIR"
 BASE="$(basename -- "$IMAGE")"; BASE="${BASE%.img}"
+if [[ -z "$VERSION" ]]; then
+  VERSION="$(printf '%s\n' "$BASE" | grep -oE 'v[0-9]+(\.[0-9]+)+' | head -n 1 || true)"
+  [[ -n "$VERSION" ]] || die "No version (like v0.1.8) in '$BASE'; rename the image or pass --version v0.1.8"
+fi
+[[ "$VERSION" =~ ^[A-Za-z0-9._-]+$ ]] || die "Bad --version '$VERSION'"
 IMAGE_ABS="$(abspath "$IMAGE")"
 
 # ------------------------------------------------------------------
@@ -157,17 +185,19 @@ for t in $TARGETS; do
   lc="$(lower "$t")"
   flag=""
   if dtb="$(variant_dtb "$lc")"; then
-    name="$lc"
+    name="$(variant_file "$lc" "$VERSION")"
   elif [[ "$lc" =~ ^(n4|n4pro)-(0\.8|1\.2)a-v(1\.0|1\.1|1\.4)-t(ribbon|usbc)$ ]]; then
     flag="$(model_name "${BASH_REMATCH[1]}")-${BASH_REMATCH[2]}A-v${BASH_REMATCH[3]}-t${BASH_REMATCH[4]}"
-    dtb="$(pcb_dtb "${BASH_REMATCH[3]}")"; name="$flag"
+    dtb="$(pcb_dtb "${BASH_REMATCH[3]}")"
+    name="$(model_file_prefix "${BASH_REMATCH[1]}")-$VERSION-ZNP-K1-V${BASH_REMATCH[3]}-${BASH_REMATCH[2]}A-$(toolhead_file "${BASH_REMATCH[4]}")"
   elif [[ "$lc" =~ ^(n4plus|n4max)-v(2\.0|2\.3)-t(ribbon|usbc)$ ]]; then
     flag="$(model_name "${BASH_REMATCH[1]}")-v${BASH_REMATCH[2]}-t${BASH_REMATCH[3]}"
-    dtb="$(pcb_dtb "${BASH_REMATCH[2]}")"; name="$flag"
+    dtb="$(pcb_dtb "${BASH_REMATCH[2]}")"
+    name="$(model_file_prefix "${BASH_REMATCH[1]}")-$VERSION-ZNP-K1-V${BASH_REMATCH[2]}-$(toolhead_file "${BASH_REMATCH[3]}")"
   else
     die "Unknown target '$t'. See --help for variants and model lines."
   fi
-  out="$OUT_DIR/$BASE-$name.img"
+  out="$OUT_DIR/$name.img"
   [[ "$(abspath "$out")" != "$IMAGE_ABS" ]] || die "Target '$t' would overwrite $IMAGE itself; use --out-dir"
   if [[ "$FORCE" != "true" ]]; then
     for f in "$out" "$out.xz"; do
