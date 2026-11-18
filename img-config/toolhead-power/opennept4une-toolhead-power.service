@@ -1,0 +1,17 @@
+[Unit]
+Description=OpenNept4une USB-C toolhead power (GPIO82)
+Documentation=https://github.com/OpenNeptune3D/OpenNept4une/issues/417
+After=local-fs.target
+Before=klipper.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/sbin/opennept4une-toolhead-power on
+# Hold Klipper until the toolhead's Klipper application has enumerated. A timeout is
+# not a failure: Klipper then reports the missing THR MCU itself.
+ExecStartPost=-/usr/local/sbin/opennept4une-toolhead-power wait 20
+TimeoutStartSec=60
+
+[Install]
+WantedBy=multi-user.target
