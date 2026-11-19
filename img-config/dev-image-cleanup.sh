@@ -528,10 +528,12 @@ remove /etc/NetworkManager/system-connections/* /etc/netplan/90-NM-*.yaml \
 # 8) Machine identity
 # ------------------------------------------------------------------
 step "8/10 Machine identity"
-# Empty (not missing) machine-id = "first boot" for systemd: it writes a new
-# ID, and sshd-keygen.service (ConditionFirstBoot=yes) creates new host keys.
-# Do NOT run ssh-keygen -A here, or every image would share the same keys.
-run truncate -s 0 /etc/machine-id
+# Mark the image as uninitialized so systemd treats the next boot as
+# first boot. sshd-keygen.service (ConditionFirstBoot=yes) will then
+# generate unique SSH host keys on the deployed device.
+# Do NOT run ssh-keygen -A during image preparation: doing so would
+# embed identical private host keys in every image clone.
+run sh -c 'printf "uninitialized\n" > /etc/machine-id'
 [[ -L /var/lib/dbus/machine-id ]] || remove /var/lib/dbus/machine-id
 remove /etc/ssh/ssh_host_* /var/lib/systemd/random-seed /var/lib/systemd/credential.secret
 run systemctl enable sshd-keygen.service >/dev/null 2>&1 || true
